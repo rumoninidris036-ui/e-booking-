@@ -16,6 +16,7 @@ class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory;
+
     use HasRoles;
     use Notifiable;
 
@@ -30,14 +31,16 @@ class User extends Authenticatable
         'password',
     ];
 
-    /**
-     * @var string
-     */
     protected string $guard_name = 'web';
 
     public function ownedFields(): HasMany
     {
         return $this->hasMany(BadmintonField::class, 'owner_id');
+    }
+
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
     }
 
     /**

@@ -22,6 +22,8 @@ class StoreBadmintonFieldRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'address' => ['nullable', 'string', 'max:255'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'price_per_hour' => ['required', 'numeric', 'min:0'],
             'is_active' => ['sometimes', 'boolean'],
             'facility_ids' => ['sometimes', 'array'],

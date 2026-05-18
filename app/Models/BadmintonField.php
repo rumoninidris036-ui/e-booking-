@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 
@@ -25,6 +26,8 @@ class BadmintonField extends Model
         'slug',
         'description',
         'address',
+        'latitude',
+        'longitude',
         'price_per_hour',
         'cover_image',
         'is_active',
@@ -35,6 +38,7 @@ class BadmintonField extends Model
      */
     protected $appends = [
         'cover_image_url',
+        'map_marker',
     ];
 
     /**
@@ -44,6 +48,8 @@ class BadmintonField extends Model
     {
         return [
             'price_per_hour' => 'decimal:2',
+            'latitude' => 'decimal:7',
+            'longitude' => 'decimal:7',
             'is_active' => 'boolean',
         ];
     }
@@ -58,6 +64,11 @@ class BadmintonField extends Model
         return $this->belongsToMany(Facility::class);
     }
 
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
+    }
+
     public function getCoverImageUrlAttribute(): ?string
     {
         if ($this->cover_image === null) {
@@ -65,5 +76,26 @@ class BadmintonField extends Model
         }
 
         return Storage::disk('public')->url($this->cover_image);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function getMapMarkerAttribute(): ?array
+    {
+        if ($this->latitude === null || $this->longitude === null) {
+            return null;
+        }
+
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'slug' => $this->slug,
+            'address' => $this->address,
+            'latitude' => (float) $this->latitude,
+            'longitude' => (float) $this->longitude,
+            'price_per_hour' => (float) $this->price_per_hour,
+            'cover_image_url' => $this->cover_image_url,
+        ];
     }
 }
