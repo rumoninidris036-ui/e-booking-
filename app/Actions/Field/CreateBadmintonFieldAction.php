@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
 class CreateBadmintonFieldAction
 {
     /**
-     * @param array{name: string, description?: string|null, address?: string|null, price_per_hour: numeric-string|int|float, is_active?: bool, facility_ids?: array<int, int>} $attributes
+     * @param  array{name: string, description?: string|null, address?: string|null, latitude?: numeric-string|int|float|null, longitude?: numeric-string|int|float|null, price_per_hour: numeric-string|int|float, is_active?: bool, facility_ids?: array<int, int>}  $attributes
      */
     public function handle(User $owner, array $attributes, ?UploadedFile $coverImage = null): BadmintonField
     {
@@ -24,6 +24,8 @@ class CreateBadmintonFieldAction
                 'slug' => $this->generateSlug($attributes['name']),
                 'description' => $attributes['description'] ?? null,
                 'address' => $attributes['address'] ?? null,
+                'latitude' => $attributes['latitude'] ?? null,
+                'longitude' => $attributes['longitude'] ?? null,
                 'price_per_hour' => $attributes['price_per_hour'],
                 'cover_image' => $coverImage?->store('badminton-fields/covers', 'public'),
                 'is_active' => $attributes['is_active'] ?? true,

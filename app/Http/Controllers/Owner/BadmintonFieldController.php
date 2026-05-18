@@ -24,7 +24,23 @@ class BadmintonFieldController extends Controller
             ->latest()
             ->paginate(10);
 
-        return response()->json($fields);
+        return response()->json([
+            'data' => $fields->items(),
+            'meta' => [
+                'current_page' => $fields->currentPage(),
+                'last_page' => $fields->lastPage(),
+                'per_page' => $fields->perPage(),
+                'total' => $fields->total(),
+                'map' => [
+                    'provider' => 'OpenStreetMap',
+                    'library' => 'Leaflet.js',
+                    'markers' => collect($fields->items())
+                        ->map(fn (BadmintonField $field): ?array => $field->map_marker)
+                        ->filter()
+                        ->values(),
+                ],
+            ],
+        ]);
     }
 
     public function store(
@@ -49,6 +65,13 @@ class BadmintonFieldController extends Controller
 
         return response()->json([
             'data' => $badmintonField->load(['facilities', 'owner']),
+            'meta' => [
+                'map' => [
+                    'provider' => 'OpenStreetMap',
+                    'library' => 'Leaflet.js',
+                    'marker' => $badmintonField->map_marker,
+                ],
+            ],
         ]);
     }
 

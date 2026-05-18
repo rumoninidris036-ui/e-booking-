@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
 class UpdateBadmintonFieldAction
 {
     /**
-     * @param array{name: string, description?: string|null, address?: string|null, price_per_hour: numeric-string|int|float, is_active?: bool, facility_ids?: array<int, int>, remove_cover_image?: bool} $attributes
+     * @param  array{name: string, description?: string|null, address?: string|null, latitude?: numeric-string|int|float|null, longitude?: numeric-string|int|float|null, price_per_hour: numeric-string|int|float, is_active?: bool, facility_ids?: array<int, int>, remove_cover_image?: bool}  $attributes
      */
     public function handle(BadmintonField $badmintonField, array $attributes, ?UploadedFile $coverImage = null): BadmintonField
     {
@@ -36,6 +36,8 @@ class UpdateBadmintonFieldAction
                     : $badmintonField->slug,
                 'description' => $attributes['description'] ?? null,
                 'address' => $attributes['address'] ?? null,
+                'latitude' => $attributes['latitude'] ?? null,
+                'longitude' => $attributes['longitude'] ?? null,
                 'price_per_hour' => $attributes['price_per_hour'],
                 'cover_image' => $newCoverImage,
                 'is_active' => $attributes['is_active'] ?? true,
