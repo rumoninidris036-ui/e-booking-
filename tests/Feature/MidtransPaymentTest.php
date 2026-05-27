@@ -10,6 +10,7 @@ use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\Fakes\FakeMidtransGateway;
 use Tests\TestCase;
 
@@ -77,7 +78,7 @@ class MidtransPaymentTest extends TestCase
         $response = $this->actingAs($user)->post(route('public.fields.bookings.store', [
             'slug' => $field->slug,
         ]), [
-            'booking_date' => '2026-05-21',
+            'booking_date' => now()->addDay()->format('Y-m-d'),
             'start_time' => '08:00',
         ]);
 
@@ -90,6 +91,61 @@ class MidtransPaymentTest extends TestCase
             ->assertOk()
             ->assertSee('Continue To Pay')
             ->assertSee('BK-2026-0001');
+    }
+
+    public function test_guest_can_book_and_open_payment_page_with_access_token(): void
+    {
+        $gateway = new FakeMidtransGateway;
+        $gateway->statusResponse = [
+            'order_id' => 'BK-2026-0001',
+            'status_code' => '201',
+            'gross_amount' => '90000.00',
+            'transaction_status' => 'pending',
+            'payment_type' => 'bank_transfer',
+            'transaction_id' => 'trx-guest-pending-page',
+            'fraud_status' => 'accept',
+        ];
+        $this->app->instance(MidtransGateway::class, $gateway);
+
+        $field = BadmintonField::query()->create([
+            'name' => 'Arena Guest',
+            'slug' => 'arena-guest',
+            'price_per_hour' => 90000,
+            'is_active' => true,
+        ]);
+
+        $response = $this->post(route('public.fields.bookings.store', [
+            'slug' => $field->slug,
+        ]), [
+            'customer_name' => 'Guest Customer',
+            'customer_contact' => '081234567890',
+            'customer_email' => 'guest@example.test',
+            'booking_date' => now()->addDay()->format('Y-m-d'),
+            'start_time' => '08:00',
+        ]);
+
+        $booking = Booking::query()->firstOrFail();
+        $payment = Payment::query()->firstOrFail();
+
+        $this->assertNull($booking->user_id);
+        $this->assertSame('Guest Customer', $booking->customer_name);
+        $this->assertSame('081234567890', $booking->customer_contact);
+        $this->assertNotNull($booking->guest_access_token);
+
+        $response->assertRedirect(route('payments.show', [
+            'payment' => $payment,
+            'access_token' => $booking->guest_access_token,
+        ]));
+
+        $this->get(route('payments.show', $payment))->assertForbidden();
+
+        $this->get(route('payments.show', [
+            'payment' => $payment,
+            'access_token' => $booking->guest_access_token,
+        ]))
+            ->assertOk()
+            ->assertSee('Guest Customer')
+            ->assertSee('Continue To Pay');
     }
 
     public function test_payment_page_syncs_success_status_from_midtrans(): void
@@ -151,6 +207,68 @@ class MidtransPaymentTest extends TestCase
             'id' => $booking->id,
             'status' => Booking::STATUS_PAID,
         ]);
+
+        $payment->refresh();
+        $this->assertNotNull($payment->invoice_number);
+        $this->assertNotNull($payment->invoice_pdf_path);
+        Storage::disk('local')->assertExists($payment->invoice_pdf_path);
+    }
+
+    public function test_successful_payment_invoice_can_be_downloaded_as_pdf(): void
+    {
+        $gateway = new FakeMidtransGateway;
+        $gateway->statusResponse = [
+            'order_id' => 'BK-2026-0001',
+            'status_code' => '200',
+            'gross_amount' => '80000.00',
+            'transaction_status' => 'settlement',
+            'payment_type' => 'bank_transfer',
+            'transaction_id' => 'trx-invoice-success',
+            'fraud_status' => 'accept',
+        ];
+        $this->app->instance(MidtransGateway::class, $gateway);
+
+        $user = User::factory()->create();
+        $field = BadmintonField::query()->create([
+            'name' => 'Arena Invoice',
+            'slug' => 'arena-invoice',
+            'price_per_hour' => 80000,
+            'is_active' => true,
+        ]);
+
+        $booking = Booking::query()->create([
+            'booking_code' => 'BK-2026-0001',
+            'badminton_field_id' => $field->id,
+            'user_id' => $user->id,
+            'booking_date' => '2026-05-21',
+            'start_time' => '08:00:00',
+            'end_time' => '09:00:00',
+            'status' => Booking::STATUS_PENDING,
+            'price_per_hour' => 80000,
+        ]);
+
+        $payment = Payment::query()->create([
+            'booking_id' => $booking->id,
+            'provider' => 'midtrans',
+            'order_id' => 'BK-2026-0001',
+            'amount' => 80000,
+            'currency' => 'IDR',
+            'status' => Payment::STATUS_PENDING,
+            'snap_redirect_url' => 'https://app.sandbox.midtrans.com/snap/v2/vtweb/test-token',
+        ]);
+
+        $this->actingAs($user)
+            ->getJson(route('payments.show', $payment))
+            ->assertOk()
+            ->assertJsonPath('data.status', Payment::STATUS_SUCCESS)
+            ->assertJsonPath('data.invoice_number', 'INV-2026-00001');
+
+        $payment->refresh();
+
+        $response = $this->actingAs($user)->get(route('payments.invoice.download', $payment));
+
+        $response->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
     }
 
     public function test_failed_payment_page_still_offers_continue_to_pay(): void

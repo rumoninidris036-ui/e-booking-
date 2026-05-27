@@ -21,6 +21,13 @@ Route::get('/fields/markers', [PublicBadmintonFieldController::class, 'markers']
 Route::get('/fields/{slug}/booking', [PublicFieldBookingPageController::class, 'show'])->name('public.fields.booking');
 Route::get('/fields/{slug}/schedule', [PublicFieldScheduleController::class, 'show'])->name('public.fields.schedule');
 Route::get('/fields/{slug}', [PublicBadmintonFieldController::class, 'show'])->name('public.fields.show');
+Route::post('/fields/{slug}/bookings', [PublicBookingController::class, 'store'])->name('public.fields.bookings.store');
+Route::post('/bookings/{booking}/payments', [PublicPaymentController::class, 'store'])
+    ->middleware('throttle:payment-create')
+    ->name('payments.store');
+Route::get('/payments/{payment}', [PublicPaymentController::class, 'show'])->name('payments.show');
+Route::get('/payments/{payment}/return', [PublicPaymentController::class, 'handleReturn'])->name('payments.return');
+Route::get('/payments/{payment}/invoice', [PublicPaymentController::class, 'downloadInvoice'])->name('payments.invoice.download');
 Route::post('/webhooks/midtrans', [MidtransWebhookController::class, 'handle'])
     ->middleware('throttle:midtrans-webhook')
     ->name('webhooks.midtrans.handle');
@@ -33,12 +40,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/bookings', [PublicBookingController::class, 'index'])->name('bookings.index');
     Route::get('/bookings/{booking}', [PublicBookingController::class, 'show'])->name('bookings.show');
     Route::patch('/bookings/{booking}/cancel', [PublicBookingController::class, 'cancel'])->name('bookings.cancel');
-    Route::post('/bookings/{booking}/payments', [PublicPaymentController::class, 'store'])
-        ->middleware('throttle:payment-create')
-        ->name('payments.store');
-    Route::get('/payments/{payment}', [PublicPaymentController::class, 'show'])->name('payments.show');
-    Route::get('/payments/{payment}/return', [PublicPaymentController::class, 'handleReturn'])->name('payments.return');
-    Route::post('/fields/{slug}/bookings', [PublicBookingController::class, 'store'])->name('public.fields.bookings.store');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

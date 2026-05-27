@@ -8,22 +8,26 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\PaymentResource;
 use App\Models\Booking;
 use App\Models\Payment;
+use App\Services\Invoices\InvoiceService;
 use App\Services\Payments\PaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PaymentController extends Controller
 {
     public function __construct(
         private readonly PaymentService $paymentService,
+        private readonly InvoiceService $invoiceService,
     ) {}
 
     public function store(Request $request, Booking $booking): JsonResponse|RedirectResponse
     {
-        abort_unless($booking->user_id === $request->user()->id, 403);
+        $this->authorizePaymentAccess($request, $booking);
 
         $payment = $this->paymentService->createOrGetSnapPayment(
             $booking->loadMissing(['field', 'user']),
@@ -31,7 +35,7 @@ class PaymentController extends Controller
 
         if (! $request->expectsJson()) {
             return redirect()
-                ->route('payments.show', $payment)
+                ->to($this->paymentUrl($payment))
                 ->with('status', 'Sesi pembayaran siap. Lanjutkan pembayaran secara aman lewat Midtrans.');
         }
 
@@ -49,7 +53,7 @@ class PaymentController extends Controller
 
     public function show(Request $request, Payment $payment): JsonResponse|View
     {
-        abort_unless($payment->booking->user_id === $request->user()->id, 403);
+        $this->authorizePaymentAccess($request, $payment->booking);
 
         $payment->load(['booking.field', 'booking.user']);
 
@@ -65,13 +69,20 @@ class PaymentController extends Controller
             }
         }
 
+        if ($payment->status === Payment::STATUS_SUCCESS) {
+            $payment = $this->invoiceService->generateForPayment($payment);
+        }
+
         if (! $request->expectsJson()) {
             return view('payments.show', [
-                'payment' => $payment,
-                'booking' => $payment->booking,
-                'field' => $payment->booking->field,
-                'snapRedirectUrl' => $this->trustedSnapRedirectUrl($payment->snap_redirect_url),
-            ]);
+            'payment' => $payment,
+            'booking' => $payment->booking,
+            'field' => $payment->booking->field,
+            'snapRedirectUrl' => $this->trustedSnapRedirectUrl($payment->snap_redirect_url),
+            'paymentUrl' => $this->paymentUrl($payment),
+            'paymentStoreUrl' => $this->paymentStoreUrl($payment->booking),
+            'invoiceDownloadUrl' => $this->invoiceDownloadUrl($payment),
+        ]);
         }
 
         return response()->json([
@@ -87,7 +98,7 @@ class PaymentController extends Controller
 
     public function handleReturn(Request $request, Payment $payment): View
     {
-        abort_unless($payment->booking->user_id === $request->user()->id, 403);
+        $this->authorizePaymentAccess($request, $payment->booking);
 
         $payment->load(['booking.field', 'booking.user']);
 
@@ -113,7 +124,25 @@ class PaymentController extends Controller
 
         return view('payments.return', [
             'payment' => $payment->fresh(['booking.field', 'booking.user']),
+            'paymentUrl' => $this->paymentUrl($payment),
         ]);
+    }
+
+    public function downloadInvoice(Request $request, Payment $payment): StreamedResponse
+    {
+        $this->authorizePaymentAccess($request, $payment->booking);
+
+        $payment->load(['booking.field', 'booking.user']);
+        $payment = $this->invoiceService->generateForPayment($payment);
+
+        abort_if($payment->invoice_pdf_path === null, 404);
+        abort_unless(Storage::disk('local')->exists($payment->invoice_pdf_path), 404);
+
+        return Storage::disk('local')->download(
+            $payment->invoice_pdf_path,
+            sprintf('%s.pdf', $payment->invoice_number),
+            ['Content-Type' => 'application/pdf'],
+        );
     }
 
     private function trustedSnapRedirectUrl(?string $url): ?string
@@ -136,5 +165,42 @@ class PaymentController extends Controller
         ];
 
         return in_array($host, $allowedHosts, true) ? $url : null;
+    }
+
+    private function authorizePaymentAccess(Request $request, Booking $booking): void
+    {
+        if ($booking->user_id === null) {
+            $token = (string) $request->query('access_token', $request->input('access_token', ''));
+
+            abort_unless($booking->guest_access_token !== null && hash_equals($booking->guest_access_token, $token), 403);
+
+            return;
+        }
+
+        abort_unless($booking->user_id === $request->user()?->id, 403);
+    }
+
+    private function paymentUrl(Payment $payment): string
+    {
+        return route('payments.show', array_filter([
+            'payment' => $payment,
+            'access_token' => $payment->booking->guest_access_token,
+        ]));
+    }
+
+    private function paymentStoreUrl(Booking $booking): string
+    {
+        return route('payments.store', array_filter([
+            'booking' => $booking,
+            'access_token' => $booking->guest_access_token,
+        ]));
+    }
+
+    private function invoiceDownloadUrl(Payment $payment): string
+    {
+        return route('payments.invoice.download', array_filter([
+            'payment' => $payment,
+            'access_token' => $payment->booking->guest_access_token,
+        ]));
     }
 }

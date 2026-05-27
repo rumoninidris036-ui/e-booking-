@@ -7,6 +7,7 @@ namespace App\Services\Payments;
 use App\Contracts\Payments\MidtransGateway;
 use App\Models\Booking;
 use App\Models\Payment;
+use App\Services\Invoices\InvoiceService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -15,6 +16,7 @@ class PaymentService
 {
     public function __construct(
         private readonly MidtransGateway $midtransGateway,
+        private readonly InvoiceService $invoiceService,
     ) {}
 
     public function createOrGetSnapPayment(Booking $booking): Payment
@@ -128,10 +130,12 @@ class PaymentService
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            return $this->synchronizePaymentFromVerifiedStatus(
+            $payment = $this->synchronizePaymentFromVerifiedStatus(
                 payment: $lockedPayment,
                 verifiedStatus: $verifiedStatus,
             );
+
+            return $this->ensureInvoiceForSuccessfulPayment($payment);
         });
     }
 
@@ -197,21 +201,40 @@ class PaymentService
                 'environment' => app()->environment(),
             ]);
 
-            return $lockedPayment->fresh(['booking.field', 'booking.user']);
+            $lockedPayment = $lockedPayment->fresh(['booking.field', 'booking.user']);
+
+            return $this->ensureInvoiceForSuccessfulPayment($lockedPayment);
         });
     }
 
     private function makeSnapPayload(Payment $payment, Booking $booking): array
     {
+        $customerName = $booking->customer_name ?: $booking->user?->name ?: 'Customer';
+        $customerEmail = $booking->customer_email ?: $booking->user?->email;
+
+        $customerDetails = [
+            'first_name' => $customerName,
+        ];
+
+        if ($customerEmail !== null && $customerEmail !== '') {
+            $customerDetails['email'] = $customerEmail;
+        }
+
+        if ($booking->customer_contact !== null && $booking->customer_contact !== '') {
+            $customerDetails['phone'] = $booking->customer_contact;
+        }
+
+        $returnRouteParameters = array_filter([
+            'payment' => $payment,
+            'access_token' => $booking->guest_access_token,
+        ]);
+
         return [
             'transaction_details' => [
                 'order_id' => $payment->order_id,
                 'gross_amount' => (int) round((float) $payment->amount),
             ],
-            'customer_details' => [
-                'first_name' => $booking->user->name,
-                'email' => $booking->user->email,
-            ],
+            'customer_details' => $customerDetails,
             'item_details' => [
                 [
                     'id' => (string) $booking->field->id,
@@ -227,15 +250,15 @@ class PaymentService
             ],
             'callbacks' => [
                 'finish' => route('payments.return', [
-                    'payment' => $payment,
+                    ...$returnRouteParameters,
                     'callback_state' => 'finish',
                 ]),
                 'pending' => route('payments.return', [
-                    'payment' => $payment,
+                    ...$returnRouteParameters,
                     'callback_state' => 'pending',
                 ]),
                 'error' => route('payments.return', [
-                    'payment' => $payment,
+                    ...$returnRouteParameters,
                     'callback_state' => 'error',
                 ]),
             ],
@@ -421,6 +444,17 @@ class PaymentService
             ])->save();
         }
 
-        return $payment->fresh(['booking.field', 'booking.user']);
+        $payment = $payment->fresh(['booking.field', 'booking.user']);
+
+        return $this->ensureInvoiceForSuccessfulPayment($payment);
+    }
+
+    private function ensureInvoiceForSuccessfulPayment(Payment $payment): Payment
+    {
+        if ($payment->status !== Payment::STATUS_SUCCESS) {
+            return $payment;
+        }
+
+        return $this->invoiceService->generateForPayment($payment);
     }
 }

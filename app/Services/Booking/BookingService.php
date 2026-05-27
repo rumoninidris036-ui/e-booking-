@@ -11,6 +11,7 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class BookingService
@@ -21,10 +22,11 @@ class BookingService
 
     public function create(
         BadmintonField $field,
-        User $user,
+        ?User $user,
         string $bookingDate,
         string $startTime,
         ?string $endTime = null,
+        array $customer = [],
     ): Booking {
         $scheduleDate = CarbonImmutable::createFromFormat('Y-m-d', $bookingDate);
         $slotStart = CarbonImmutable::createFromFormat('H:i', $startTime);
@@ -45,7 +47,7 @@ class BookingService
         }
 
         try {
-            return DB::transaction(function () use ($field, $user, $scheduleDate, $slotStart, $slotEnd): Booking {
+            return DB::transaction(function () use ($field, $user, $customer, $scheduleDate, $slotStart, $slotEnd): Booking {
                 $conflictExists = Booking::query()
                     ->where('badminton_field_id', $field->id)
                     ->whereDate('booking_date', $scheduleDate->toDateString())
@@ -64,7 +66,11 @@ class BookingService
                 return Booking::query()->create([
                     'booking_code' => $this->generateBookingCode($scheduleDate->year),
                     'badminton_field_id' => $field->id,
-                    'user_id' => $user->id,
+                    'user_id' => $user?->id,
+                    'customer_name' => $customer['customer_name'] ?? $user?->name,
+                    'customer_contact' => $customer['customer_contact'] ?? null,
+                    'customer_email' => $customer['customer_email'] ?? $user?->email,
+                    'guest_access_token' => $user === null ? Str::random(64) : null,
                     'booking_date' => $scheduleDate->toDateString(),
                     'start_time' => $slotStart->format('H:i:s'),
                     'end_time' => $slotEnd->format('H:i:s'),

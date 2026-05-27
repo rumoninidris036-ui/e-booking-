@@ -28,6 +28,9 @@ class Payment extends Model
         'amount',
         'currency',
         'status',
+        'invoice_number',
+        'invoice_pdf_path',
+        'invoice_generated_at',
         'snap_token',
         'snap_redirect_url',
         'midtrans_transaction_id',
@@ -58,6 +61,7 @@ class Payment extends Model
             'notification_payload' => 'array',
             'paid_at' => 'datetime',
             'failed_at' => 'datetime',
+            'invoice_generated_at' => 'datetime',
         ];
     }
 

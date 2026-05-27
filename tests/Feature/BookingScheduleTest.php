@@ -48,6 +48,7 @@ class BookingScheduleTest extends TestCase
     public function test_authenticated_user_can_book_available_slot(): void
     {
         $user = User::factory()->create();
+        $bookingDate = now()->addDay()->format('Y-m-d');
         $field = BadmintonField::query()->create([
             'name' => 'Arena Sore',
             'slug' => 'arena-sore',
@@ -58,7 +59,7 @@ class BookingScheduleTest extends TestCase
         $response = $this->actingAs($user)->postJson(route('public.fields.bookings.store', [
             'slug' => $field->slug,
         ]), [
-            'booking_date' => '2026-05-20',
+            'booking_date' => $bookingDate,
             'start_time' => '08:00',
         ]);
 
@@ -71,7 +72,7 @@ class BookingScheduleTest extends TestCase
             Booking::query()
                 ->where('badminton_field_id', $field->id)
                 ->where('user_id', $user->id)
-                ->whereDate('booking_date', '2026-05-20')
+                ->whereDate('booking_date', $bookingDate)
                 ->where('start_time', '08:00:00')
                 ->where('end_time', '09:00:00')
                 ->where('status', Booking::STATUS_PENDING)
@@ -83,6 +84,7 @@ class BookingScheduleTest extends TestCase
     {
         $firstUser = User::factory()->create();
         $secondUser = User::factory()->create();
+        $bookingDate = now()->addDay()->format('Y-m-d');
         $field = BadmintonField::query()->create([
             'name' => 'Arena Malam',
             'slug' => 'arena-malam',
@@ -93,7 +95,7 @@ class BookingScheduleTest extends TestCase
         Booking::query()->create([
             'badminton_field_id' => $field->id,
             'user_id' => $firstUser->id,
-            'booking_date' => '2026-05-20',
+            'booking_date' => $bookingDate,
             'start_time' => '10:00:00',
             'end_time' => '11:00:00',
             'status' => Booking::STATUS_PENDING,
@@ -103,7 +105,7 @@ class BookingScheduleTest extends TestCase
         $response = $this->actingAs($secondUser)->postJson(route('public.fields.bookings.store', [
             'slug' => $field->slug,
         ]), [
-            'booking_date' => '2026-05-20',
+            'booking_date' => $bookingDate,
             'start_time' => '10:00',
         ]);
 

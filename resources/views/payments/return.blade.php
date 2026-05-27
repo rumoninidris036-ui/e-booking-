@@ -21,7 +21,7 @@
                 </div>
 
                 <a
-                    href="{{ route('payments.show', $payment) }}"
+                    href="{{ $paymentUrl }}"
                     class="mt-6 block w-full rounded-2xl bg-[#c3f400] px-6 py-4 text-center text-sm font-bold uppercase tracking-[0.18em] text-black"
                 >
                     Back To Payment Page

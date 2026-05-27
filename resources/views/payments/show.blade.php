@@ -40,6 +40,7 @@
         @php
             $paymentStatus = $payment->status;
             $bookingStatus = $booking->status;
+            $customerName = $booking->customer_name ?: $booking->user?->name ?: 'Customer';
             $statusPalette = match ($payment->status) {
                 \App\Models\Payment::STATUS_SUCCESS => [
                     'label' => 'Payment Confirmed',
@@ -63,8 +64,9 @@
         @endphp
         <main
             id="payment-page"
-            data-payment-show-url="{{ route('payments.show', $payment) }}"
-            data-payment-store-url="{{ route('payments.store', $booking) }}"
+            data-payment-show-url="{{ $paymentUrl }}"
+            data-payment-store-url="{{ $paymentStoreUrl }}"
+            data-invoice-download-url="{{ $invoiceDownloadUrl }}"
             data-booking-url="{{ route('public.fields.booking', ['slug' => $field->slug, 'date' => $booking->booking_date->format('Y-m-d'), 'slot' => substr((string) $booking->start_time, 0, 5)]) }}"
             data-payment-status="{{ $paymentStatus }}"
             data-booking-status="{{ $bookingStatus }}"
@@ -127,7 +129,7 @@
                                 </div>
                                 <div class="flex items-center justify-between gap-4">
                                     <span>Customer</span>
-                                    <span class="text-right font-semibold text-white">{{ $booking->user->name }}</span>
+                                    <span class="text-right font-semibold text-white">{{ $customerName }}</span>
                                 </div>
                                 <div class="border-t border-white/10 pt-4">
                                     <div class="flex items-center justify-between gap-4">
@@ -160,6 +162,12 @@
                             <div class="mt-8 rounded-2xl border border-accent/30 bg-accent/10 px-4 py-5 text-sm leading-6 text-white">
                                 Payment sudah sukses. Kamu tidak perlu menekan tombol bayar lagi.
                             </div>
+                            <a
+                                href="{{ $invoiceDownloadUrl }}"
+                                class="mt-4 block w-full rounded-2xl bg-accent px-6 py-4 text-center text-sm font-bold uppercase tracking-[0.18em] text-black transition-transform hover:-translate-y-0.5"
+                            >
+                                Download Invoice PDF
+                            </a>
                         @elseif ($paymentStatus === \App\Models\Payment::STATUS_PENDING && $snapRedirectUrl !== null)
                             <a
                                 href="{{ $snapRedirectUrl }}"
@@ -174,7 +182,7 @@
                                 Midtrans akan dibuka di tab baru. Halaman ini tetap terbuka untuk memantau status pembayaranmu.
                             </p>
                         @elseif ($bookingStatus === \App\Models\Booking::STATUS_PENDING)
-                            <form method="POST" action="{{ route('payments.store', $booking) }}" class="mt-8">
+                            <form method="POST" action="{{ $paymentStoreUrl }}" class="mt-8">
                                 @csrf
                                 <button type="submit" class="w-full rounded-2xl bg-accent px-6 py-4 text-sm font-bold uppercase tracking-[0.18em] text-black transition-transform hover:-translate-y-0.5">
                                     Continue To Pay
@@ -233,6 +241,7 @@
                 const state = {
                     paymentShowUrl: paymentPage.dataset.paymentShowUrl,
                     paymentStoreUrl: paymentPage.dataset.paymentStoreUrl,
+                    invoiceDownloadUrl: paymentPage.dataset.invoiceDownloadUrl,
                     bookingUrl: paymentPage.dataset.bookingUrl,
                     paymentStatus: paymentPage.dataset.paymentStatus,
                     bookingStatus: paymentPage.dataset.bookingStatus,
@@ -271,6 +280,12 @@
                             <div class="mt-8 rounded-2xl border border-accent/30 bg-accent/10 px-4 py-5 text-sm leading-6 text-white">
                                 Payment sudah sukses. Kamu tidak perlu menekan tombol bayar lagi.
                             </div>
+                            <a
+                                href="${state.invoiceDownloadUrl}"
+                                class="mt-4 block w-full rounded-2xl bg-accent px-6 py-4 text-center text-sm font-bold uppercase tracking-[0.18em] text-black transition-transform hover:-translate-y-0.5"
+                            >
+                                Download Invoice PDF
+                            </a>
                         `;
                         return;
                     }
