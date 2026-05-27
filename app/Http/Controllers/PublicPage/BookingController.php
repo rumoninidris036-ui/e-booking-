@@ -61,6 +61,11 @@ class BookingController extends Controller
             bookingDate: $validated['booking_date'],
             startTime: $validated['start_time'],
             endTime: $validated['end_time'] ?? null,
+            customer: [
+                'customer_name' => $validated['customer_name'] ?? $request->user()?->name,
+                'customer_contact' => $validated['customer_contact'] ?? null,
+                'customer_email' => $validated['customer_email'] ?? $request->user()?->email,
+            ],
         );
 
         if (! $request->expectsJson()) {
@@ -69,7 +74,10 @@ class BookingController extends Controller
             );
 
             return redirect()
-                ->route('payments.show', $payment)
+                ->to(route('payments.show', array_filter([
+                    'payment' => $payment,
+                    'access_token' => $booking->guest_access_token,
+                ])))
                 ->with('status', 'Booking berhasil dibuat. Lanjutkan ke pembayaran untuk mengamankan slot.');
         }
 

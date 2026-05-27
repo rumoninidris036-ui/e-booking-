@@ -14,6 +14,12 @@ class PaymentResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $invoiceRouteParameters = ['payment' => $this->resource];
+
+        if ($this->relationLoaded('booking') && $this->booking?->guest_access_token !== null) {
+            $invoiceRouteParameters['access_token'] = $this->booking->guest_access_token;
+        }
+
         return [
             'id' => $this->id,
             'booking_id' => $this->booking_id,
@@ -26,6 +32,11 @@ class PaymentResource extends JsonResource
             'snap_redirect_url' => $this->snap_redirect_url,
             'midtrans_transaction_status' => $this->midtrans_transaction_status,
             'midtrans_payment_type' => $this->midtrans_payment_type,
+            'invoice_number' => $this->invoice_number,
+            'invoice_generated_at' => $this->invoice_generated_at,
+            'invoice_download_url' => $this->invoice_pdf_path !== null
+                ? route('payments.invoice.download', $invoiceRouteParameters)
+                : null,
             'paid_at' => $this->paid_at,
             'failed_at' => $this->failed_at,
             'created_at' => $this->created_at,
@@ -37,6 +48,9 @@ class PaymentResource extends JsonResource
                 'booking_date' => $this->booking->booking_date,
                 'start_time' => $this->booking->start_time,
                 'end_time' => $this->booking->end_time,
+                'customer_name' => $this->booking->customer_name ?: $this->booking->user?->name,
+                'customer_contact' => $this->booking->customer_contact,
+                'customer_email' => $this->booking->customer_email ?: $this->booking->user?->email,
                 'field' => $this->booking->relationLoaded('field') ? [
                     'id' => $this->booking->field->id,
                     'name' => $this->booking->field->name,

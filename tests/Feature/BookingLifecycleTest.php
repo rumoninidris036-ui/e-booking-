@@ -18,6 +18,7 @@ class BookingLifecycleTest extends TestCase
     public function test_booking_creation_generates_pending_booking_code(): void
     {
         $user = User::factory()->create();
+        $bookingDate = now()->addDay()->format('Y-m-d');
         $field = BadmintonField::query()->create([
             'name' => 'Arena Booking',
             'slug' => 'arena-booking',
@@ -28,7 +29,7 @@ class BookingLifecycleTest extends TestCase
         $response = $this->actingAs($user)->postJson(route('public.fields.bookings.store', [
             'slug' => $field->slug,
         ]), [
-            'booking_date' => '2026-05-21',
+            'booking_date' => $bookingDate,
             'start_time' => '08:00',
         ]);
 

@@ -347,27 +347,67 @@
                                 </div>
                             </div>
 
-                            @auth
-                                <div id="booking-summary-hint" class="mt-8 rounded-xl border border-outline-variant bg-surface-container-low p-4 text-sm text-on-surface-variant">
-                                    Pilih slot terlebih dulu untuk mengaktifkan tombol booking.
+                            @if ($errors->any())
+                                <div class="mt-8 rounded-xl border border-error-container bg-error-container/10 p-4 text-sm text-error">
+                                    {{ $errors->first() }}
                                 </div>
-                                <form method="POST" action="{{ route('public.fields.bookings.store', ['slug' => $field->slug]) }}" class="mt-4 space-y-4">
-                                    @csrf
-                                    <input id="booking-date-input" type="hidden" name="booking_date" value="{{ $selectedDate->toDateString() }}">
-                                    <input id="booking-slot-input" type="hidden" name="start_time" value="{{ $selectedSlotData['start_time'] ?? '' }}">
+                            @endif
 
-                                    <button id="confirm-booking-button" type="submit" @disabled($selectedSlotData === null) class="w-full rounded-xl bg-secondary-container py-4 font-label-bold text-label-bold uppercase text-black neon-glow-secondary transition-transform disabled:cursor-not-allowed disabled:opacity-50 active:translate-y-[2px]">
-                                        Confirm Booking
-                                    </button>
-                                </form>
-                            @else
-                                <div id="booking-summary-hint" class="mt-8 rounded-xl border border-outline-variant bg-surface-container-low p-4 text-sm text-on-surface-variant">
-                                    Kamu bisa lihat jadwal dan slot dulu. Saat siap booking, login dulu untuk lanjut.
+                            <div id="booking-summary-hint" class="mt-8 rounded-xl border border-outline-variant bg-surface-container-low p-4 text-sm text-on-surface-variant">
+                                Isi data customer dan pilih slot terlebih dulu untuk mengaktifkan tombol booking.
+                            </div>
+
+                            <form method="POST" action="{{ route('public.fields.bookings.store', ['slug' => $field->slug]) }}" class="mt-4 space-y-4">
+                                @csrf
+                                <input id="booking-date-input" type="hidden" name="booking_date" value="{{ $selectedDate->toDateString() }}">
+                                <input id="booking-slot-input" type="hidden" name="start_time" value="{{ $selectedSlotData['start_time'] ?? '' }}">
+
+                                <div>
+                                    <label for="customer_name" class="mb-2 block text-[12px] font-label-bold uppercase text-on-surface-variant">Nama Customer</label>
+                                    <input
+                                        id="customer_name"
+                                        name="customer_name"
+                                        type="text"
+                                        value="{{ old('customer_name', auth()->user()?->name) }}"
+                                        required
+                                        autocomplete="name"
+                                        class="w-full rounded-xl border border-white/10 bg-surface-container-low px-4 py-3 text-secondary placeholder:text-on-surface-variant focus:border-secondary-container focus:ring-secondary-container"
+                                        placeholder="Nama lengkap"
+                                    >
                                 </div>
-                                <a href="{{ route('login') }}" class="mt-4 block w-full rounded-xl bg-secondary-container py-4 text-center font-label-bold text-label-bold uppercase text-black neon-glow-secondary transition-transform active:translate-y-[2px]">
-                                    Login To Continue
-                                </a>
-                            @endauth
+
+                                <div>
+                                    <label for="customer_contact" class="mb-2 block text-[12px] font-label-bold uppercase text-on-surface-variant">Nomor WhatsApp / Telegram</label>
+                                    <input
+                                        id="customer_contact"
+                                        name="customer_contact"
+                                        type="text"
+                                        value="{{ old('customer_contact') }}"
+                                        required
+                                        inputmode="tel"
+                                        autocomplete="tel"
+                                        class="w-full rounded-xl border border-white/10 bg-surface-container-low px-4 py-3 text-secondary placeholder:text-on-surface-variant focus:border-secondary-container focus:ring-secondary-container"
+                                        placeholder="08xxxxxxxxxx atau @telegram"
+                                    >
+                                </div>
+
+                                <div>
+                                    <label for="customer_email" class="mb-2 block text-[12px] font-label-bold uppercase text-on-surface-variant">Email Opsional</label>
+                                    <input
+                                        id="customer_email"
+                                        name="customer_email"
+                                        type="email"
+                                        value="{{ old('customer_email', auth()->user()?->email) }}"
+                                        autocomplete="email"
+                                        class="w-full rounded-xl border border-white/10 bg-surface-container-low px-4 py-3 text-secondary placeholder:text-on-surface-variant focus:border-secondary-container focus:ring-secondary-container"
+                                        placeholder="nama@email.com"
+                                    >
+                                </div>
+
+                                <button id="confirm-booking-button" type="submit" @disabled($selectedSlotData === null) class="w-full rounded-xl bg-secondary-container py-4 font-label-bold text-label-bold uppercase text-black neon-glow-secondary transition-transform disabled:cursor-not-allowed disabled:opacity-50 active:translate-y-[2px]">
+                                    Confirm Booking
+                                </button>
+                            </form>
 
                             <a href="{{ route('public.fields.show', ['slug' => $field->slug]) }}" class="mt-4 block w-full rounded-xl border border-primary px-6 py-4 text-center font-label-bold text-label-bold uppercase text-primary transition-all hover:bg-primary/10">
                                 Back To Detail
@@ -430,7 +470,7 @@
                 if (bookingSummaryHint && confirmBookingButton) {
                     bookingSummaryHint.textContent = scheduleState.selectedSlot
                         ? 'Slot sudah siap. Lanjutkan booking saat kamu yakin dengan jadwal yang dipilih.'
-                        : 'Pilih slot terlebih dulu untuk mengaktifkan tombol booking.';
+                        : 'Isi data customer dan pilih slot terlebih dulu untuk mengaktifkan tombol booking.';
                 }
             }
 
