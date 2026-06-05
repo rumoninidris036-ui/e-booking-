@@ -169,6 +169,12 @@ class PaymentController extends Controller
 
     private function authorizePaymentAccess(Request $request, Booking $booking): void
     {
+        $booking->loadMissing('field:id,owner_id');
+
+        if ($request->user()?->hasRole('owner') === true && $booking->field?->owner_id === $request->user()->id) {
+            return;
+        }
+
         if ($booking->user_id === null) {
             $token = (string) $request->query('access_token', $request->input('access_token', ''));
 

@@ -29,6 +29,9 @@ class BadmintonField extends Model
         'latitude',
         'longitude',
         'price_per_hour',
+        'open_time',
+        'close_time',
+        'slot_duration_minutes',
         'cover_image',
         'is_active',
     ];
@@ -50,6 +53,7 @@ class BadmintonField extends Model
             'price_per_hour' => 'decimal:2',
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
+            'slot_duration_minutes' => 'integer',
             'is_active' => 'boolean',
         ];
     }

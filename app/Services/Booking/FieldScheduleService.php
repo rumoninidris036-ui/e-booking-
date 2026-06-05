@@ -15,7 +15,9 @@ class FieldScheduleService
 
     public const DEFAULT_CLOSE_TIME = '22:00';
 
-    public const SLOT_DURATION_MINUTES = 60;
+    public const DEFAULT_SLOT_DURATION_MINUTES = 60;
+
+    public const SLOT_DURATION_MINUTES = self::DEFAULT_SLOT_DURATION_MINUTES;
 
     /**
      * @return array<int, array<string, mixed>>
@@ -23,8 +25,9 @@ class FieldScheduleService
     public function generateSlots(BadmintonField $field, string $date): array
     {
         $scheduleDate = CarbonImmutable::createFromFormat('Y-m-d', $date)->startOfDay();
-        $openAt = $scheduleDate->setTimeFromTimeString(self::DEFAULT_OPEN_TIME);
-        $closeAt = $scheduleDate->setTimeFromTimeString(self::DEFAULT_CLOSE_TIME);
+        $openAt = $scheduleDate->setTimeFromTimeString($this->openTimeFor($field));
+        $closeAt = $scheduleDate->setTimeFromTimeString($this->closeTimeFor($field));
+        $slotDurationMinutes = $this->slotDurationMinutesFor($field);
 
         $bookings = $field->bookings()
             ->whereDate('booking_date', $scheduleDate->toDateString())
@@ -34,8 +37,8 @@ class FieldScheduleService
 
         $slots = [];
 
-        for ($cursor = $openAt; $cursor->lt($closeAt); $cursor = $cursor->addMinutes(self::SLOT_DURATION_MINUTES)) {
-            $slotEnd = $cursor->addMinutes(self::SLOT_DURATION_MINUTES);
+        for ($cursor = $openAt; $cursor->lt($closeAt); $cursor = $cursor->addMinutes($slotDurationMinutes)) {
+            $slotEnd = $cursor->addMinutes($slotDurationMinutes);
 
             if ($slotEnd->gt($closeAt)) {
                 break;
@@ -55,12 +58,13 @@ class FieldScheduleService
         return $slots;
     }
 
-    public function isBookableSlot(string $startTime, string $endTime): bool
+    public function isBookableSlot(BadmintonField $field, string $startTime, string $endTime): bool
     {
-        $openAt = $this->timeToMinutes(self::DEFAULT_OPEN_TIME);
-        $closeAt = $this->timeToMinutes(self::DEFAULT_CLOSE_TIME);
+        $openAt = $this->timeToMinutes($this->openTimeFor($field));
+        $closeAt = $this->timeToMinutes($this->closeTimeFor($field));
         $slotStart = $this->timeToMinutes($startTime);
         $slotEnd = $this->timeToMinutes($endTime);
+        $slotDurationMinutes = $this->slotDurationMinutesFor($field);
 
         if ($slotEnd <= $slotStart) {
             return false;
@@ -70,12 +74,56 @@ class FieldScheduleService
             return false;
         }
 
-        return ($slotEnd - $slotStart) === self::SLOT_DURATION_MINUTES;
+        return ($slotEnd - $slotStart) === $slotDurationMinutes;
+    }
+
+    public function openTimeFor(BadmintonField $field): string
+    {
+        return substr((string) ($field->open_time ?? self::DEFAULT_OPEN_TIME), 0, 5);
+    }
+
+    public function closeTimeFor(BadmintonField $field): string
+    {
+        return substr((string) ($field->close_time ?? self::DEFAULT_CLOSE_TIME), 0, 5);
+    }
+
+    public function slotDurationMinutesFor(BadmintonField $field): int
+    {
+        return (int) ($field->slot_duration_minutes ?: self::DEFAULT_SLOT_DURATION_MINUTES);
+    }
+
+    public static function isValidScheduleWindow(string $openTime, string $closeTime, int $slotDurationMinutes): bool
+    {
+        if ($slotDurationMinutes < 30 || $slotDurationMinutes > 240) {
+            return false;
+        }
+
+        $openAt = self::timeToMinutesValue($openTime);
+        $closeAt = self::timeToMinutesValue($closeTime);
+
+        if ($openAt === null || $closeAt === null || $closeAt <= $openAt) {
+            return false;
+        }
+
+        return ($closeAt - $openAt) >= $slotDurationMinutes;
     }
 
     private function timeToMinutes(string $time): int
     {
+        return self::timeToMinutesValue($time) ?? 0;
+    }
+
+    private static function timeToMinutesValue(string $time): ?int
+    {
+        if (! preg_match('/^\d{2}:\d{2}$/', $time)) {
+            return null;
+        }
+
         [$hours, $minutes] = array_map('intval', explode(':', $time));
+
+        if ($hours > 23 || $minutes > 59) {
+            return null;
+        }
 
         return ($hours * 60) + $minutes;
     }

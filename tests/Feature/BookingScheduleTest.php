@@ -80,6 +80,45 @@ class BookingScheduleTest extends TestCase
         );
     }
 
+    public function test_custom_field_schedule_generates_shorter_slots_and_booking_duration(): void
+    {
+        $user = User::factory()->create();
+        $bookingDate = now()->addDay()->format('Y-m-d');
+        $field = BadmintonField::query()->create([
+            'name' => 'Arena Custom Slot',
+            'slug' => 'arena-custom-slot',
+            'price_per_hour' => 75000,
+            'open_time' => '08:00',
+            'close_time' => '09:00',
+            'slot_duration_minutes' => 30,
+            'is_active' => true,
+        ]);
+
+        $scheduleResponse = $this->getJson(route('public.fields.schedule', [
+            'slug' => $field->slug,
+            'date' => $bookingDate,
+        ]));
+
+        $scheduleResponse->assertOk()
+            ->assertJsonCount(2, 'data.slots')
+            ->assertJsonPath('data.slots.0.start_time', '08:00')
+            ->assertJsonPath('data.slots.0.end_time', '08:30')
+            ->assertJsonPath('data.slots.1.start_time', '08:30')
+            ->assertJsonPath('data.slots.1.end_time', '09:00')
+            ->assertJsonPath('meta.slot_duration_minutes', 30);
+
+        $bookingResponse = $this->actingAs($user)->postJson(route('public.fields.bookings.store', [
+            'slug' => $field->slug,
+        ]), [
+            'booking_date' => $bookingDate,
+            'start_time' => '08:30',
+        ]);
+
+        $bookingResponse->assertCreated()
+            ->assertJsonPath('data.start_time', '08:30:00')
+            ->assertJsonPath('data.end_time', '09:00:00');
+    }
+
     public function test_booking_endpoint_prevents_double_booking(): void
     {
         $firstUser = User::factory()->create();

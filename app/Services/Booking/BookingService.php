@@ -31,10 +31,10 @@ class BookingService
         $scheduleDate = CarbonImmutable::createFromFormat('Y-m-d', $bookingDate);
         $slotStart = CarbonImmutable::createFromFormat('H:i', $startTime);
         $slotEnd = $endTime === null
-            ? $slotStart->addMinutes(FieldScheduleService::SLOT_DURATION_MINUTES)
+            ? $slotStart->addMinutes($this->fieldScheduleService->slotDurationMinutesFor($field))
             : CarbonImmutable::createFromFormat('H:i', $endTime);
 
-        if (! $this->fieldScheduleService->isBookableSlot($slotStart->format('H:i'), $slotEnd->format('H:i'))) {
+        if (! $this->fieldScheduleService->isBookableSlot($field, $slotStart->format('H:i'), $slotEnd->format('H:i'))) {
             throw ValidationException::withMessages([
                 'start_time' => ['Selected time slot is outside the allowed schedule.'],
             ]);

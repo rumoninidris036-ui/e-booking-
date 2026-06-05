@@ -158,6 +158,7 @@
                     'dayNumber' => $dateOption->format('d'),
                 ])->all(),
                 'pricePerHour' => (float) $field->price_per_hour,
+                'slotDurationMinutes' => (int) ($field->slot_duration_minutes ?? \App\Services\Booking\FieldScheduleService::DEFAULT_SLOT_DURATION_MINUTES),
                 'scheduleUrl' => route('public.fields.schedule', ['slug' => $field->slug]),
             ];
         @endphp
@@ -174,7 +175,7 @@
                 </div>
                 <div class="flex items-center gap-4">
                     @auth
-                        <a href="{{ route('dashboard') }}" class="material-symbols-outlined text-on-surface-variant transition-transform hover:text-primary active:scale-95">account_circle</a>
+                        <a href="{{ \App\Support\RoleHome::urlFor(auth()->user()) }}" class="material-symbols-outlined text-on-surface-variant transition-transform hover:text-primary active:scale-95">account_circle</a>
                     @else
                         <a href="{{ route('login') }}" class="rounded-full border border-white/10 px-4 py-2 font-label-bold text-label-bold uppercase text-on-surface-variant transition-colors hover:text-primary">Login</a>
                     @endauth
@@ -271,7 +272,7 @@
 
                                     @if ($isBooked)
                                         <div data-slot-disabled class="cursor-not-allowed rounded-lg border border-white/5 bg-surface-container-high py-3 text-center text-on-surface-variant opacity-50 line-through">
-                                            {{ $slot['start_time'] }}
+                                            {{ $slot['start_time'] }}-{{ $slot['end_time'] }}
                                         </div>
                                     @else
                                         <button
@@ -280,7 +281,7 @@
                                             data-slot-time="{{ $slot['start_time'] }}"
                                             class="rounded-lg py-3 text-center transition-colors {{ $isSelectedSlot ? 'bg-secondary-container font-bold text-black shadow-[0_0_15px_rgba(195,244,0,0.3)]' : 'border border-white/10 bg-surface-variant/20 text-on-surface hover:bg-surface-variant hover:text-secondary' }}"
                                         >
-                                            {{ $slot['start_time'] }}
+                                            {{ $slot['start_time'] }}-{{ $slot['end_time'] }}
                                         </button>
                                     @endif
                                 @endforeach
@@ -331,11 +332,11 @@
                                 </div>
                                 <div class="flex items-center justify-between">
                                     <span class="text-on-surface-variant">Slot</span>
-                                    <span id="booking-summary-slot" class="font-semibold text-secondary">{{ $selectedSlotData['start_time'] ?? 'Choose a slot' }}</span>
+                                    <span id="booking-summary-slot" class="font-semibold text-secondary">{{ $selectedSlotData !== null ? $selectedSlotData['start_time'].'-'.$selectedSlotData['end_time'] : 'Choose a slot' }}</span>
                                 </div>
                                 <div class="flex items-center justify-between">
                                     <span class="text-on-surface-variant">Duration</span>
-                                    <span class="font-semibold text-secondary">1 Hour</span>
+                                    <span id="booking-summary-duration" class="font-semibold text-secondary">{{ (int) ($field->slot_duration_minutes ?? \App\Services\Booking\FieldScheduleService::DEFAULT_SLOT_DURATION_MINUTES) }} menit</span>
                                 </div>
                                 <div class="border-t border-white/10 pt-4">
                                     <div class="flex items-center justify-between">
@@ -427,6 +428,7 @@
             const selectedMonthLabel = document.getElementById('selected-month-label');
             const bookingSummaryDate = document.getElementById('booking-summary-date');
             const bookingSummarySlot = document.getElementById('booking-summary-slot');
+            const bookingSummaryDuration = document.getElementById('booking-summary-duration');
             const bookingSummaryHint = document.getElementById('booking-summary-hint');
             const bookingDateInput = document.getElementById('booking-date-input');
             const bookingSlotInput = document.getElementById('booking-slot-input');
@@ -450,10 +452,22 @@
                 }).format(new Date(`${dateString}T00:00:00`));
             }
 
+            function selectedSlotDetails() {
+                return scheduleState.slots.find((slot) => slot.start_time === scheduleState.selectedSlot) ?? null;
+            }
+
             function updateSummary() {
+                const selectedSlot = selectedSlotDetails();
+
                 selectedMonthLabel.textContent = formatMonthLabel(scheduleState.selectedDate);
                 bookingSummaryDate.textContent = formatSummaryDate(scheduleState.selectedDate);
-                bookingSummarySlot.textContent = scheduleState.selectedSlot ?? 'Choose a slot';
+                bookingSummarySlot.textContent = selectedSlot
+                    ? `${selectedSlot.start_time}-${selectedSlot.end_time}`
+                    : 'Choose a slot';
+
+                if (bookingSummaryDuration) {
+                    bookingSummaryDuration.textContent = `${scheduleState.slotDurationMinutes ?? 60} menit`;
+                }
 
                 if (bookingDateInput) {
                     bookingDateInput.value = scheduleState.selectedDate;
@@ -508,7 +522,7 @@
                     if (slot.status === 'booked') {
                         const blockedSlot = document.createElement('div');
                         blockedSlot.className = 'cursor-not-allowed rounded-lg border border-white/5 bg-surface-container-high py-3 text-center text-on-surface-variant opacity-50 line-through';
-                        blockedSlot.textContent = slot.start_time;
+                        blockedSlot.textContent = `${slot.start_time}-${slot.end_time}`;
                         slotSelector.appendChild(blockedSlot);
                         return;
                     }
@@ -517,7 +531,7 @@
                     button.type = 'button';
                     button.dataset.slotOption = 'true';
                     button.dataset.slotTime = slot.start_time;
-                    button.textContent = slot.start_time;
+                    button.textContent = `${slot.start_time}-${slot.end_time}`;
 
                     const isSelected = scheduleState.selectedSlot === slot.start_time;
                     button.className = `rounded-lg py-3 text-center transition-colors ${isSelected ? slotSelectedClass : slotButtonClass}`;
@@ -586,6 +600,7 @@
 
                     const payload = await response.json();
                     scheduleState.slots = payload.data?.slots ?? [];
+                    scheduleState.slotDurationMinutes = payload.meta?.slot_duration_minutes ?? scheduleState.slotDurationMinutes;
                     setFeedback('');
                     renderSlots();
                 } catch (error) {

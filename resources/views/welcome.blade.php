@@ -127,41 +127,20 @@
     </head>
     <body class="overflow-x-hidden bg-surface font-body-md text-on-surface">
         @php
-            $featuredCourts = [
-                [
-                    'name' => 'Olympic Arena',
-                    'slug' => 'olympic-arena',
-                    'rating' => '4.9',
-                    'location' => 'Downtown',
-                    'price' => '$25/hr',
-                    'badge' => 'Available',
-                    'badge_class' => 'bg-secondary-container/90 text-on-secondary',
-                    'image' => 'https://lh3.googleusercontent.com/aida-public/AB6AXuB59syCrEtoscrLtnVVbKFlVvYLgoQiQKa20vyksDs2Eq_taI-K_yu4U1RCbSt4osetGfsidCQzQ8GdqVYnQld6BAUziQKOZlTa0egECgMHdPUNRxGzg0vzY83Pk2t-b5uU76rsMj4_KzJ4XhaJCMRir6D7Gl3dKAd_U-OBM70re_uqNRz2R8_ZnNHFoaz_Pnb8OYxRGrJDt-jhH70Vx1zn_kQxXIPQRDfP0k6p5dX1gvO_Z_Ko_l1JAOXd_KBEzS8kf9xgIIklZ2bY',
-                ],
-                [
-                    'name' => 'Grand Central',
-                    'slug' => 'grand-central-court',
-                    'rating' => '4.7',
-                    'location' => 'Midtown',
-                    'price' => '$30/hr',
-                    'badge' => 'Available',
-                    'badge_class' => 'bg-secondary-container/90 text-on-secondary',
-                    'image' => 'https://lh3.googleusercontent.com/aida-public/AB6AXuDiIKBJPktA3YOriKldGSUDhEEnSVBz-32EA3Q4HYlnJYXXHlAXXQbavqDYlgHPteniN_DG30w3Lu6KdyhXcSu12Y1QqNOfaBeihXzYVUfIvnNJbq1M3kN9f8DgIIzcOzmmHRa47hCSLTYd0sX35IL9WGPGyetgohvwo3xlcPHM3jmZGt-DTFlTtrvaB8tiKJJQoOkBicaJwyY2gLrtlKVxbcahjcKMhXx9xo6hKkdtVbA3e2Rm-I3Pt7VkyM0wkVJuuPueQubuw3la',
-                ],
-                [
-                    'name' => 'Velocity X',
-                    'slug' => 'velocity-x-hall',
-                    'rating' => '5.0',
-                    'location' => 'Skyline Tower',
-                    'price' => '$45/hr',
-                    'badge' => 'Limited Seats',
-                    'badge_class' => 'bg-error-container text-on-error-container',
-                    'image' => 'https://lh3.googleusercontent.com/aida-public/AB6AXuBXOW32ZlMRAHPkJIPhX5BRK1bbd_4KUK1chiiGsFUlpRcs0ZyDLjbqCRf32plR5tnYO49Hqp--lcQhrG0pRmZMKDtE0vLGPvZvMy5eObuj_fTk8hSD415tsDMMJfGtCE4ttCXKrkUtZb5YvSLylMvLq6S9R2gHccXQb4oxsd9VsioX4wk4DiZLJ6veA3QhfNgDxfQDwpbp0tp2P2RvIHXeMhMQoqi4GXwrKkazTjHi6Mc8ipDy2IB7YICpY5AcX5uXKtcRSIJAM-30',
-                ],
-            ];
+            $fallbackImage = 'https://lh3.googleusercontent.com/aida-public/AB6AXuB59syCrEtoscrLtnVVbKFlVvYLgoQiQKa20vyksDs2Eq_taI-K_yu4U1RCbSt4osetGfsidCQzQ8GdqVYnQld6BAUziQKOZlTa0egECgMHdPUNRxGzg0vzY83Pk2t-b5uU76rsMj4_KzJ4XhaJCMRir6D7Gl3dKAd_U-OBM70re_uqNRz2R8_ZnNHFoaz_Pnb8OYxRGrJDt-jhH70Vx1zn_kQxXIPQRDfP0k6p5dX1gvO_Z_Ko_l1JAOXd_KBEzS8kf9xgIIklZ2bY';
+            $featuredCourts = collect($homepageFields ?? [])->map(fn ($field) => [
+                'name' => $field->name,
+                'slug' => $field->slug,
+                'rating' => '4.9',
+                'location' => $field->address ?: 'Lokasi tersedia',
+                'price' => 'Rp'.number_format((float) $field->price_per_hour, 0, ',', '.').'/jam',
+                'badge' => 'Available',
+                'badge_class' => 'bg-secondary-container/90 text-on-secondary',
+                'image' => $field->cover_image_url ?: $fallbackImage,
+            ])->values();
 
-            $primaryCta = '#arenas';
-            $secondaryCta = auth()->check() ? route('dashboard') : route('login');
+            $primaryCta = route('public.fields.index');
+            $secondaryCta = auth()->check() ? \App\Support\RoleHome::urlFor(auth()->user()) : route('login');
         @endphp
 
         <nav class="fixed top-0 z-50 w-full border-b border-white/10 bg-surface/80 shadow-sm backdrop-blur-md">
@@ -171,14 +150,14 @@
                 </a>
 
                 <div class="hidden items-center gap-8 md:flex">
-                    <a class="border-b-2 border-secondary-container pb-1 font-body-md text-body-md font-bold text-secondary-container" href="#search">
-                        Find Courts
+                    <a class="border-b-2 border-secondary-container pb-1 font-body-md text-body-md font-bold text-secondary-container" href="{{ route('public.fields.index') }}">
+                        Explore Courts
                     </a>
                     <a class="font-body-md text-body-md text-on-surface transition-colors hover:text-secondary-container" href="#benefits">
                         Memberships
                     </a>
                     <a class="font-body-md text-body-md text-on-surface transition-colors hover:text-secondary-container" href="#arenas">
-                        Tournaments
+                        Featured
                     </a>
                     <a class="font-body-md text-body-md text-on-surface transition-colors hover:text-secondary-container" href="#cta">
                         Coaching
@@ -191,13 +170,13 @@
                             Login
                         </a>
                     @else
-                        <a href="{{ route('dashboard') }}" class="hidden font-body-md text-body-md text-on-surface transition-colors hover:text-secondary-container md:block">
+                        <a href="{{ \App\Support\RoleHome::urlFor(auth()->user()) }}" class="hidden font-body-md text-body-md text-on-surface transition-colors hover:text-secondary-container md:block">
                             Dashboard
                         </a>
                     @endguest
 
                     <a href="{{ $primaryCta }}" class="rounded-full bg-secondary-container px-6 py-2.5 font-label-bold text-label-bold uppercase text-on-secondary btn-tactile">
-                        Book Now
+                        Explore Court
                     </a>
                 </div>
             </div>
@@ -225,13 +204,13 @@
                     </p>
 
                     <div class="flex flex-col gap-4 sm:flex-row">
-                        <a href="#arenas" class="flex items-center justify-center gap-3 rounded-lg bg-secondary-container px-10 py-5 font-headline-md text-headline-md uppercase italic text-on-secondary btn-tactile">
-                            Get Started
+                        <a href="{{ route('public.fields.index') }}" class="flex items-center justify-center gap-3 rounded-lg bg-secondary-container px-10 py-5 font-headline-md text-headline-md uppercase italic text-on-secondary btn-tactile">
+                            Explore Court
                             <span class="material-symbols-outlined">bolt</span>
                         </a>
 
-                        <a href="#search" class="flex items-center justify-center gap-3 rounded-lg border-2 border-primary px-10 py-5 font-headline-md text-headline-md uppercase text-primary transition-all hover:bg-primary/10">
-                            View Schedule
+                        <a href="#arenas" class="flex items-center justify-center gap-3 rounded-lg border-2 border-primary px-10 py-5 font-headline-md text-headline-md uppercase text-primary transition-all hover:bg-primary/10">
+                            Featured Courts
                         </a>
                     </div>
                 </div>
@@ -240,7 +219,7 @@
 
         <div id="search" class="relative z-30 mx-auto -mt-12 max-w-6xl px-gutter md:px-margin-desktop">
             <div class="rounded-xl border border-white/5 bg-surface-container-high p-4 shadow-2xl backdrop-blur-xl md:p-6">
-                <form class="grid grid-cols-1 gap-4 md:grid-cols-4" action="javascript:void(0)">
+                <form class="grid grid-cols-1 gap-4 md:grid-cols-4" action="{{ route('public.fields.index') }}" method="GET">
                     <div class="flex flex-col gap-2">
                         <label class="ml-1 font-label-bold text-label-bold uppercase text-on-surface-variant">Location</label>
                         <div class="relative">
@@ -271,7 +250,7 @@
                     </div>
 
                     <div class="flex items-end">
-                        <a href="#arenas" class="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-container py-4 font-label-bold text-label-bold uppercase text-on-primary-container transition-all hover:brightness-110">
+                        <a href="{{ route('public.fields.index') }}" class="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-container py-4 font-label-bold text-label-bold uppercase text-on-primary-container transition-all hover:brightness-110">
                             <span class="material-symbols-outlined">search</span>
                             Find My Court
                         </a>
@@ -320,17 +299,17 @@
         <section id="arenas" class="mx-auto max-w-7xl px-gutter py-24 md:px-margin-desktop">
             <div class="mb-12 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
                 <div>
-                    <h2 class="mb-2 font-headline-lg text-headline-lg uppercase italic tracking-tight text-secondary">Premium Arenas</h2>
+                    <h2 class="mb-2 font-headline-lg text-headline-lg uppercase italic tracking-tight text-secondary">Explore Courts</h2>
                     <div class="h-1 w-24 bg-secondary-container"></div>
                 </div>
 
-                <a class="flex items-center gap-2 font-label-bold text-label-bold uppercase text-primary transition-all hover:gap-4" href="{{ route('public.fields.show', ['slug' => $featuredCourts[0]['slug']]) }}">
-                    Explore Court Details <span class="material-symbols-outlined">arrow_forward</span>
+                <a class="flex items-center gap-2 font-label-bold text-label-bold uppercase text-primary transition-all hover:gap-4" href="{{ route('public.fields.index') }}">
+                    View All Courts <span class="material-symbols-outlined">arrow_forward</span>
                 </a>
             </div>
 
             <div class="grid grid-cols-1 gap-base md:grid-cols-2 md:gap-8 lg:grid-cols-3">
-                @foreach ($featuredCourts as $court)
+                @forelse ($featuredCourts as $court)
                     <article class="group overflow-hidden rounded-xl border border-white/5 bg-surface-container shadow-xl transition-all hover:border-primary/30">
                         <a href="{{ route('public.fields.show', ['slug' => $court['slug']]) }}" class="block">
                             <div class="relative h-64 overflow-hidden">
@@ -365,7 +344,12 @@
                             </a>
                         </div>
                     </article>
-                @endforeach
+                @empty
+                    <div class="col-span-full rounded-2xl border border-dashed border-outline-variant bg-surface-container p-10 text-center">
+                        <h3 class="font-headline-md text-headline-md text-secondary">Belum ada lapangan aktif</h3>
+                        <p class="mt-3 text-on-surface-variant">Owner bisa menambahkan lapangan dari dashboard, lalu court akan tampil otomatis di homepage.</p>
+                    </div>
+                @endforelse
             </div>
         </section>
 
@@ -379,8 +363,8 @@
                     <p class="mx-auto mb-10 max-w-xl font-body-lg text-body-lg text-on-primary-container/80">
                         Join players already smashing their limits with instant booking, premium courts, and fast online payment.
                     </p>
-                    <a href="{{ route('public.fields.show', ['slug' => $featuredCourts[0]['slug']]) }}" class="inline-block rounded-xl bg-secondary-container px-12 py-6 font-headline-md text-headline-md uppercase italic text-on-secondary btn-tactile">
-                        Explore Court Detail
+                    <a href="{{ route('public.fields.index') }}" class="inline-block rounded-xl bg-secondary-container px-12 py-6 font-headline-md text-headline-md uppercase italic text-on-secondary btn-tactile">
+                        Explore Courts
                     </a>
                 </div>
             </div>
@@ -400,7 +384,7 @@
                     <a class="font-body-md text-body-md text-on-surface-variant transition-colors hover:text-secondary-container" href="#arenas">Terms of Service</a>
                     <a class="font-body-md text-body-md text-on-surface-variant transition-colors hover:text-secondary-container" href="#cta">Partner with Us</a>
                     <a class="font-body-md text-body-md text-on-surface-variant transition-colors hover:text-secondary-container" href="{{ $secondaryCta }}">Contact Support</a>
-                    <a class="font-body-md text-body-md text-on-surface-variant transition-colors hover:text-secondary-container" href="{{ route('public.fields.show', ['slug' => $featuredCourts[0]['slug']]) }}">Careers</a>
+                    <a class="font-body-md text-body-md text-on-surface-variant transition-colors hover:text-secondary-container" href="{{ route('public.fields.index') }}">Explore Courts</a>
                 </div>
             </div>
         </footer>

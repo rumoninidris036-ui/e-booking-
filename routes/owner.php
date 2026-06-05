@@ -13,6 +13,7 @@ Route::middleware(['auth', 'role:owner'])
     ->as('owner.')
     ->group(function (): void {
         Route::get('/dashboard', DashboardController::class)->name('dashboard');
+        Route::get('/schedules', [FieldScheduleController::class, 'index'])->name('schedules.index');
         Route::get('/fields', [BadmintonFieldController::class, 'index'])->name('fields.index');
         Route::post('/fields', [BadmintonFieldController::class, 'store'])->name('fields.store');
         Route::get('/fields/{badmintonField}/schedule', [FieldScheduleController::class, 'show'])->name('fields.schedule');

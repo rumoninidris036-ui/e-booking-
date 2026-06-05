@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Auth;
 use App\Actions\Auth\RegisterUserAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Support\RoleHome;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -34,6 +35,6 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect(RoleHome::urlFor($user, absolute: false));
     }
 }
