@@ -11,12 +11,12 @@ class BadmintonFieldPolicy
 {
     public function view(User $user, BadmintonField $badmintonField): bool
     {
-        return $user->hasRole('owner') && $badmintonField->owner_id === $user->id;
+        return $user->hasRole('admin') || ($user->hasRole('owner') && $badmintonField->owner_id === $user->id);
     }
 
     public function update(User $user, BadmintonField $badmintonField): bool
     {
-        return $user->hasRole('owner') && $badmintonField->owner_id === $user->id;
+        return $user->hasRole('admin') || ($user->hasRole('owner') && $badmintonField->owner_id === $user->id);
     }
 
     public function delete(User $user, BadmintonField $badmintonField): bool

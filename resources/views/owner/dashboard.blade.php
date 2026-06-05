@@ -94,15 +94,6 @@
                 default => 'bg-slate-50 text-slate-600 ring-slate-200',
             };
 
-            $navItems = [
-                ['label' => 'Dashboard', 'href' => route('owner.dashboard'), 'active' => true, 'icon' => 'D'],
-                ['label' => 'Lapangan Saya', 'href' => route('owner.fields.index'), 'active' => false, 'icon' => 'L'],
-                ['label' => 'Jadwal', 'href' => route('owner.schedules.index'), 'active' => false, 'icon' => 'J'],
-                ['label' => 'Booking', 'href' => route('owner.bookings.index'), 'active' => false, 'icon' => 'B'],
-                ['label' => 'Invoice', 'href' => '#transactions', 'active' => false, 'icon' => 'I'],
-                ['label' => 'Notifikasi', 'href' => '#notifications', 'active' => false, 'icon' => 'N'],
-            ];
-
             $kpis = [
                 [
                     'label' => 'Total Booking',
@@ -143,27 +134,7 @@
         @endphp
 
         <div class="min-h-screen lg:grid lg:grid-cols-[232px_1fr]">
-            <aside class="hidden border-r border-white/10 bg-nav text-white lg:block">
-                <div class="flex h-16 items-center gap-3 border-b border-white/10 px-5">
-                    <div class="flex h-9 w-9 items-center justify-center rounded-2xl bg-brand font-display text-sm font-bold">SC</div>
-                    <div>
-                        <div class="font-display text-sm font-bold">SmashCourt</div>
-                        <div class="text-[10px] uppercase tracking-[0.22em] text-slate-400">Owner Panel</div>
-                    </div>
-                </div>
-
-                <nav class="px-3 py-6">
-                    <div class="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.24em] text-slate-500">Overview</div>
-                    <div class="space-y-1">
-                        @foreach ($navItems as $item)
-                            <a href="{{ $item['href'] }}" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition {{ $item['active'] ? 'bg-brand text-white shadow-lg shadow-brand/20' : 'text-slate-300 hover:bg-white/5 hover:text-white' }}">
-                                <span class="flex h-6 w-6 items-center justify-center rounded-lg border border-white/10 text-[10px] font-bold">{{ $item['icon'] }}</span>
-                                {{ $item['label'] }}
-                            </a>
-                        @endforeach
-                    </div>
-                </nav>
-            </aside>
+            @include("layouts.role-sidebar")
 
             <div class="min-w-0">
                 <header class="sticky top-0 z-30 border-b border-line bg-white/90 backdrop-blur-xl">
@@ -189,12 +160,8 @@
                                     <span class="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white"></span>
                                 @endif
                             </div>
-                            <div class="flex items-center gap-3 border-l border-line pl-4">
-                                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-brand font-bold text-white">{{ strtoupper(substr($owner->name, 0, 2)) }}</div>
-                                <div class="hidden md:block">
-                                    <div class="text-sm font-bold">{{ $owner->name }}</div>
-                                    <div class="text-xs text-slateSoft">Owner Venue</div>
-                                </div>
+                            <div class="border-l border-line pl-4">
+                                @include('layouts.topbar-profile-menu')
                             </div>
                         </div>
                     </div>

@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title>SmashCourt | Lapangan Saya</title>
+        <title>SmashCourt | {{ ($isAdminFieldManagement ?? false) ? 'Semua Lapangan' : 'Lapangan Saya' }}</title>
 
         <script src="https://cdn.tailwindcss.com"></script>
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -49,6 +49,11 @@
     </head>
     <body class="min-h-screen bg-shell font-body text-ink">
         @php
+            $isAdminFieldManagement = $isAdminFieldManagement ?? false;
+            $fieldIndexRoute = $isAdminFieldManagement ? route('admin.fields.index') : route('owner.fields.index');
+            $fieldUpdateRouteName = $isAdminFieldManagement ? 'admin.fields.update' : 'owner.fields.update';
+            $pageTitle = $isAdminFieldManagement ? 'Semua Lapangan' : 'Lapangan Saya';
+            $workspaceLabel = $isAdminFieldManagement ? 'Field Control' : 'Venue Management';
             $defaultLatitude = -3.6954;
             $defaultLongitude = 128.1814;
             $summary = $summary ?? [
@@ -82,14 +87,8 @@
 
                 return 'Rp '.number_format($amount, 0, ',', '.');
             };
-            $navItems = [
-                ['label' => 'Dashboard', 'href' => route('owner.dashboard'), 'active' => false, 'icon' => 'D'],
-                ['label' => 'Lapangan Saya', 'href' => route('owner.fields.index'), 'active' => true, 'icon' => 'L'],
-                ['label' => 'Jadwal', 'href' => route('owner.schedules.index'), 'active' => false, 'icon' => 'J'],
-                ['label' => 'Booking', 'href' => route('owner.bookings.index'), 'active' => false, 'icon' => 'B'],
-            ];
             $kpis = [
-                ['label' => 'Total Lapangan', 'value' => number_format((int) $summary['total_fields']), 'hint' => 'semua venue', 'tone' => 'text-brand bg-brandSoft', 'icon' => 'LP'],
+                ['label' => 'Total Lapangan', 'value' => number_format((int) $summary['total_fields']), 'hint' => $isAdminFieldManagement ? 'semua owner' : 'semua venue', 'tone' => 'text-brand bg-brandSoft', 'icon' => 'LP'],
                 ['label' => 'Aktif', 'value' => number_format((int) $summary['active_fields']), 'hint' => 'muncul di publik', 'tone' => 'text-emerald-700 bg-emerald-50', 'icon' => 'ON'],
                 ['label' => 'Belum Aktif', 'value' => number_format((int) $summary['inactive_fields']), 'hint' => 'draft/nonaktif', 'tone' => 'text-amber-700 bg-amber-50', 'icon' => 'DR'],
                 ['label' => 'Sudah Dipin', 'value' => number_format((int) $summary['mapped_fields']), 'hint' => 'koordinat OSM', 'tone' => 'text-sky-700 bg-sky-50', 'icon' => 'OS'],
@@ -98,45 +97,23 @@
         @endphp
 
         <div class="min-h-screen lg:grid lg:grid-cols-[232px_1fr]">
-            <aside class="hidden border-r border-white/10 bg-nav text-white lg:block">
-                <div class="flex h-16 items-center gap-3 border-b border-white/10 px-5">
-                    <div class="flex h-9 w-9 items-center justify-center rounded-2xl bg-brand font-display text-sm font-bold">SC</div>
-                    <div>
-                        <div class="font-display text-sm font-bold">SmashCourt</div>
-                        <div class="text-[10px] uppercase tracking-[0.22em] text-slate-400">Owner Panel</div>
-                    </div>
-                </div>
-
-                <nav class="px-3 py-6">
-                    <div class="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.24em] text-slate-500">Management</div>
-                    <div class="space-y-1">
-                        @foreach ($navItems as $item)
-                            <a href="{{ $item['href'] }}" class="flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition {{ $item['active'] ? 'bg-brand text-white shadow-lg shadow-brand/20' : 'text-slate-300 hover:bg-white/5 hover:text-white' }}">
-                                <span class="flex h-6 w-6 items-center justify-center rounded-lg border border-white/10 text-[10px] font-bold">{{ $item['icon'] }}</span>
-                                {{ $item['label'] }}
-                            </a>
-                        @endforeach
-                    </div>
-                </nav>
-            </aside>
+            @include("layouts.role-sidebar")
 
             <div class="min-w-0">
                 <header class="sticky top-0 z-30 border-b border-line bg-white/90 backdrop-blur-xl">
                     <div class="flex min-h-16 items-center justify-between gap-4 px-4 py-3 md:px-6">
                         <div>
-                            <p class="hidden text-xs font-bold uppercase tracking-[0.22em] text-brand md:block">Venue Management</p>
-                            <h1 class="font-display text-xl font-bold md:text-2xl">Lapangan Saya</h1>
+                            <p class="hidden text-xs font-bold uppercase tracking-[0.22em] text-brand md:block">{{ $workspaceLabel }}</p>
+                            <h1 class="font-display text-xl font-bold md:text-2xl">{{ $pageTitle }}</h1>
                         </div>
 
                         <div class="ml-auto flex items-center gap-3">
-                            <a href="{{ route('owner.dashboard') }}" class="rounded-xl border border-line px-4 py-2 text-sm font-bold text-ink transition hover:border-brand hover:text-brand">Dashboard</a>
-                            <a href="#create-field" class="rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white shadow-lg shadow-brand/20 transition hover:bg-blue-600">Tambah Lapangan</a>
-                            <div class="hidden items-center gap-3 border-l border-line pl-4 md:flex">
-                                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-brand font-bold text-white">{{ strtoupper(substr($owner->name, 0, 2)) }}</div>
-                                <div>
-                                    <div class="text-sm font-bold">{{ $owner->name }}</div>
-                                    <div class="text-xs text-slateSoft">Owner Venue</div>
-                                </div>
+                            <a href="{{ $isAdminFieldManagement ? route('admin.dashboard') : route('owner.dashboard') }}" class="rounded-xl border border-line px-4 py-2 text-sm font-bold text-ink transition hover:border-brand hover:text-brand">Dashboard</a>
+                            @unless ($isAdminFieldManagement)
+                                <a href="#create-field" class="rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white shadow-lg shadow-brand/20 transition hover:bg-blue-600">Tambah Lapangan</a>
+                            @endunless
+                            <div class="border-l border-line pl-4">
+                                @include('layouts.topbar-profile-menu')
                             </div>
                         </div>
                     </div>
@@ -170,6 +147,7 @@
                         @endforeach
                     </section>
 
+                    @unless ($isAdminFieldManagement)
                     <section id="create-field" class="rounded-3xl border border-line bg-panel shadow-card">
                         <div class="border-b border-line px-5 py-5">
                             <p class="text-xs font-bold uppercase tracking-[0.22em] text-brand">Create Venue</p>
@@ -272,16 +250,17 @@
                             </div>
                         </form>
                     </section>
+                    @endunless
 
                     <section class="rounded-3xl border border-line bg-panel shadow-card">
                         <div class="flex flex-col gap-4 border-b border-line px-5 py-5 xl:flex-row xl:items-end xl:justify-between">
                             <div>
-                                <p class="text-xs font-bold uppercase tracking-[0.22em] text-brand">My Fields</p>
-                                <h2 class="mt-1 font-display text-2xl font-bold">Daftar Lapangan</h2>
+                                <p class="text-xs font-bold uppercase tracking-[0.22em] text-brand">{{ $isAdminFieldManagement ? 'Owner Fields' : 'My Fields' }}</p>
+                                <h2 class="mt-1 font-display text-2xl font-bold">{{ $isAdminFieldManagement ? 'Daftar Semua Lapangan' : 'Daftar Lapangan' }}</h2>
                                 <p class="mt-2 text-sm text-slateSoft">{{ $fields->total() }} lapangan cocok dengan filter saat ini</p>
                             </div>
-                            <form action="{{ route('owner.fields.index') }}" method="GET" class="grid gap-3 md:grid-cols-[minmax(220px,1fr)_150px_150px_auto] xl:w-[720px]">
-                                <input name="search" type="search" value="{{ $filters['search'] }}" class="rounded-xl border-line bg-slate-50 px-4 py-2 text-sm focus:border-brand focus:bg-white focus:ring-brand/20" placeholder="Cari nama atau alamat">
+                            <form action="{{ $fieldIndexRoute }}" method="GET" class="grid gap-3 md:grid-cols-[minmax(220px,1fr)_150px_150px_auto] xl:w-[720px]">
+                                <input name="search" type="search" value="{{ $filters['search'] }}" class="rounded-xl border-line bg-slate-50 px-4 py-2 text-sm focus:border-brand focus:bg-white focus:ring-brand/20" placeholder="{{ $isAdminFieldManagement ? 'Cari lapangan, alamat, owner' : 'Cari nama atau alamat' }}">
                                 <select name="status" class="rounded-xl border-line bg-slate-50 text-sm focus:border-brand focus:ring-brand/20">
                                     <option value="all" @selected($filters['status'] === 'all')>Semua status</option>
                                     <option value="active" @selected($filters['status'] === 'active')>Aktif</option>
@@ -311,7 +290,7 @@
                                 @endphp
 
                                 <article id="field-{{ $field->id }}" class="p-5 {{ (string) request('focus') === (string) $field->id ? 'bg-brandSoft/40' : '' }}">
-                                    <form method="POST" action="{{ route('owner.fields.update', $field) }}" enctype="multipart/form-data" class="grid gap-6 xl:grid-cols-[260px_1fr_0.9fr]">
+                                    <form method="POST" action="{{ route($fieldUpdateRouteName, $field) }}" enctype="multipart/form-data" class="grid gap-6 xl:grid-cols-[260px_1fr_0.9fr]">
                                         @csrf
                                         @method('PUT')
 
@@ -336,6 +315,14 @@
                                                 <div class="mt-3 text-sm font-bold">{{ $rupiah((float) $field->price_per_hour) }} / jam</div>
                                                 <div class="mt-2 text-xs font-semibold text-slateSoft">{{ $fieldOpenTime }}-{{ $fieldCloseTime }} · {{ $fieldSlotDuration }} menit/slot</div>
                                             </div>
+
+                                            @if ($isAdminFieldManagement)
+                                                <div class="rounded-2xl border border-brand/20 bg-brandSoft p-4">
+                                                    <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-brand">Pemilik Lapangan</p>
+                                                    <p class="mt-2 text-sm font-bold">{{ $field->owner?->name ?? 'Tanpa owner' }}</p>
+                                                    <p class="mt-1 truncate text-xs font-semibold text-slateSoft">{{ $field->owner?->email ?? '-' }}</p>
+                                                </div>
+                                            @endif
 
                                             <div class="grid grid-cols-2 gap-3">
                                                 <div class="rounded-2xl border border-line bg-white p-3">
@@ -368,9 +355,11 @@
                                                 @endif
                                             </div>
 
-                                            <button type="submit" form="delete-field-{{ $field->id }}" onclick="return confirm('Hapus lapangan ini?')" class="w-full rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700 transition hover:bg-rose-100">
-                                                Hapus Lapangan
-                                            </button>
+                                            @unless ($isAdminFieldManagement)
+                                                <button type="submit" form="delete-field-{{ $field->id }}" onclick="return confirm('Hapus lapangan ini?')" class="w-full rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700 transition hover:bg-rose-100">
+                                                    Hapus Lapangan
+                                                </button>
+                                            @endunless
                                         </div>
 
                                         <div class="space-y-4">
@@ -472,15 +461,17 @@
                                         </div>
                                     </form>
 
-                                    <form id="delete-field-{{ $field->id }}" method="POST" action="{{ route('owner.fields.destroy', $field) }}">
-                                        @csrf
-                                        @method('DELETE')
-                                    </form>
+                                    @unless ($isAdminFieldManagement)
+                                        <form id="delete-field-{{ $field->id }}" method="POST" action="{{ route('owner.fields.destroy', $field) }}">
+                                            @csrf
+                                            @method('DELETE')
+                                        </form>
+                                    @endunless
                                 </article>
                             @empty
                                 <div class="px-5 py-12 text-center">
                                     <h3 class="font-display text-2xl font-bold">Belum ada lapangan</h3>
-                                    <p class="mt-2 text-sm text-slateSoft">Tambahkan lapangan pertama dan pin lokasinya di OSM.</p>
+                                    <p class="mt-2 text-sm text-slateSoft">{{ $isAdminFieldManagement ? 'Belum ada lapangan dari owner mana pun.' : 'Tambahkan lapangan pertama dan pin lokasinya di OSM.' }}</p>
                                 </div>
                             @endforelse
                         </div>
