@@ -12,13 +12,27 @@ use Illuminate\View\View;
 
 class BadmintonFieldController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse|View
     {
         $fields = BadmintonField::query()
             ->with(['facilities', 'owner:id,name'])
             ->where('is_active', true)
             ->latest()
             ->paginate(12);
+
+        if (! $request->expectsJson()) {
+            return view('public.fields.index', [
+                'fields' => $fields,
+                'mapMeta' => [
+                    'provider' => 'OpenStreetMap',
+                    'library' => 'Leaflet.js',
+                    'markers' => collect($fields->items())
+                        ->map(fn (BadmintonField $field): ?array => $field->map_marker)
+                        ->filter()
+                        ->values(),
+                ],
+            ]);
+        }
 
         return response()->json([
             'data' => $fields->items(),

@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicPage\BadmintonFieldController as PublicBadmintonFieldController;
 use App\Http\Controllers\PublicPage\BookingController as PublicBookingController;
@@ -10,10 +9,18 @@ use App\Http\Controllers\PublicPage\FieldBookingPageController as PublicFieldBoo
 use App\Http\Controllers\PublicPage\FieldScheduleController as PublicFieldScheduleController;
 use App\Http\Controllers\PublicPage\PaymentController as PublicPaymentController;
 use App\Http\Controllers\Webhooks\MidtransWebhookController;
+use App\Models\BadmintonField;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('welcome', [
+        'homepageFields' => BadmintonField::query()
+            ->with(['facilities', 'owner:id,name'])
+            ->where('is_active', true)
+            ->latest()
+            ->limit(3)
+            ->get(),
+    ]);
 });
 
 Route::get('/fields', [PublicBadmintonFieldController::class, 'index'])->name('public.fields.index');
@@ -31,10 +38,6 @@ Route::get('/payments/{payment}/invoice', [PublicPaymentController::class, 'down
 Route::post('/webhooks/midtrans', [MidtransWebhookController::class, 'handle'])
     ->middleware('throttle:midtrans-webhook')
     ->name('webhooks.midtrans.handle');
-
-Route::get('/dashboard', DashboardController::class)
-    ->middleware(['auth'])
-    ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/bookings', [PublicBookingController::class, 'index'])->name('bookings.index');

@@ -28,14 +28,14 @@ class FieldScheduleController extends Controller
 
         return response()->json([
             'data' => [
-                'field' => $field->only(['id', 'name', 'slug', 'price_per_hour']),
+                'field' => $field->only(['id', 'name', 'slug', 'price_per_hour', 'open_time', 'close_time', 'slot_duration_minutes']),
                 'date' => $date,
                 'slots' => $slots,
             ],
             'meta' => [
-                'open_time' => FieldScheduleService::DEFAULT_OPEN_TIME,
-                'close_time' => FieldScheduleService::DEFAULT_CLOSE_TIME,
-                'slot_duration_minutes' => FieldScheduleService::SLOT_DURATION_MINUTES,
+                'open_time' => $this->fieldScheduleService->openTimeFor($field),
+                'close_time' => $this->fieldScheduleService->closeTimeFor($field),
+                'slot_duration_minutes' => $this->fieldScheduleService->slotDurationMinutesFor($field),
             ],
         ]);
     }

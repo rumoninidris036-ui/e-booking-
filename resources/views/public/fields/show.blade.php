@@ -144,7 +144,7 @@
                     @guest
                         <a href="{{ route('login') }}" class="hidden font-label-bold text-label-bold uppercase text-on-surface transition-colors hover:text-secondary-container md:block">Login</a>
                     @else
-                        <a href="{{ route('dashboard') }}" class="hidden font-label-bold text-label-bold uppercase text-on-surface transition-colors hover:text-secondary-container md:block">Dashboard</a>
+                        <a href="{{ \App\Support\RoleHome::urlFor(auth()->user()) }}" class="hidden font-label-bold text-label-bold uppercase text-on-surface transition-colors hover:text-secondary-container md:block">Dashboard</a>
                     @endguest
                     <a href="{{ $primaryCta }}" class="rounded-lg bg-secondary-container px-6 py-2 font-label-bold text-label-bold uppercase text-on-secondary neon-glow transition-transform hover:scale-105 active:scale-95">Book Now</a>
                 </div>
