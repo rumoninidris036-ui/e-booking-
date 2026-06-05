@@ -2,13 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controllers\Owner;
+namespace App\Http\Controllers\Admin;
 
-use App\Actions\Field\CreateBadmintonFieldAction;
-use App\Actions\Field\DeleteBadmintonFieldAction;
 use App\Actions\Field\UpdateBadmintonFieldAction;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Owner\StoreBadmintonFieldRequest;
 use App\Http\Requests\Owner\UpdateBadmintonFieldRequest;
 use App\Models\BadmintonField;
 use App\Models\Booking;
@@ -23,15 +20,13 @@ class BadmintonFieldController extends Controller
 {
     public function index(Request $request): JsonResponse|View
     {
-        $owner = $request->user();
         $filters = [
             'search' => trim($request->string('search')->toString()),
             'status' => $request->string('status')->toString() ?: 'all',
             'sort' => $request->string('sort')->toString() ?: 'latest',
         ];
 
-        $fields = $owner
-            ->ownedFields()
+        $fields = BadmintonField::query()
             ->with(['facilities', 'owner:id,name,email'])
             ->withCount([
                 'bookings',
@@ -51,7 +46,12 @@ class BadmintonFieldController extends Controller
                 $query->where(function ($query) use ($filters): void {
                     $query
                         ->where('name', 'like', '%'.$filters['search'].'%')
-                        ->orWhere('address', 'like', '%'.$filters['search'].'%');
+                        ->orWhere('address', 'like', '%'.$filters['search'].'%')
+                        ->orWhereHas('owner', function ($query) use ($filters): void {
+                            $query
+                                ->where('name', 'like', '%'.$filters['search'].'%')
+                                ->orWhere('email', 'like', '%'.$filters['search'].'%');
+                        });
                 });
             })
             ->when($filters['status'] === 'active', fn ($query) => $query->where('is_active', true))
@@ -76,8 +76,9 @@ class BadmintonFieldController extends Controller
                 'fields' => $fields,
                 'facilities' => Facility::query()->orderBy('name')->get(['id', 'name']),
                 'filters' => $filters,
-                'summary' => $this->summaryForOwner((int) $owner->id),
-                'owner' => $owner,
+                'summary' => $this->summaryForAllFields(),
+                'owner' => $request->user(),
+                'isAdminFieldManagement' => true,
             ]);
         }
 
@@ -89,15 +90,7 @@ class BadmintonFieldController extends Controller
                 'per_page' => $fields->perPage(),
                 'total' => $fields->total(),
                 'filters' => $filters,
-                'summary' => $this->summaryForOwner((int) $owner->id),
-                'map' => [
-                    'provider' => 'OpenStreetMap',
-                    'library' => 'Leaflet.js',
-                    'markers' => collect($fields->items())
-                        ->map(fn (BadmintonField $field): ?array => $field->map_marker)
-                        ->filter()
-                        ->values(),
-                ],
+                'summary' => $this->summaryForAllFields(),
             ],
         ]);
     }
@@ -105,18 +98,12 @@ class BadmintonFieldController extends Controller
     /**
      * @return array<string, int|float>
      */
-    private function summaryForOwner(int $ownerId): array
+    private function summaryForAllFields(): array
     {
-        $fieldQuery = BadmintonField::query()->where('owner_id', $ownerId);
-
-        $totalBookings = Booking::query()
-            ->whereHas('field', fn ($query) => $query->where('owner_id', $ownerId))
-            ->count();
+        $fieldQuery = BadmintonField::query();
 
         $totalRevenue = Payment::query()
             ->join('bookings', 'bookings.id', '=', 'payments.booking_id')
-            ->join('badminton_fields', 'badminton_fields.id', '=', 'bookings.badminton_field_id')
-            ->where('badminton_fields.owner_id', $ownerId)
             ->where('payments.status', Payment::STATUS_SUCCESS)
             ->sum('payments.amount');
 
@@ -125,51 +112,9 @@ class BadmintonFieldController extends Controller
             'active_fields' => (clone $fieldQuery)->where('is_active', true)->count(),
             'inactive_fields' => (clone $fieldQuery)->where('is_active', false)->count(),
             'mapped_fields' => (clone $fieldQuery)->whereNotNull('latitude')->whereNotNull('longitude')->count(),
-            'total_bookings' => $totalBookings,
+            'total_bookings' => Booking::query()->count(),
             'total_revenue' => (float) $totalRevenue,
         ];
-    }
-
-    public function store(
-        StoreBadmintonFieldRequest $request,
-        CreateBadmintonFieldAction $createBadmintonFieldAction,
-    ): JsonResponse|RedirectResponse {
-        $field = $createBadmintonFieldAction->handle(
-            owner: $request->user(),
-            attributes: $request->validated(),
-            coverImage: $request->file('cover_image'),
-        );
-
-        if (! $request->expectsJson()) {
-            return redirect()
-                ->route('owner.fields.index')
-                ->with('status', sprintf('Lapangan %s berhasil ditambahkan.', $field->name));
-        }
-
-        return response()->json([
-            'message' => 'Badminton field created successfully.',
-            'data' => $field,
-        ], 201);
-    }
-
-    public function show(Request $request, BadmintonField $badmintonField): JsonResponse|RedirectResponse
-    {
-        $this->authorize('view', $badmintonField);
-
-        if (! $request->expectsJson()) {
-            return redirect()->route('owner.fields.index', ['focus' => $badmintonField->id]);
-        }
-
-        return response()->json([
-            'data' => $badmintonField->load(['facilities', 'owner']),
-            'meta' => [
-                'map' => [
-                    'provider' => 'OpenStreetMap',
-                    'library' => 'Leaflet.js',
-                    'marker' => $badmintonField->map_marker,
-                ],
-            ],
-        ]);
     }
 
     public function update(
@@ -187,32 +132,13 @@ class BadmintonFieldController extends Controller
 
         if (! $request->expectsJson()) {
             return redirect()
-                ->route('owner.fields.index', ['focus' => $field->id])
+                ->route('admin.fields.index', ['focus' => $field->id])
                 ->with('status', sprintf('Lapangan %s berhasil diperbarui.', $field->name));
         }
 
         return response()->json([
             'message' => 'Badminton field updated successfully.',
             'data' => $field,
-        ]);
-    }
-
-    public function destroy(
-        BadmintonField $badmintonField,
-        DeleteBadmintonFieldAction $deleteBadmintonFieldAction,
-    ): JsonResponse|RedirectResponse {
-        $this->authorize('delete', $badmintonField);
-
-        $deleteBadmintonFieldAction->handle($badmintonField);
-
-        if (! request()->expectsJson()) {
-            return redirect()
-                ->route('owner.fields.index')
-                ->with('status', 'Lapangan berhasil dihapus.');
-        }
-
-        return response()->json([
-            'message' => 'Badminton field deleted successfully.',
         ]);
     }
 }

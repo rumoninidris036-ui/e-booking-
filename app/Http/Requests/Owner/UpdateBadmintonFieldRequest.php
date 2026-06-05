@@ -23,7 +23,7 @@ class UpdateBadmintonFieldRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return $this->user()?->hasRole('owner') === true;
+        return $this->user()?->hasAnyRole(['admin', 'owner']) === true;
     }
 
     /**

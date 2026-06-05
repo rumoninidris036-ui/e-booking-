@@ -1,59 +1,357 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SmashCourt - E-Booking Lapangan Badminton
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+SmashCourt adalah aplikasi web untuk pencarian, pemesanan, pembayaran, dan pengelolaan lapangan badminton. Aplikasi ini mendukung tiga alur utama: customer mencari dan booking lapangan, owner mengelola lapangan beserta jadwal dan booking, serta admin memantau seluruh aktivitas platform.
 
-## About Laravel
+## Fitur Utama
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Halaman Publik dan Customer
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- Melihat daftar lapangan badminton aktif.
+- Melihat detail lapangan, fasilitas, harga, alamat, owner, dan lokasi berbasis peta.
+- Melihat jadwal ketersediaan slot lapangan.
+- Membuat booking berdasarkan tanggal dan slot waktu.
+- Melakukan pembayaran booking melalui Midtrans Snap.
+- Melihat status pembayaran dan halaman return pembayaran.
+- Mengunduh invoice pembayaran.
+- Melihat daftar booking customer setelah login.
+- Membatalkan booking sesuai aturan yang tersedia.
+- Mengelola profil akun.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Owner Venue
 
-## Learning Laravel
+- Dashboard owner berisi ringkasan booking, pending booking, paid booking, revenue, dan lapangan aktif.
+- Grafik tren booking dan revenue.
+- Statistik performa lapangan.
+- Daftar booking terbaru dan transaksi terbaru.
+- Notifikasi operasional booking.
+- Manajemen lapangan:
+  - tambah lapangan;
+  - edit nama, deskripsi, alamat, harga, status aktif, cover image;
+  - edit jam buka, jam tutup, dan durasi slot;
+  - pilih fasilitas;
+  - pin koordinat lapangan di peta OpenStreetMap/Leaflet;
+  - hapus lapangan.
+- Manajemen jadwal lapangan:
+  - pilih lapangan dan tanggal;
+  - melihat slot tersedia, slot terisi, pending, dan paid.
+- Manajemen booking:
+  - melihat daftar booking masuk;
+  - filter booking berdasarkan status, lapangan, tanggal, dan pencarian;
+  - update status booking.
+- Top bar profil dengan menu Profil dan Log Out.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### Admin
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- Dashboard admin untuk memantau platform secara keseluruhan.
+- Ringkasan total user, owner, lapangan, booking, transaksi, dan revenue.
+- Monitoring owner terbaru dan top owner.
+- Monitoring lapangan terbaru.
+- Monitoring booking terbaru.
+- Manajemen user owner:
+  - melihat daftar owner terdaftar;
+  - melihat tanggal daftar, jumlah lapangan, booking, dan revenue per owner;
+  - filter dan sortir owner.
+- Manajemen semua lapangan owner:
+  - melihat semua lapangan dari semua owner;
+  - mengetahui lapangan tersebut milik owner siapa;
+  - melihat nama dan email owner di setiap lapangan;
+  - mengedit data lapangan owner.
+- Top bar profil dengan menu Profil dan Log Out.
 
-## Laravel Sponsors
+## Teknologi yang Digunakan
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Backend
 
-### Premium Partners
+- PHP 8.2+
+- Laravel 12
+- Laravel Breeze untuk autentikasi dasar
+- Laravel Eloquent ORM
+- Laravel Form Request untuk validasi
+- Laravel Policy untuk authorization
+- Laravel Resource untuk response data tertentu
+- Laravel Migrations dan Seeders
+- PHPUnit untuk automated testing
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### Frontend
 
-## Contributing
+- Blade template engine
+- Tailwind CSS
+- Tailwind Forms plugin
+- Alpine.js untuk interaksi ringan seperti dropdown
+- Vite untuk asset bundling
+- Chart.js untuk visualisasi dashboard owner
+- Leaflet.js dan OpenStreetMap untuk peta dan marker lapangan
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Payment dan Dokumen
 
-## Code of Conduct
+- Midtrans Snap untuk pembayaran online
+- Midtrans webhook untuk sinkronisasi status pembayaran
+- barryvdh/laravel-dompdf untuk generate invoice PDF
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Authorization dan Role
 
-## Security Vulnerabilities
+- spatie/laravel-permission
+- Role utama:
+  - `admin`
+  - `owner`
+  - `customer`
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Infrastruktur Development
 
-## License
+- Docker Compose
+- Nginx
+- PHP-FPM container
+- MySQL 8.4
+- phpMyAdmin
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Struktur Modul Penting
+
+```text
+app/
+  Actions/
+    Auth/                 # aksi register user
+    Field/                # create, update, delete lapangan
+  Contracts/Payments/     # kontrak gateway pembayaran
+  Http/
+    Controllers/
+      Admin/              # dashboard, users, semua lapangan
+      Auth/               # login, register, reset password
+      Owner/              # dashboard, lapangan, booking, jadwal
+      PublicPage/         # halaman publik, booking, payment
+      Webhooks/           # webhook Midtrans
+    Requests/             # validasi form/request
+    Resources/            # resource API
+  Models/                 # User, BadmintonField, Booking, Payment, Facility
+  Policies/               # authorization booking dan lapangan
+  Services/
+    Booking/              # service jadwal slot lapangan
+    Invoices/             # service invoice
+    Payments/             # service pembayaran Midtrans
+
+routes/
+  web.php                 # halaman publik, booking, payment, profile
+  auth.php                # route auth Breeze
+  owner.php               # route panel owner
+  admin.php               # route panel admin
+
+resources/views/
+  public/                 # halaman lapangan publik dan booking
+  owner/                  # panel owner
+  admin/                  # panel admin
+  layouts/                # sidebar dan topbar shared
+  payments/               # halaman pembayaran
+  invoices/               # template invoice
+
+database/
+  migrations/             # struktur database
+  seeders/                # data awal role, fasilitas, user, lapangan
+
+tests/
+  Feature/                # pengujian alur fitur utama
+```
+
+## Model Data Utama
+
+- `User`: akun pengguna aplikasi, bisa memiliki role admin, owner, atau customer.
+- `BadmintonField`: data lapangan milik owner, termasuk harga, alamat, koordinat, cover image, status aktif, dan pengaturan jadwal.
+- `Facility`: fasilitas lapangan, terhubung many-to-many dengan lapangan.
+- `Booking`: data pemesanan slot lapangan.
+- `Payment`: data pembayaran booking, Snap token, status Midtrans, dan data invoice.
+
+## Alur Booking dan Payment
+
+1. Customer memilih lapangan dari halaman publik.
+2. Customer membuka halaman booking lapangan.
+3. Sistem menampilkan slot jadwal berdasarkan tanggal, jam buka, jam tutup, durasi slot, dan booking yang sudah ada.
+4. Customer membuat booking.
+5. Booking dibuat dengan status pending.
+6. Customer membuat pembayaran Midtrans Snap.
+7. Sistem menyimpan payment pending beserta Snap token/redirect URL.
+8. Midtrans mengirim webhook status transaksi.
+9. Sistem memverifikasi notifikasi, memperbarui status payment, dan memperbarui status booking.
+10. Jika payment sukses, invoice dapat dibuat dan diunduh.
+
+## Panel Owner
+
+Route owner berada di prefix:
+
+```text
+/owner
+```
+
+Route penting:
+
+- `/owner/dashboard`
+- `/owner/fields`
+- `/owner/schedules`
+- `/owner/bookings`
+
+Owner hanya dapat mengakses dan mengubah data lapangan/booking miliknya sendiri.
+
+## Panel Admin
+
+Route admin berada di prefix:
+
+```text
+/admin
+```
+
+Route penting:
+
+- `/admin/dashboard`
+- `/admin/users`
+- `/admin/fields`
+
+Admin dapat memantau data seluruh platform dan mengedit lapangan milik owner. Pada halaman semua lapangan, admin bisa melihat informasi pemilik lapangan agar jelas lapangan tersebut milik owner siapa.
+
+## Menjalankan Aplikasi dengan Docker
+
+Jalankan service:
+
+```bash
+docker compose up -d --build
+```
+
+Install dependency PHP:
+
+```bash
+docker compose exec app composer install
+```
+
+Install dependency frontend dari host yang memiliki Node.js:
+
+```bash
+npm install
+```
+
+Siapkan environment:
+
+```bash
+cp .env.example .env
+docker compose exec app php artisan key:generate
+```
+
+Jalankan migrasi dan seeder:
+
+```bash
+docker compose exec app php artisan migrate --seed
+```
+
+Buat storage link:
+
+```bash
+docker compose exec app php artisan storage:link
+```
+
+Build asset:
+
+```bash
+npm run build
+```
+
+Akses aplikasi:
+
+```text
+http://localhost:18000
+```
+
+phpMyAdmin:
+
+```text
+http://localhost:18081
+```
+
+## Menjalankan Aplikasi Tanpa Docker
+
+Install dependency:
+
+```bash
+composer install
+npm install
+```
+
+Siapkan environment:
+
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+
+Jalankan migrasi dan seeder:
+
+```bash
+php artisan migrate --seed
+php artisan storage:link
+```
+
+Jalankan server development:
+
+```bash
+composer run dev
+```
+
+Atau jalankan Laravel dan Vite terpisah:
+
+```bash
+php artisan serve
+npm run dev
+```
+
+## Konfigurasi Environment Penting
+
+Sesuaikan `.env` untuk database:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=mysql
+DB_PORT=3306
+DB_DATABASE=ebooking_court
+DB_USERNAME=ebooking_user
+DB_PASSWORD=secret
+```
+
+Sesuaikan konfigurasi Midtrans:
+
+```env
+MIDTRANS_SERVER_KEY=
+MIDTRANS_CLIENT_KEY=
+MIDTRANS_IS_PRODUCTION=false
+```
+
+Webhook Midtrans diarahkan ke:
+
+```text
+/webhooks/midtrans
+```
+
+## Testing
+
+Jalankan seluruh test:
+
+```bash
+docker compose exec app php artisan test
+```
+
+Jalankan test tertentu:
+
+```bash
+docker compose exec app php artisan test --filter=DashboardTest
+```
+
+Area yang sudah memiliki feature test meliputi:
+
+- autentikasi dan registrasi;
+- profile;
+- dashboard owner dan admin;
+- manajemen lapangan owner;
+- manajemen jadwal owner;
+- manajemen booking owner;
+- lifecycle booking customer;
+- integrasi payment Midtrans dengan fake gateway.
+
+## Catatan Pengembangan
+
+- User yang register dari halaman publik otomatis diarahkan sebagai owner sesuai implementasi saat ini.
+- Data role, fasilitas, user awal, dan lapangan awal disediakan oleh seeder.
+- Halaman custom dashboard menggunakan Blade dengan Tailwind CDN pada beberapa view, sementara asset utama tetap dikelola oleh Vite.
+- Untuk development lokal Midtrans, aplikasi menyediakan fallback return browser pada environment local/testing karena webhook tidak selalu bisa menjangkau localhost.

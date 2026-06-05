@@ -144,4 +144,123 @@ class DashboardTest extends TestCase
             ->assertJsonCount(1, 'data.field_monitoring.recent_fields')
             ->assertJsonCount(1, 'data.booking_monitoring.recent_bookings');
     }
+
+    public function test_admin_dashboard_can_be_rendered_as_owner_style_page(): void
+    {
+        Role::findOrCreate('admin', 'web');
+        Role::findOrCreate('owner', 'web');
+
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $owner = User::factory()->create();
+        $owner->assignRole('owner');
+
+        $response = $this->actingAs($admin)->get(route('admin.dashboard'));
+
+        $response->assertOk()
+            ->assertSee('Dashboard Admin')
+            ->assertSee('Owner Terdaftar')
+            ->assertSee('Users');
+    }
+
+    public function test_admin_users_page_lists_registered_owners(): void
+    {
+        Role::findOrCreate('admin', 'web');
+        Role::findOrCreate('owner', 'web');
+
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $owner = User::factory()->create([
+            'name' => 'Owner Baru',
+            'email' => 'owner-baru@example.test',
+        ]);
+        $owner->assignRole('owner');
+
+        $response = $this->actingAs($admin)->get(route('admin.users.index'));
+
+        $response->assertOk()
+            ->assertSee('Users Owner')
+            ->assertSee('Owner Baru')
+            ->assertSee('owner-baru@example.test');
+    }
+
+    public function test_admin_fields_page_lists_owner_fields_with_owner_identity(): void
+    {
+        Role::findOrCreate('admin', 'web');
+        Role::findOrCreate('owner', 'web');
+
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $owner = User::factory()->create([
+            'name' => 'Owner Olympic',
+            'email' => 'olympic-owner@example.test',
+        ]);
+        $owner->assignRole('owner');
+
+        BadmintonField::query()->create([
+            'owner_id' => $owner->id,
+            'name' => 'Olympic Arena',
+            'slug' => 'olympic-arena',
+            'price_per_hour' => 100000,
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.fields.index'));
+
+        $response->assertOk()
+            ->assertSee('Semua Lapangan')
+            ->assertSee('Olympic Arena')
+            ->assertSee('Pemilik Lapangan')
+            ->assertSee('Owner Olympic')
+            ->assertSee('olympic-owner@example.test');
+    }
+
+    public function test_admin_can_update_owner_field(): void
+    {
+        Role::findOrCreate('admin', 'web');
+        Role::findOrCreate('owner', 'web');
+
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $owner = User::factory()->create();
+        $owner->assignRole('owner');
+
+        $field = BadmintonField::query()->create([
+            'owner_id' => $owner->id,
+            'name' => 'Court Lama',
+            'slug' => 'court-lama',
+            'price_per_hour' => 75000,
+            'open_time' => '08:00',
+            'close_time' => '22:00',
+            'slot_duration_minutes' => 60,
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($admin)->put(route('admin.fields.update', $field), [
+            'name' => 'Court Baru Admin',
+            'description' => 'Diedit admin.',
+            'address' => 'Jl. Admin',
+            'latitude' => '-3.6954000',
+            'longitude' => '128.1814000',
+            'price_per_hour' => 95000,
+            'open_time' => '09:00',
+            'close_time' => '21:00',
+            'slot_duration_minutes' => 60,
+            'is_active' => '1',
+            'facility_ids' => [],
+        ]);
+
+        $response->assertRedirect(route('admin.fields.index', ['focus' => $field->id]));
+
+        $this->assertDatabaseHas('badminton_fields', [
+            'id' => $field->id,
+            'owner_id' => $owner->id,
+            'name' => 'Court Baru Admin',
+            'price_per_hour' => 95000,
+        ]);
+    }
 }

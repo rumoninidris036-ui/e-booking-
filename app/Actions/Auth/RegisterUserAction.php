@@ -17,7 +17,7 @@ class RegisterUserAction
     public function handle(array $attributes): User
     {
         return DB::transaction(function () use ($attributes): User {
-            Role::findOrCreate('customer', 'web');
+            Role::findOrCreate('owner', 'web');
 
             $user = User::query()->create([
                 'name' => $attributes['name'],
@@ -25,7 +25,7 @@ class RegisterUserAction
                 'password' => Hash::make($attributes['password']),
             ]);
 
-            $user->assignRole('customer');
+            $user->assignRole('owner');
 
             return $user;
         });
