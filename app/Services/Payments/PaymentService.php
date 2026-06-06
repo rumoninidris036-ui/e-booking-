@@ -8,6 +8,7 @@ use App\Contracts\Payments\MidtransGateway;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Services\Invoices\InvoiceService;
+use App\Services\Notifications\BookingPaymentWhatsAppNotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -17,6 +18,7 @@ class PaymentService
     public function __construct(
         private readonly MidtransGateway $midtransGateway,
         private readonly InvoiceService $invoiceService,
+        private readonly BookingPaymentWhatsAppNotificationService $whatsAppNotificationService,
     ) {}
 
     public function createOrGetSnapPayment(Booking $booking): Payment
@@ -90,7 +92,7 @@ class PaymentService
         $orderId = (string) ($payload['order_id'] ?? '');
         $verifiedStatus = $this->midtransGateway->getTransactionStatus($orderId);
 
-        return DB::transaction(function () use ($orderId, $payload, $verifiedStatus): Payment {
+        $payment = DB::transaction(function () use ($orderId, $payload, $verifiedStatus): Payment {
             $payment = Payment::query()
                 ->with(['booking.field', 'booking.user'])
                 ->where('order_id', $orderId)
@@ -113,6 +115,8 @@ class PaymentService
 
             return $payment;
         });
+
+        return $this->sendWhatsAppNotificationForSuccessfulPayment($payment);
     }
 
     public function syncPaymentStatus(Payment $payment): Payment
@@ -123,7 +127,7 @@ class PaymentService
 
         $verifiedStatus = $this->midtransGateway->getTransactionStatus($payment->order_id);
 
-        return DB::transaction(function () use ($payment, $verifiedStatus): Payment {
+        $syncedPayment = DB::transaction(function () use ($payment, $verifiedStatus): Payment {
             $lockedPayment = Payment::query()
                 ->with(['booking.field', 'booking.user'])
                 ->whereKey($payment->id)
@@ -137,6 +141,8 @@ class PaymentService
 
             return $this->ensureInvoiceForSuccessfulPayment($payment);
         });
+
+        return $this->sendWhatsAppNotificationForSuccessfulPayment($syncedPayment);
     }
 
     /**
@@ -162,7 +168,7 @@ class PaymentService
             ]);
         }
 
-        return DB::transaction(function () use ($payment, $payload): Payment {
+        $syncedPayment = DB::transaction(function () use ($payment, $payload): Payment {
             $lockedPayment = Payment::query()
                 ->with(['booking.field', 'booking.user'])
                 ->whereKey($payment->id)
@@ -205,6 +211,8 @@ class PaymentService
 
             return $this->ensureInvoiceForSuccessfulPayment($lockedPayment);
         });
+
+        return $this->sendWhatsAppNotificationForSuccessfulPayment($syncedPayment);
     }
 
     private function makeSnapPayload(Payment $payment, Booking $booking): array
@@ -456,5 +464,14 @@ class PaymentService
         }
 
         return $this->invoiceService->generateForPayment($payment);
+    }
+
+    private function sendWhatsAppNotificationForSuccessfulPayment(Payment $payment): Payment
+    {
+        if ($payment->status !== Payment::STATUS_SUCCESS) {
+            return $payment;
+        }
+
+        return $this->whatsAppNotificationService->sendPaymentSuccessNotification($payment);
     }
 }
