@@ -155,12 +155,6 @@ class PaymentService
      */
     public function applyBrowserReturnStatus(Payment $payment, array $payload): Payment
     {
-        if (! app()->environment(['local', 'testing'])) {
-            throw ValidationException::withMessages([
-                'payment' => ['Browser return fallback is not available in this environment.'],
-            ]);
-        }
-
         $orderId = (string) ($payload['order_id'] ?? '');
 
         if ($orderId !== '' && $orderId !== $payment->order_id) {
@@ -175,6 +169,10 @@ class PaymentService
                 ->whereKey($payment->id)
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            if (! app()->environment(['local', 'testing'])) {
+                $this->assertSignedBrowserReturnPayload($lockedPayment, $payload);
+            }
 
             $resolvedTransactionStatus = $this->resolveBrowserReturnTransactionStatus($payload);
             $fallbackStatus = $this->mapMidtransStatusToPaymentStatus([
@@ -214,6 +212,29 @@ class PaymentService
         });
 
         return $this->sendWhatsAppNotificationForSuccessfulPayment($syncedPayment);
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private function assertSignedBrowserReturnPayload(Payment $payment, array $payload): void
+    {
+        if ((string) ($payload['signature_key'] ?? '') === '') {
+            throw ValidationException::withMessages([
+                'signature_key' => ['Midtrans return signature is required outside local/testing.'],
+            ]);
+        }
+
+        $this->assertNotificationSignature($payload);
+
+        $grossAmount = (string) ($payload['gross_amount'] ?? '');
+        $expectedAmount = number_format((float) $payment->amount, 2, '.', '');
+
+        if ($grossAmount !== $expectedAmount) {
+            throw ValidationException::withMessages([
+                'gross_amount' => ['Midtrans return amount mismatch.'],
+            ]);
+        }
     }
 
     private function makeSnapPayload(Payment $payment, Booking $booking): array
