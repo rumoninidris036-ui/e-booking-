@@ -387,7 +387,6 @@ class PaymentService
     {
         $paymentCount = Payment::query()
             ->where('booking_id', $booking->id)
-            ->lockForUpdate()
             ->count();
 
         if ($paymentCount === 0) {
