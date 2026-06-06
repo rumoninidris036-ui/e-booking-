@@ -42,4 +42,11 @@ return [
         'is_production' => env('MIDTRANS_IS_PRODUCTION', false),
     ],
 
+    'flowkirim' => [
+        'base_url' => env('FLOWKIRIM_BASE_URL', 'https://api.flowkirim.com'),
+        'token' => env('FLOWKIRIM_TOKEN'),
+        'session_id' => env('FLOWKIRIM_SESSION_ID'),
+        'timeout' => env('FLOWKIRIM_TIMEOUT', 15),
+    ],
+
 ];

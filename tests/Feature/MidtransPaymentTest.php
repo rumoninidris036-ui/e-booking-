@@ -10,6 +10,8 @@ use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Tests\Fakes\FakeMidtransGateway;
 use Tests\TestCase;
@@ -212,6 +214,88 @@ class MidtransPaymentTest extends TestCase
         $this->assertNotNull($payment->invoice_number);
         $this->assertNotNull($payment->invoice_pdf_path);
         Storage::disk('local')->assertExists($payment->invoice_pdf_path);
+    }
+
+    public function test_successful_guest_payment_sends_booking_pdf_to_customer_whatsapp(): void
+    {
+        config([
+            'services.flowkirim.base_url' => 'https://api.flowkirim.test',
+            'services.flowkirim.token' => 'test-token',
+            'services.flowkirim.session_id' => 'session-123',
+        ]);
+
+        Http::fake([
+            'api.flowkirim.test/api/whatsapp/messages/media' => Http::response([
+                'success' => true,
+                'messageId' => 'wa-doc-123',
+            ]),
+        ]);
+
+        $gateway = new FakeMidtransGateway;
+        $gateway->statusResponse = [
+            'order_id' => 'BK-2026-0001',
+            'status_code' => '200',
+            'gross_amount' => '90000.00',
+            'transaction_status' => 'settlement',
+            'payment_type' => 'bank_transfer',
+            'transaction_id' => 'trx-wa-success',
+            'fraud_status' => 'accept',
+        ];
+        $this->app->instance(MidtransGateway::class, $gateway);
+
+        $field = BadmintonField::query()->create([
+            'name' => 'Arena WhatsApp',
+            'slug' => 'arena-whatsapp',
+            'price_per_hour' => 90000,
+            'is_active' => true,
+        ]);
+
+        $booking = Booking::query()->create([
+            'booking_code' => 'BK-2026-0001',
+            'badminton_field_id' => $field->id,
+            'customer_name' => 'Guest Customer',
+            'customer_contact' => '0812-3456-7890',
+            'customer_email' => 'guest@example.test',
+            'guest_access_token' => 'guest-token-123',
+            'booking_date' => '2026-05-21',
+            'start_time' => '08:00:00',
+            'end_time' => '09:00:00',
+            'status' => Booking::STATUS_PENDING,
+            'price_per_hour' => 90000,
+        ]);
+
+        $payment = Payment::query()->create([
+            'booking_id' => $booking->id,
+            'provider' => 'midtrans',
+            'order_id' => 'BK-2026-0001',
+            'amount' => 90000,
+            'currency' => 'IDR',
+            'status' => Payment::STATUS_PENDING,
+            'snap_redirect_url' => 'https://app.sandbox.midtrans.com/snap/v2/vtweb/test-token',
+        ]);
+
+        $this->get(route('payments.show', [
+            'payment' => $payment,
+            'access_token' => $booking->guest_access_token,
+        ]))->assertOk();
+
+        $payment->refresh();
+
+        $this->assertNotNull($payment->whatsapp_notified_at);
+        $this->assertSame(['success' => true, 'messageId' => 'wa-doc-123'], $payment->whatsapp_notification_response);
+
+        Http::assertSent(function (Request $request) use ($payment): bool {
+            return $request->url() === 'https://api.flowkirim.test/api/whatsapp/messages/media'
+                && $request['session_id'] === 'session-123'
+                && $request['to'] === '6281234567890'
+                && $request['type'] === 'document'
+                && str_contains((string) $request['media_url'], route('payments.invoice.download', [
+                    'payment' => $payment,
+                    'access_token' => 'guest-token-123',
+                ]))
+                && str_contains((string) $request['caption'], 'Kode booking: BK-2026-0001')
+                && str_contains((string) $request['caption'], 'PDF booking/invoice terlampir');
+        });
     }
 
     public function test_successful_payment_invoice_can_be_downloaded_as_pdf(): void

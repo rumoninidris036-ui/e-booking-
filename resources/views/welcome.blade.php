@@ -159,9 +159,7 @@
                     <a class="font-body-md text-body-md text-on-surface transition-colors hover:text-secondary-container" href="#arenas">
                         Featured
                     </a>
-                    <a class="font-body-md text-body-md text-on-surface transition-colors hover:text-secondary-container" href="#cta">
-                        Coaching
-                    </a>
+
                 </div>
 
                 <div class="flex items-center gap-4">

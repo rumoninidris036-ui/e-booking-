@@ -90,6 +90,7 @@
                         </div>
 
                         <div class="ml-auto flex items-center gap-3">
+                            <a href="{{ route('public.fields.index') }}" class="hidden rounded-xl border border-line px-4 py-2 text-sm font-bold text-ink transition hover:border-brand hover:text-brand md:inline-flex">View Public</a>
                             <a href="{{ route('admin.fields.index') }}" class="rounded-xl border border-line px-4 py-2 text-sm font-bold text-ink transition hover:border-brand hover:text-brand">Lapangan</a>
                             <a href="{{ route('admin.users.index') }}" class="rounded-xl border border-line px-4 py-2 text-sm font-bold text-ink transition hover:border-brand hover:text-brand">Users</a>
                             <div class="border-l border-line pl-4">

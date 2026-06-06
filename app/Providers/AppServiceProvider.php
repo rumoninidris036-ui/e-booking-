@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Contracts\Notifications\WhatsAppNotificationGateway;
 use App\Contracts\Payments\MidtransGateway;
 use App\Models\BadmintonField;
 use App\Models\Booking;
 use App\Policies\BadmintonFieldPolicy;
 use App\Policies\BookingPolicy;
+use App\Services\Notifications\FlowKirimWhatsAppService;
 use App\Services\Payments\Midtrans\MidtransSdkGateway;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -24,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(MidtransGateway::class, MidtransSdkGateway::class);
+        $this->app->bind(WhatsAppNotificationGateway::class, FlowKirimWhatsAppService::class);
     }
 
     /**

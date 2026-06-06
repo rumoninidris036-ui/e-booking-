@@ -31,6 +31,8 @@ class Payment extends Model
         'invoice_number',
         'invoice_pdf_path',
         'invoice_generated_at',
+        'whatsapp_notified_at',
+        'whatsapp_notification_response',
         'snap_token',
         'snap_redirect_url',
         'midtrans_transaction_id',
@@ -48,6 +50,7 @@ class Payment extends Model
     protected $hidden = [
         'snap_response',
         'notification_payload',
+        'whatsapp_notification_response',
     ];
 
     /**
@@ -59,9 +62,11 @@ class Payment extends Model
             'amount' => 'decimal:2',
             'snap_response' => 'array',
             'notification_payload' => 'array',
+            'whatsapp_notification_response' => 'array',
             'paid_at' => 'datetime',
             'failed_at' => 'datetime',
             'invoice_generated_at' => 'datetime',
+            'whatsapp_notified_at' => 'datetime',
         ];
     }
 
