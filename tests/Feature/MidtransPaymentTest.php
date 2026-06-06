@@ -540,6 +540,76 @@ class MidtransPaymentTest extends TestCase
         ]);
     }
 
+    public function test_midtrans_return_route_uses_signed_payload_when_status_api_is_still_pending(): void
+    {
+        $this->app->detectEnvironment(fn (): string => 'production');
+
+        $gateway = new FakeMidtransGateway;
+        $gateway->statusResponse = [
+            'order_id' => 'BK-2026-0001',
+            'status_code' => '201',
+            'gross_amount' => '80000.00',
+            'transaction_status' => 'pending',
+            'payment_type' => 'bank_transfer',
+            'transaction_id' => 'trx-still-pending',
+            'fraud_status' => 'accept',
+        ];
+        $this->app->instance(MidtransGateway::class, $gateway);
+
+        $user = User::factory()->create();
+        $field = BadmintonField::query()->create([
+            'name' => 'Arena Pending Api',
+            'slug' => 'arena-pending-api',
+            'price_per_hour' => 80000,
+            'is_active' => true,
+        ]);
+
+        $booking = Booking::query()->create([
+            'booking_code' => 'BK-2026-0001',
+            'badminton_field_id' => $field->id,
+            'user_id' => $user->id,
+            'booking_date' => '2026-05-21',
+            'start_time' => '08:00:00',
+            'end_time' => '09:00:00',
+            'status' => Booking::STATUS_PENDING,
+            'price_per_hour' => 80000,
+        ]);
+
+        $payment = Payment::query()->create([
+            'booking_id' => $booking->id,
+            'provider' => 'midtrans',
+            'order_id' => 'BK-2026-0001',
+            'amount' => 80000,
+            'currency' => 'IDR',
+            'status' => Payment::STATUS_PENDING,
+            'snap_redirect_url' => 'https://app.sandbox.midtrans.com/snap/v4/redirection/test-token',
+        ]);
+
+        $payload = [
+            'order_id' => 'BK-2026-0001',
+            'status_code' => '200',
+            'gross_amount' => '80000.00',
+            'transaction_status' => 'settlement',
+            'payment_type' => 'bank_transfer',
+        ];
+        $payload['signature_key'] = hash('sha512', $payload['order_id'].$payload['status_code'].$payload['gross_amount'].config('services.midtrans.server_key'));
+
+        $this->actingAs($user)
+            ->get(route('payments.return', ['payment' => $payment, ...$payload]))
+            ->assertOk()
+            ->assertSee('success');
+
+        $this->assertDatabaseHas('payments', [
+            'id' => $payment->id,
+            'status' => Payment::STATUS_SUCCESS,
+        ]);
+
+        $this->assertDatabaseHas('bookings', [
+            'id' => $booking->id,
+            'status' => Booking::STATUS_PAID,
+        ]);
+    }
+
     public function test_retry_payment_after_failed_status_creates_new_order_id(): void
     {
         $gateway = new FakeMidtransGateway;
