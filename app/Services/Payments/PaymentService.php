@@ -220,6 +220,16 @@ class PaymentService
     private function assertSignedBrowserReturnPayload(Payment $payment, array $payload): void
     {
         if ((string) ($payload['signature_key'] ?? '') === '') {
+            if (! (bool) config('services.midtrans.is_production', false) && (string) ($payload['callback_state'] ?? '') !== '') {
+                Log::warning('payment.return.unsigned_sandbox_fallback_allowed', [
+                    'payment_id' => $payment->id,
+                    'order_id' => $payment->order_id,
+                    'callback_state' => (string) ($payload['callback_state'] ?? ''),
+                ]);
+
+                return;
+            }
+
             throw ValidationException::withMessages([
                 'signature_key' => ['Midtrans return signature is required outside local/testing.'],
             ]);

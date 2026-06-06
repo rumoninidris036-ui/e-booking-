@@ -610,6 +610,73 @@ class MidtransPaymentTest extends TestCase
         ]);
     }
 
+    public function test_midtrans_return_route_allows_unsigned_finish_fallback_in_sandbox(): void
+    {
+        $this->app->detectEnvironment(fn (): string => 'production');
+        config(['services.midtrans.is_production' => false]);
+
+        $this->app->instance(MidtransGateway::class, new class implements MidtransGateway
+        {
+            public function createSnapTransaction(array $payload): array
+            {
+                return [];
+            }
+
+            public function getTransactionStatus(string $orderId): array
+            {
+                throw new \RuntimeException("Transaction doesn't exist.");
+            }
+        });
+
+        $user = User::factory()->create();
+        $field = BadmintonField::query()->create([
+            'name' => 'Arena Sandbox Return',
+            'slug' => 'arena-sandbox-return',
+            'price_per_hour' => 80000,
+            'is_active' => true,
+        ]);
+
+        $booking = Booking::query()->create([
+            'booking_code' => 'BK-2026-0001',
+            'badminton_field_id' => $field->id,
+            'user_id' => $user->id,
+            'booking_date' => '2026-05-21',
+            'start_time' => '08:00:00',
+            'end_time' => '09:00:00',
+            'status' => Booking::STATUS_PENDING,
+            'price_per_hour' => 80000,
+        ]);
+
+        $payment = Payment::query()->create([
+            'booking_id' => $booking->id,
+            'provider' => 'midtrans',
+            'order_id' => 'BK-2026-0001',
+            'amount' => 80000,
+            'currency' => 'IDR',
+            'status' => Payment::STATUS_PENDING,
+            'snap_redirect_url' => 'https://app.sandbox.midtrans.com/snap/v4/redirection/test-token',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('payments.return', [
+                'payment' => $payment,
+                'order_id' => 'BK-2026-0001',
+                'callback_state' => 'finish',
+            ]))
+            ->assertOk()
+            ->assertSee('success');
+
+        $this->assertDatabaseHas('payments', [
+            'id' => $payment->id,
+            'status' => Payment::STATUS_SUCCESS,
+        ]);
+
+        $this->assertDatabaseHas('bookings', [
+            'id' => $booking->id,
+            'status' => Booking::STATUS_PAID,
+        ]);
+    }
+
     public function test_retry_payment_after_failed_status_creates_new_order_id(): void
     {
         $gateway = new FakeMidtransGateway;
