@@ -47,12 +47,16 @@ class MidtransPaymentTest extends TestCase
         $response = $this->actingAs($user)->postJson(route('payments.store', $booking));
 
         $response->assertCreated()
-            ->assertJsonPath('data.order_id', 'BK-2026-0001')
             ->assertJsonPath('data.snap_token', 'snap-token-test')
             ->assertJsonPath('data.status', Payment::STATUS_PENDING)
             ->assertJsonPath('meta.midtrans.client_key', 'Mid-client-eTIvWK6JoSR9nFFU')
             ->assertJsonMissingPath('data.snap_response')
             ->assertJsonMissingPath('data.notification_payload');
+
+        $this->assertMatchesRegularExpression(
+            '/^BK-2026-0001-PAY-01-[A-Z0-9]{6}$/',
+            $response->json('data.order_id'),
+        );
     }
 
     public function test_web_booking_flow_redirects_to_internal_payment_page(): void
@@ -500,12 +504,15 @@ class MidtransPaymentTest extends TestCase
         $response = $this->actingAs($user)->postJson(route('payments.store', $booking));
 
         $response->assertCreated()
-            ->assertJsonPath('data.order_id', 'BK-2026-0001-PAY-02')
             ->assertJsonPath('data.status', Payment::STATUS_PENDING);
+
+        $orderId = $response->json('data.order_id');
+
+        $this->assertMatchesRegularExpression('/^BK-2026-0001-PAY-02-[A-Z0-9]{6}$/', $orderId);
 
         $this->assertDatabaseHas('payments', [
             'booking_id' => $booking->id,
-            'order_id' => 'BK-2026-0001-PAY-02',
+            'order_id' => $orderId,
             'status' => Payment::STATUS_PENDING,
         ]);
     }
