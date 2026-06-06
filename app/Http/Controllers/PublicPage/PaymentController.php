@@ -75,14 +75,14 @@ class PaymentController extends Controller
 
         if (! $request->expectsJson()) {
             return view('payments.show', [
-            'payment' => $payment,
-            'booking' => $payment->booking,
-            'field' => $payment->booking->field,
-            'snapRedirectUrl' => $this->trustedSnapRedirectUrl($payment->snap_redirect_url),
-            'paymentUrl' => $this->paymentUrl($payment),
-            'paymentStoreUrl' => $this->paymentStoreUrl($payment->booking),
-            'invoiceDownloadUrl' => $this->invoiceDownloadUrl($payment),
-        ]);
+                'payment' => $payment,
+                'booking' => $payment->booking,
+                'field' => $payment->booking->field,
+                'snapRedirectUrl' => $this->trustedSnapRedirectUrl($payment->snap_redirect_url),
+                'paymentUrl' => $this->paymentUrl($payment),
+                'paymentStoreUrl' => $this->paymentStoreUrl($payment->booking),
+                'invoiceDownloadUrl' => $this->invoiceDownloadUrl($payment),
+            ]);
         }
 
         return response()->json([
@@ -104,6 +104,10 @@ class PaymentController extends Controller
 
         try {
             $payment = $this->paymentService->syncPaymentStatus($payment);
+
+            if ($payment->status !== Payment::STATUS_SUCCESS && $this->hasMidtransReturnStatus($request)) {
+                $payment = $this->paymentService->applyBrowserReturnStatus($payment, $request->all());
+            }
         } catch (\Throwable $exception) {
             Log::warning('payment.return.sync_failed', [
                 'payment_id' => $payment->id,
@@ -126,6 +130,12 @@ class PaymentController extends Controller
             'payment' => $payment->fresh(['booking.field', 'booking.user']),
             'paymentUrl' => $this->paymentUrl($payment),
         ]);
+    }
+
+    private function hasMidtransReturnStatus(Request $request): bool
+    {
+        return $request->filled('order_id')
+            && ($request->filled('transaction_status') || $request->filled('callback_state'));
     }
 
     public function downloadInvoice(Request $request, Payment $payment): StreamedResponse
