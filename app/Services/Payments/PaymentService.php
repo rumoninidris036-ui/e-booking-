@@ -11,6 +11,7 @@ use App\Services\Invoices\InvoiceService;
 use App\Services\Notifications\BookingPaymentWhatsAppNotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class PaymentService
@@ -389,11 +390,12 @@ class PaymentService
             ->where('booking_id', $booking->id)
             ->count();
 
-        if ($paymentCount === 0) {
-            return $booking->booking_code;
-        }
-
-        return sprintf('%s-PAY-%02d', $booking->booking_code, $paymentCount + 1);
+        return sprintf(
+            '%s-PAY-%02d-%s',
+            $booking->booking_code,
+            $paymentCount + 1,
+            Str::upper(Str::random(6)),
+        );
     }
 
     /**
