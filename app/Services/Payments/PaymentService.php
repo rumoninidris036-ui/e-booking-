@@ -86,6 +86,7 @@ class PaymentService
 
     public function handleMidtransNotification(array $payload): Payment
     {
+        // 1. Verifikasi keaslian webhook
         $this->assertNotificationSignature($payload);
         $orderId = (string) ($payload['order_id'] ?? '');
 
@@ -97,20 +98,25 @@ class PaymentService
                 ->firstOrFail();
 
             try {
+                // 2. Coba ambil status terbaru dari Core API
                 $verifiedStatus = $this->midtransGateway->getTransactionStatus($orderId);
             } catch (\Throwable $exception) {
-                // Cegah webhook crash (Error 500) jika ada delay dari Midtrans Core API
+                // 3. Jika Core API Sandbox LAG dan membalas 404, KITA GUNAKAN PAYLOAD WEBHOOK!
                 if (str_contains($exception->getMessage(), '404') || str_contains(strtolower($exception->getMessage()), "doesn't exist")) {
-                    Log::warning('payment.webhook.404_ignored', [
+                    Log::info('payment.webhook.404_fallback_to_payload', [
                         'payment_id' => $payment->id,
                         'order_id' => $orderId,
-                        'reason' => 'Midtrans sent webhook but Core API returned 404.'
+                        'reason' => 'Core API 404 due to Sandbox delay. Using authenticated webhook payload instead.'
                     ]);
-                    return $payment; // Abaikan dan biarkan webhook kembali dengan sukses (200)
+
+                    // Payload sudah diverifikasi asli di atas, jadi aman untuk digunakan sebagai fallback!
+                    $verifiedStatus = $payload;
+                } else {
+                    throw $exception; // Lempar jika error selain 404
                 }
-                throw $exception;
             }
 
+            // 4. Sinkronisasi status ke Database
             $payment = $this->synchronizePaymentFromVerifiedStatus(
                 payment: $payment,
                 verifiedStatus: $verifiedStatus,
@@ -220,7 +226,7 @@ class PaymentService
                 ])->save();
             }
 
-            Log::warning('payment.browser_return_fallback_applied', [
+            Log::info('payment.browser_return_fallback_applied', [
                 'payment_id' => $lockedPayment->id,
                 'order_id' => $lockedPayment->order_id,
                 'resolved_status' => $resolvedStatus,
@@ -327,7 +333,6 @@ class PaymentService
         $statusCode = (string) ($payload['status_code'] ?? '');
         $grossAmount = (string) ($payload['gross_amount'] ?? '');
 
-        // Midtrans selalu menggunakan format dua desimal (misal 10000.00) untuk mencetak signature
         if (is_numeric($grossAmount)) {
             $grossAmount = number_format((float) $grossAmount, 2, '.', '');
         }
