@@ -475,6 +475,14 @@ class PaymentService
             return $payment;
         }
 
-        return $this->whatsAppNotificationService->sendPaymentSuccessNotification($payment);
+        // PERBAIKAN: Masukkan proses kirim WA ke background queue untuk menghindari server deadlock
+        \App\Jobs\SendBookingPaymentWhatsAppNotificationJob::dispatch($payment);
+
+        \Illuminate\Support\Facades\Log::info('payment.whatsapp_notification.queued', [
+            'payment_id' => $payment->id,
+            'order_id' => $payment->order_id,
+        ]);
+
+        return $payment;
     }
 }

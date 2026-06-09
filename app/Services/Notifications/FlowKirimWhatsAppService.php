@@ -26,7 +26,7 @@ class FlowKirimWhatsAppService implements WhatsAppNotificationGateway
             ->timeout($this->timeout())
             ->post('/api/whatsapp/messages/text', [
                 'session_id' => $sessionId,
-                'to' => $this->normalizePhoneNumber($to), // Pakai angka murni
+                'to' => $this->normalizeRecipient($to), // Otomatis nambah @s.whatsapp.net
                 'message' => trim($message),
             ])
             ->throw()
@@ -54,21 +54,21 @@ class FlowKirimWhatsAppService implements WhatsAppNotificationGateway
             ->timeout($this->timeout())
             ->post('/api/whatsapp/messages/media', array_filter([
                 'session_id' => $sessionId,
-                'to' => $this->normalizePhoneNumber($to), // Pakai angka murni
+                'to' => $this->normalizeRecipient($to), // Otomatis nambah @s.whatsapp.net
                 'media_url' => trim($documentUrl),
-                'type' => 'document',
+                'type' => 'document', // Pakai document karena kita kirim PDF
                 'caption' => trim($caption),
-                'filename' => $filename,
+                'filename' => $filename, // Aman, kalau kosong (null) akan otomatis dibuang oleh array_filter
             ], static fn(mixed $value): bool => $value !== null && $value !== ''))
             ->throw()
             ->json() ?? [];
     }
 
-    private function normalizePhoneNumber(string $recipient): string
+    private function normalizeRecipient(string $recipient): string
     {
         $recipient = trim($recipient);
 
-        // Bersihkan dari @s.whatsapp.net (karena server FlowKirim menolak format itu)
+        // Bersihkan dari @s.whatsapp.net kalau misal user udah terlanjur ngetik itu
         $recipient = explode('@', $recipient, 2)[0];
 
         // Ambil angkanya saja
@@ -83,7 +83,8 @@ class FlowKirimWhatsAppService implements WhatsAppNotificationGateway
             throw new InvalidArgumentException('Nomor WhatsApp tujuan tidak valid.');
         }
 
-        return $number; // Hasil akhir: 6285231125221
+        // KEMBALIKAN @s.whatsapp.net SESUAI FORMAT YANG DIMINTA FLOWKIRIM
+        return $number . '@s.whatsapp.net';
     }
 
     private function baseUrl(): string
@@ -103,6 +104,6 @@ class FlowKirimWhatsAppService implements WhatsAppNotificationGateway
 
     private function timeout(): int
     {
-        return 30; // Timeout untuk PDF dilegakan jadi 30 detik
+        return 30; // Timeout 30 detik
     }
 }
