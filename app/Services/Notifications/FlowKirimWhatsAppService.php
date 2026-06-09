@@ -15,13 +15,18 @@ class FlowKirimWhatsAppService implements WhatsAppNotificationGateway
         $token = $this->token();
         $sessionId = $sessionId ?: $this->defaultSessionId();
 
+        if ($sessionId === '') {
+            throw new InvalidArgumentException('FlowKirim session ID belum dikonfigurasi.');
+        }
+
         return Http::baseUrl($this->baseUrl())
-            ->withToken($token)
+            ->withToken($token) // Ini otomatis menjadi Bearer Token
             ->acceptJson()
             ->asJson()
+            ->timeout($this->timeout())
             ->post('/api/whatsapp/messages/text', [
-                'session_id' => $sessionId, // Pakai session_id
-                'to' => $this->normalizeRecipient($to), // Pakai format lengkap @s.whatsapp.net
+                'session_id' => $sessionId,
+                'to' => $this->normalizePhoneNumber($to), // Pakai angka murni 628...
                 'message' => trim($message),
             ])
             ->throw()
@@ -38,13 +43,18 @@ class FlowKirimWhatsAppService implements WhatsAppNotificationGateway
         $token = $this->token();
         $sessionId = $sessionId ?: $this->defaultSessionId();
 
+        if ($sessionId === '') {
+            throw new InvalidArgumentException('FlowKirim session ID belum dikonfigurasi.');
+        }
+
         return Http::baseUrl($this->baseUrl())
-            ->withToken($token)
+            ->withToken($token) // Ini otomatis menjadi Bearer Token
             ->acceptJson()
             ->asJson()
+            ->timeout($this->timeout())
             ->post('/api/whatsapp/messages/media', array_filter([
-                'session_id' => $sessionId, // Pakai session_id
-                'to' => $this->normalizeRecipient($to), // Pakai format lengkap @s.whatsapp.net
+                'session_id' => $sessionId,
+                'to' => $this->normalizePhoneNumber($to), // Pakai angka murni 628...
                 'media_url' => trim($documentUrl),
                 'type' => 'document',
                 'caption' => trim($caption),
@@ -54,37 +64,43 @@ class FlowKirimWhatsAppService implements WhatsAppNotificationGateway
             ->json() ?? [];
     }
 
-    private function normalizeRecipient(string $recipient): string
+    private function normalizePhoneNumber(string $recipient): string
     {
         $recipient = trim($recipient);
-        // Jika sudah ada @s.whatsapp.net, biarkan
-        if (str_contains($recipient, '@s.whatsapp.net')) {
-            return $recipient;
-        }
 
-        // Hapus karakter non-digit
-        $number = preg_replace('/\D+/', '', explode('@', $recipient, 2)[0]) ?? '';
+        // Buang @s.whatsapp.net jika ada
+        $recipient = explode('@', $recipient, 2)[0];
 
-        // Pastikan format 62
+        // Ambil angkanya saja
+        $number = preg_replace('/\D+/', '', $recipient) ?? '';
+
+        // Pastikan depannya 62, bukan 0
         if (str_starts_with($number, '0')) {
             $number = '62' . substr($number, 1);
         }
 
-        return $number . '@s.whatsapp.net';
+        if ($number === '') {
+            throw new InvalidArgumentException('Nomor WhatsApp tujuan tidak valid.');
+        }
+
+        return $number; // Hasilnya akan murni angka misal: 6285231125221
     }
 
     private function baseUrl(): string
     {
         return rtrim((string) config('services.flowkirim.base_url', 'https://scan.flowkirim.com'), '/');
     }
+
     private function token(): string
     {
         return (string) config('services.flowkirim.token');
     }
+
     private function defaultSessionId(): string
     {
         return (string) config('services.flowkirim.session_id');
     }
+
     private function timeout(): int
     {
         return (int) config('services.flowkirim.timeout', 15);
