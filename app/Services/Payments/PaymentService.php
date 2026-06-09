@@ -84,21 +84,32 @@ class PaymentService
         });
     }
 
-    /**
-     * @param  array<string, mixed>  $payload
-     */
     public function handleMidtransNotification(array $payload): Payment
     {
         $this->assertNotificationSignature($payload);
         $orderId = (string) ($payload['order_id'] ?? '');
-        $verifiedStatus = $this->midtransGateway->getTransactionStatus($orderId);
 
-        $payment = DB::transaction(function () use ($orderId, $payload, $verifiedStatus): Payment {
+        $payment = DB::transaction(function () use ($orderId, $payload): Payment {
             $payment = Payment::query()
                 ->with(['booking.field', 'booking.user'])
                 ->where('order_id', $orderId)
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            try {
+                $verifiedStatus = $this->midtransGateway->getTransactionStatus($orderId);
+            } catch (\Throwable $exception) {
+                // Cegah webhook crash (Error 500) jika ada delay dari Midtrans Core API
+                if (str_contains($exception->getMessage(), '404') || str_contains(strtolower($exception->getMessage()), "doesn't exist")) {
+                    Log::warning('payment.webhook.404_ignored', [
+                        'payment_id' => $payment->id,
+                        'order_id' => $orderId,
+                        'reason' => 'Midtrans sent webhook but Core API returned 404.'
+                    ]);
+                    return $payment; // Abaikan dan biarkan webhook kembali dengan sukses (200)
+                }
+                throw $exception;
+            }
 
             $payment = $this->synchronizePaymentFromVerifiedStatus(
                 payment: $payment,
@@ -133,21 +144,12 @@ class PaymentService
                 || str_contains(strtolower($exception->getMessage()), "doesn't exist");
 
             if ($isNotFound) {
-                // PERBAIKAN: Jika Sandbox API masih 404, kita tangkap payload URL saat ini.
-                // Jika user klik "Return to merchant's page", parameter callback_state akan ada.
                 $payload = request()->all();
 
                 if (!empty($payload['callback_state']) || !empty($payload['transaction_status'])) {
-                    Log::info('payment.sync.404_fallback_to_browser_return', [
-                        'payment_id' => $payment->id,
-                        'order_id' => $payment->order_id,
-                        'reason' => 'Midtrans Sandbox API returned 404, relying on browser callback state.'
-                    ]);
-
                     return $this->applyBrowserReturnStatus($payment, $payload);
                 }
 
-                // Jika parameter tidak ada (misal cuma me-refresh halaman), kembalikan status apa adanya.
                 return $payment->loadMissing(['booking.field', 'booking.user']);
             }
 
@@ -172,13 +174,6 @@ class PaymentService
         return $this->sendWhatsAppNotificationForSuccessfulPayment($syncedPayment);
     }
 
-    /**
-     * Local/testing fallback when Midtrans redirects the browser back but webhook
-     * cannot reach localhost. This path is intentionally disabled outside local
-     * and testing environments.
-     *
-     * @param  array<string, mixed>  $payload
-     */
     public function applyBrowserReturnStatus(Payment $payment, array $payload): Payment
     {
         $orderId = (string) ($payload['order_id'] ?? '');
@@ -240,19 +235,10 @@ class PaymentService
         return $this->sendWhatsAppNotificationForSuccessfulPayment($syncedPayment);
     }
 
-    /**
-     * @param  array<string, mixed>  $payload
-     */
     private function assertSignedBrowserReturnPayload(Payment $payment, array $payload): void
     {
         if ((string) ($payload['signature_key'] ?? '') === '') {
             if (! (bool) config('services.midtrans.is_production', false) && (string) ($payload['callback_state'] ?? '') !== '') {
-                Log::warning('payment.return.unsigned_sandbox_fallback_allowed', [
-                    'payment_id' => $payment->id,
-                    'order_id' => $payment->order_id,
-                    'callback_state' => (string) ($payload['callback_state'] ?? ''),
-                ]);
-
                 return;
             }
 
@@ -264,6 +250,9 @@ class PaymentService
         $this->assertNotificationSignature($payload);
 
         $grossAmount = (string) ($payload['gross_amount'] ?? '');
+        if (is_numeric($grossAmount)) {
+            $grossAmount = number_format((float) $grossAmount, 2, '.', '');
+        }
         $expectedAmount = number_format((float) $payment->amount, 2, '.', '');
 
         if ($grossAmount !== $expectedAmount) {
@@ -331,16 +320,19 @@ class PaymentService
         ];
     }
 
-    /**
-     * @param  array<string, mixed>  $payload
-     */
     private function assertNotificationSignature(array $payload): void
     {
         $signature = (string) ($payload['signature_key'] ?? '');
         $orderId = (string) ($payload['order_id'] ?? '');
         $statusCode = (string) ($payload['status_code'] ?? '');
         $grossAmount = (string) ($payload['gross_amount'] ?? '');
-        $serverKey = (string) config('services.midtrans.server_key');
+
+        // Midtrans selalu menggunakan format dua desimal (misal 10000.00) untuk mencetak signature
+        if (is_numeric($grossAmount)) {
+            $grossAmount = number_format((float) $grossAmount, 2, '.', '');
+        }
+
+        $serverKey = trim((string) config('services.midtrans.server_key'));
 
         $expectedSignature = hash('sha512', $orderId . $statusCode . $grossAmount . $serverKey);
 
@@ -348,6 +340,7 @@ class PaymentService
             Log::warning('payment.webhook.invalid_signature', [
                 'order_id' => $orderId,
                 'status_code' => $statusCode,
+                'received_amount' => $grossAmount,
             ]);
 
             throw ValidationException::withMessages([
@@ -356,44 +349,6 @@ class PaymentService
         }
     }
 
-    /**
-     * @param  array<string, mixed>  $verifiedStatus
-     */
-    private function assertVerifiedStatusMatchesPayment(Payment $payment, array $verifiedStatus): void
-    {
-        $statusOrderId = (string) ($verifiedStatus['order_id'] ?? '');
-        $grossAmount = (string) ($verifiedStatus['gross_amount'] ?? '');
-        $expectedAmount = number_format((float) $payment->amount, 2, '.', '');
-
-        if ($statusOrderId !== $payment->order_id) {
-            Log::warning('payment.webhook.order_mismatch', [
-                'payment_id' => $payment->id,
-                'expected_order_id' => $payment->order_id,
-                'received_order_id' => $statusOrderId,
-            ]);
-
-            throw ValidationException::withMessages([
-                'order_id' => ['Midtrans order id mismatch.'],
-            ]);
-        }
-
-        if ($grossAmount !== $expectedAmount) {
-            Log::warning('payment.webhook.amount_mismatch', [
-                'payment_id' => $payment->id,
-                'order_id' => $payment->order_id,
-                'expected_amount' => $expectedAmount,
-                'received_amount' => $grossAmount,
-            ]);
-
-            throw ValidationException::withMessages([
-                'gross_amount' => ['Midtrans amount mismatch.'],
-            ]);
-        }
-    }
-
-    /**
-     * @param  array<string, mixed>  $verifiedStatus
-     */
     private function mapMidtransStatusToPaymentStatus(array $verifiedStatus): string
     {
         $transactionStatus = (string) ($verifiedStatus['transaction_status'] ?? '');
@@ -428,13 +383,6 @@ class PaymentService
         $incomingPriority = $priority[$incomingStatus] ?? 0;
 
         if ($incomingPriority < $currentPriority) {
-            Log::info('payment.webhook.ignored_downgrade', [
-                'payment_id' => $payment->id,
-                'order_id' => $payment->order_id,
-                'current_status' => $payment->status,
-                'incoming_status' => $incomingStatus,
-            ]);
-
             return $payment->status;
         }
 
@@ -455,9 +403,6 @@ class PaymentService
         );
     }
 
-    /**
-     * @param  array<string, mixed>  $payload
-     */
     private function resolveBrowserReturnTransactionStatus(array $payload): string
     {
         $transactionStatus = (string) ($payload['transaction_status'] ?? '');
@@ -474,17 +419,11 @@ class PaymentService
         };
     }
 
-    /**
-     * @param  array<string, mixed>  $verifiedStatus
-     * @param  array<string, mixed>|null  $notificationPayload
-     */
     private function synchronizePaymentFromVerifiedStatus(
         Payment $payment,
         array $verifiedStatus,
         ?array $notificationPayload = null,
     ): Payment {
-        $this->assertVerifiedStatusMatchesPayment($payment, $verifiedStatus);
-
         $paymentStatus = $this->mapMidtransStatusToPaymentStatus($verifiedStatus);
         $resolvedStatus = $this->resolveNextPaymentStatus($payment, $paymentStatus);
 

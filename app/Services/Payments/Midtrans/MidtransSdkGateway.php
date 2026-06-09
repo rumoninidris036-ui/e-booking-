@@ -16,8 +16,16 @@ class MidtransSdkGateway implements MidtransGateway
 
     public function __construct()
     {
-        Config::$serverKey = (string) config('services.midtrans.server_key');
-        Config::$isProduction = (bool) config('services.midtrans.is_production', false);
+        // Hapus spasi tidak sengaja yang mungkin terbawa dari .env
+        Config::$serverKey = trim((string) config('services.midtrans.server_key'));
+
+        // PERBAIKAN: Filter ketat untuk menangani string "false" / "true" dari Laravel Cloud
+        $isProduction = config('services.midtrans.is_production', false);
+        if (is_string($isProduction)) {
+            $isProduction = trim($isProduction);
+        }
+        Config::$isProduction = filter_var($isProduction, FILTER_VALIDATE_BOOLEAN);
+
         Config::$isSanitized = true;
         Config::$is3ds = true;
     }
@@ -40,26 +48,19 @@ class MidtransSdkGateway implements MidtransGateway
                 $isNotFound = str_contains($e->getMessage(), '404')
                     || str_contains($e->getMessage(), "Transaction doesn't exist");
 
-                // Jika error-nya bukan 404, langsung lempar error agar ditangani sistem
                 if (! $isNotFound) {
                     throw $e;
                 }
 
-                // Jika masih 404, lakukan delay sebelum percobaan berikutnya (500ms -> 1000ms -> 2000ms)
                 if ($attempt < self::MAX_RETRIES) {
                     usleep(self::RETRY_DELAY_MS * (2 ** ($attempt - 1)) * 1000);
                 }
             }
         }
 
-        // Jika setelah percobaan maksimal masih 404, lemparkan error agar ditangkap oleh PaymentService
         throw $lastException;
     }
 
-    /**
-     * @param  array<string, mixed>|object  $response
-     * @return array<string, mixed>
-     */
     private function normalizeResponse(array|object $response): array
     {
         return json_decode(json_encode($response, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR);
