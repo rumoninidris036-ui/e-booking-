@@ -126,7 +126,33 @@ class PaymentService
             return $payment->loadMissing(['booking.field', 'booking.user']);
         }
 
-        $verifiedStatus = $this->midtransGateway->getTransactionStatus($payment->order_id);
+        try {
+            $verifiedStatus = $this->midtransGateway->getTransactionStatus($payment->order_id);
+        } catch (\Throwable $exception) {
+            $isNotFound = str_contains($exception->getMessage(), '404')
+                || str_contains(strtolower($exception->getMessage()), "doesn't exist");
+
+            if ($isNotFound) {
+                // PERBAIKAN: Jika Sandbox API masih 404, kita tangkap payload URL saat ini.
+                // Jika user klik "Return to merchant's page", parameter callback_state akan ada.
+                $payload = request()->all();
+
+                if (!empty($payload['callback_state']) || !empty($payload['transaction_status'])) {
+                    Log::info('payment.sync.404_fallback_to_browser_return', [
+                        'payment_id' => $payment->id,
+                        'order_id' => $payment->order_id,
+                        'reason' => 'Midtrans Sandbox API returned 404, relying on browser callback state.'
+                    ]);
+
+                    return $this->applyBrowserReturnStatus($payment, $payload);
+                }
+
+                // Jika parameter tidak ada (misal cuma me-refresh halaman), kembalikan status apa adanya.
+                return $payment->loadMissing(['booking.field', 'booking.user']);
+            }
+
+            throw $exception;
+        }
 
         $syncedPayment = DB::transaction(function () use ($payment, $verifiedStatus): Payment {
             $lockedPayment = Payment::query()
@@ -316,7 +342,7 @@ class PaymentService
         $grossAmount = (string) ($payload['gross_amount'] ?? '');
         $serverKey = (string) config('services.midtrans.server_key');
 
-        $expectedSignature = hash('sha512', $orderId.$statusCode.$grossAmount.$serverKey);
+        $expectedSignature = hash('sha512', $orderId . $statusCode . $grossAmount . $serverKey);
 
         if (! hash_equals($expectedSignature, $signature)) {
             Log::warning('payment.webhook.invalid_signature', [
