@@ -459,6 +459,7 @@ class PaymentService
         return $this->ensureInvoiceForSuccessfulPayment($payment);
     }
 
+
     private function ensureInvoiceForSuccessfulPayment(Payment $payment): Payment
     {
         if ($payment->status !== Payment::STATUS_SUCCESS) {
