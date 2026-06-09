@@ -26,7 +26,7 @@ class FlowKirimWhatsAppService implements WhatsAppNotificationGateway
             ->timeout($this->timeout())
             ->post('/api/whatsapp/messages/text', [
                 'session_id' => $sessionId,
-                'to' => $this->normalizePhoneNumber($to), // Pakai angka murni seperti di Postman
+                'to' => $this->normalizePhoneNumber($to), // Pakai angka murni
                 'message' => trim($message),
             ])
             ->throw()
@@ -54,7 +54,7 @@ class FlowKirimWhatsAppService implements WhatsAppNotificationGateway
             ->timeout($this->timeout())
             ->post('/api/whatsapp/messages/media', array_filter([
                 'session_id' => $sessionId,
-                'to' => $this->normalizePhoneNumber($to), // Pakai angka murni seperti di Postman
+                'to' => $this->normalizePhoneNumber($to), // Pakai angka murni
                 'media_url' => trim($documentUrl),
                 'type' => 'document',
                 'caption' => trim($caption),
@@ -68,7 +68,7 @@ class FlowKirimWhatsAppService implements WhatsAppNotificationGateway
     {
         $recipient = trim($recipient);
 
-        // Buang @s.whatsapp.net jika ada (kembali ke cara yang sukses di Postman)
+        // Bersihkan dari @s.whatsapp.net (karena server FlowKirim menolak format itu)
         $recipient = explode('@', $recipient, 2)[0];
 
         // Ambil angkanya saja
@@ -83,32 +83,26 @@ class FlowKirimWhatsAppService implements WhatsAppNotificationGateway
             throw new InvalidArgumentException('Nomor WhatsApp tujuan tidak valid.');
         }
 
-        return $number; // Mengembalikan format murni: 6285231125221
+        return $number; // Hasil akhir: 6285231125221
     }
-
-    // =========================================================================
-    // KITA HARDCODE SEMENTARA UNTUK MEMBYPASS CACHE .ENV LARAVEL CLOUD
-    // =========================================================================
 
     private function baseUrl(): string
     {
-        return 'https://scan.flowkirim.com';
+        return rtrim((string) config('services.flowkirim.base_url', 'https://scan.flowkirim.com'), '/');
     }
 
     private function token(): string
     {
-        // Token kamu yang berhasil di Postman
-        return '998298bd6716e716d86bc81674c265adf465a71dc5f71c60c2151e7ebccfa7df';
+        return (string) config('services.flowkirim.token');
     }
 
     private function defaultSessionId(): string
     {
-        // Session ID kamu yang terbukti jalan
-        return 'tes-4c163ce5-cd99-4725-b1ed-13c5bbda3a99';
+        return (string) config('services.flowkirim.session_id');
     }
 
     private function timeout(): int
     {
-        return 30; // Timeout dinaikkan sedikit untuk media
+        return 30; // Timeout untuk PDF dilegakan jadi 30 detik
     }
 }
