@@ -20,13 +20,13 @@ class FlowKirimWhatsAppService implements WhatsAppNotificationGateway
         }
 
         return Http::baseUrl($this->baseUrl())
-            ->withToken($token) // Ini otomatis menjadi Bearer Token
+            ->withToken($token)
             ->acceptJson()
             ->asJson()
             ->timeout($this->timeout())
             ->post('/api/whatsapp/messages/text', [
                 'session_id' => $sessionId,
-                'to' => $this->normalizePhoneNumber($to), // Pakai angka murni 628...
+                'to' => $this->normalizeRecipient($to), // Format pakai @s.whatsapp.net
                 'message' => trim($message),
             ])
             ->throw()
@@ -48,14 +48,14 @@ class FlowKirimWhatsAppService implements WhatsAppNotificationGateway
         }
 
         return Http::baseUrl($this->baseUrl())
-            ->withToken($token) // Ini otomatis menjadi Bearer Token
+            ->withToken($token)
             ->acceptJson()
             ->asJson()
             ->timeout($this->timeout())
             ->post('/api/whatsapp/messages/media', array_filter([
                 'session_id' => $sessionId,
-                'to' => $this->normalizePhoneNumber($to), // Pakai angka murni 628...
-                'media_url' => trim($documentUrl),
+                'to' => $this->normalizeRecipient($to), // Format pakai @s.whatsapp.net
+                'media_url' => trim($documentUrl),      // Kembali menggunakan media_url
                 'type' => 'document',
                 'caption' => trim($caption),
                 'filename' => $filename,
@@ -64,11 +64,11 @@ class FlowKirimWhatsAppService implements WhatsAppNotificationGateway
             ->json() ?? [];
     }
 
-    private function normalizePhoneNumber(string $recipient): string
+    private function normalizeRecipient(string $recipient): string
     {
         $recipient = trim($recipient);
 
-        // Buang @s.whatsapp.net jika ada
+        // Bersihkan dulu dari @s.whatsapp.net jika kebetulan sudah ada
         $recipient = explode('@', $recipient, 2)[0];
 
         // Ambil angkanya saja
@@ -83,7 +83,8 @@ class FlowKirimWhatsAppService implements WhatsAppNotificationGateway
             throw new InvalidArgumentException('Nomor WhatsApp tujuan tidak valid.');
         }
 
-        return $number; // Hasilnya akan murni angka misal: 6285231125221
+        // KEMBALIKAN @s.whatsapp.net SESUAI DOKUMENTASI TERBARU
+        return $number . '@s.whatsapp.net';
     }
 
     private function baseUrl(): string
