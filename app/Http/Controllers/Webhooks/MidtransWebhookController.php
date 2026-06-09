@@ -17,8 +17,10 @@ class MidtransWebhookController extends Controller
 
     public function handle(MidtransWebhookRequest $request): JsonResponse
     {
+        // PERBAIKAN: Gunakan all() agar payload dari Midtrans tidak ada yang terbuang
+        // oleh validasi Request bawaan Laravel.
         $payment = $this->paymentService->handleMidtransNotification(
-            $request->validated(),
+            $request->all(),
         );
 
         return response()->json([
