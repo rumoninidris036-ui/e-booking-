@@ -44,11 +44,11 @@ class BookingPaymentWhatsAppNotificationService
         }
 
         try {
-            // KITA GABUNGKAN CAPTION DENGAN LINK DOWNLOAD PDF
+            // Gabungkan teks info booking dengan link download PDF internal aplikasi
             $downloadUrl = $this->invoiceDownloadUrl($payment);
             $messageText = $this->successCaption($payment) . "\n\nUnduh Bukti Booking / Invoice Anda di sini:\n" . $downloadUrl;
 
-            // KITA UBAH JADI KIRIM TEXT MESSAGE (BUKAN DOCUMENT)
+            // Panggil pengiriman text message biasa agar super ringan dan instan
             $response = $this->whatsAppGateway->sendTextMessage(
                 to: $recipient,
                 message: $messageText
