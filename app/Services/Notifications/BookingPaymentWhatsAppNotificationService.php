@@ -44,11 +44,14 @@ class BookingPaymentWhatsAppNotificationService
         }
 
         try {
-            $response = $this->whatsAppGateway->sendDocumentMessage(
+            // KITA GABUNGKAN CAPTION DENGAN LINK DOWNLOAD PDF
+            $downloadUrl = $this->invoiceDownloadUrl($payment);
+            $messageText = $this->successCaption($payment) . "\n\nUnduh Bukti Booking / Invoice Anda di sini:\n" . $downloadUrl;
+
+            // KITA UBAH JADI KIRIM TEXT MESSAGE (BUKAN DOCUMENT)
+            $response = $this->whatsAppGateway->sendTextMessage(
                 to: $recipient,
-                documentUrl: $this->invoiceDownloadUrl($payment),
-                caption: $this->successCaption($payment),
-                filename: sprintf('%s.pdf', $payment->invoice_number ?: $payment->order_id),
+                message: $messageText
             );
 
             $payment->forceFill([
@@ -97,7 +100,7 @@ class BookingPaymentWhatsAppNotificationService
             "Jadwal: {$bookingDate}, {$startTime}-{$endTime}",
             'Status: Lunas',
             '',
-            'PDF booking/invoice terlampir. Sampai jumpa di lapangan.',
+            'Sampai jumpa di lapangan!',
         ]);
     }
 }
