@@ -475,10 +475,21 @@ class PaymentService
             return $payment;
         }
 
-        // PERBAIKAN: Masukkan proses kirim WA ke background queue untuk menghindari server deadlock
-        \App\Jobs\SendBookingPaymentWhatsAppNotificationJob::dispatch($payment);
+        // Eksekusi kirim WA teks + link setelah response selesai dikirim ke Midtrans.
+        // Trik ini sukses menghindari deadlock tanpa perlu mengaktifkan Managed Queue Cloud.
+        app()->terminating(function () use ($payment) {
+            try {
+                $notificationService = app(\App\Services\Notifications\BookingPaymentWhatsAppNotificationService::class);
+                $notificationService->sendPaymentSuccessNotification($payment);
+            } catch (\Throwable $exception) {
+                Log::error('terminating.whatsapp.error', [
+                    'payment_id' => $payment->id,
+                    'message' => $exception->getMessage()
+                ]);
+            }
+        });
 
-        \Illuminate\Support\Facades\Log::info('payment.whatsapp_notification.queued', [
+        Log::info('payment.whatsapp_notification.scheduled_after_response', [
             'payment_id' => $payment->id,
             'order_id' => $payment->order_id,
         ]);
