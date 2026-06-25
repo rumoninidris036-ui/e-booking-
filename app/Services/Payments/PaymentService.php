@@ -128,6 +128,8 @@ class PaymentService
                 }
             }
 
+            $this->assertVerifiedAmountMatchesPayment($payment, $verifiedStatus);
+
             // 4. Sinkronisasi status ke Database
             $payment = $this->synchronizePaymentFromVerifiedStatus(
                 payment: $payment,
@@ -385,6 +387,27 @@ class PaymentService
         }
     }
 
+    private function assertVerifiedAmountMatchesPayment(Payment $payment, array $verifiedStatus): void
+    {
+        $grossAmount = (string) ($verifiedStatus['gross_amount'] ?? $verifiedStatus['amount'] ?? '');
+
+        if ($grossAmount === '') {
+            return;
+        }
+
+        if (is_numeric($grossAmount)) {
+            $grossAmount = number_format((float) $grossAmount, 2, '.', '');
+        }
+
+        $expectedAmount = number_format((float) $payment->amount, 2, '.', '');
+
+        if ($grossAmount !== $expectedAmount) {
+            throw ValidationException::withMessages([
+                'gross_amount' => ['Midtrans amount mismatch.'],
+            ]);
+        }
+    }
+
     private function mapMidtransStatusToPaymentStatus(array $verifiedStatus): string
     {
         $transactionStatus = (string) ($verifiedStatus['transaction_status'] ?? '');
@@ -510,6 +533,20 @@ class PaymentService
     {
         if ($payment->status !== Payment::STATUS_SUCCESS) {
             return $payment;
+        }
+
+        if (! app()->environment('production')) {
+            try {
+                return app(\App\Services\Notifications\BookingPaymentWhatsAppNotificationService::class)
+                    ->sendPaymentSuccessNotification($payment);
+            } catch (\Throwable $exception) {
+                Log::error('testing.whatsapp.error', [
+                    'payment_id' => $payment->id,
+                    'message' => $exception->getMessage(),
+                ]);
+
+                return $payment;
+            }
         }
 
         // Eksekusi kirim WA teks + link setelah response selesai dikirim ke Midtrans.

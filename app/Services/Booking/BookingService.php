@@ -75,7 +75,7 @@ class BookingService
                     'customer_name' => $customer['customer_name'] ?? $user?->name,
                     'customer_contact' => $customer['customer_contact'] ?? null,
                     'customer_email' => $customer['customer_email'] ?? $user?->email,
-                    'guest_access_token' => $user === null ? Str::random(64) : null,
+                    'guest_access_token' => Str::random(64),
                     'booking_date' => $scheduleDate->toDateString(),
                     'start_time' => $slotStart->format('H:i:s'),
                     'end_time' => $slotEnd->format('H:i:s'),

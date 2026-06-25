@@ -14,12 +14,6 @@ class PaymentResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $invoiceRouteParameters = ['payment' => $this->resource];
-
-        if ($this->relationLoaded('booking') && $this->booking?->guest_access_token !== null) {
-            $invoiceRouteParameters['access_token'] = $this->booking->guest_access_token;
-        }
-
         return [
             'id' => $this->id,
             'booking_id' => $this->booking_id,
@@ -35,7 +29,10 @@ class PaymentResource extends JsonResource
             'invoice_number' => $this->invoice_number,
             'invoice_generated_at' => $this->invoice_generated_at,
             'invoice_download_url' => $this->invoice_pdf_path !== null
-                ? route('payments.invoice.download', $invoiceRouteParameters)
+                ? route('payments.invoice.download', array_filter([
+                    'payment' => $this->resource,
+                    'access_token' => $this->booking?->guest_access_token,
+                ]))
                 : null,
             'paid_at' => $this->paid_at,
             'failed_at' => $this->failed_at,

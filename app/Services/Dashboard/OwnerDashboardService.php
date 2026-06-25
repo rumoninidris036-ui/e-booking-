@@ -304,7 +304,7 @@ class OwnerDashboardService
                 'status' => $payment->status,
                 'paid_at' => $payment->paid_at?->format('Y-m-d H:i'),
                 'invoice_number' => $payment->invoice_number,
-                'invoice_download_url' => $payment->invoice_pdf_path !== null ? route('payments.invoice.download', $payment) : null,
+                'invoice_download_url' => $payment->invoice_pdf_path !== null ? route('payments.invoice.download', ['payment' => $payment]) : null,
             ])
             ->all();
     }
