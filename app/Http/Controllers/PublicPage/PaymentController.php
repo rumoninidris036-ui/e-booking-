@@ -86,6 +86,9 @@ class PaymentController extends Controller
 
         if ($payment->status === Payment::STATUS_SUCCESS) {
             $payment = $this->invoiceService->generateForPayment($payment);
+
+            app(\App\Services\Notifications\BookingPaymentWhatsAppNotificationService::class)
+                ->sendPaymentSuccessNotification($payment);
         }
 
         if (! $request->expectsJson()) {
@@ -198,15 +201,19 @@ class PaymentController extends Controller
     {
         $booking->loadMissing('field:id,owner_id');
 
-        if ($request->user()?->hasRole('owner') === true && $booking->field?->owner_id === $request->user()->id) {
+        $token = (string) $request->query('access_token', $request->input('access_token', ''));
+
+        if ($booking->user_id === null) {
+            abort_unless($booking->guest_access_token !== null && hash_equals($booking->guest_access_token, $token), 403);
+
             return;
         }
 
-        if ($booking->user_id === null) {
-            $token = (string) $request->query('access_token', $request->input('access_token', ''));
+        if ($booking->guest_access_token !== null && $token !== '' && hash_equals($booking->guest_access_token, $token)) {
+            return;
+        }
 
-            abort_unless($booking->guest_access_token !== null && hash_equals($booking->guest_access_token, $token), 403);
-
+        if ($request->user()?->hasRole('owner') === true && $booking->field?->owner_id === $request->user()->id) {
             return;
         }
 

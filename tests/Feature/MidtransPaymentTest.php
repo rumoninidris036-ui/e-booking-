@@ -123,9 +123,12 @@ class MidtransPaymentTest extends TestCase
             'start_time' => '08:00',
         ]);
 
-        $payment = Payment::query()->firstOrFail();
+        $payment = Payment::query()->with('booking')->firstOrFail();
 
-        $response->assertRedirect(route('payments.show', $payment));
+        $response->assertRedirect(route('payments.show', [
+            'payment' => $payment,
+            'access_token' => $payment->booking->guest_access_token,
+        ]));
 
         $this->actingAs($user)
             ->get(route('payments.show', $payment))
@@ -326,7 +329,7 @@ class MidtransPaymentTest extends TestCase
         Http::assertSent(function (Request $request) use ($payment): bool {
             return $request->url() === 'https://api.flowkirim.test/api/whatsapp/messages/media'
                 && $request['session_id'] === 'session-123'
-                && $request['to'] === '6281234567890'
+                && $request['to'] === '6281234567890@s.whatsapp.net'
                 && $request['type'] === 'document'
                 && str_contains((string) $request['media_url'], route('payments.invoice.download', [
                     'payment' => $payment,
@@ -363,6 +366,7 @@ class MidtransPaymentTest extends TestCase
             'booking_code' => 'BK-2026-0001',
             'badminton_field_id' => $field->id,
             'user_id' => $user->id,
+            'guest_access_token' => 'guest-token-456',
             'booking_date' => '2026-05-21',
             'start_time' => '08:00:00',
             'end_time' => '09:00:00',
@@ -388,10 +392,18 @@ class MidtransPaymentTest extends TestCase
 
         $payment->refresh();
 
-        $response = $this->actingAs($user)->get(route('payments.invoice.download', $payment));
+        $response = $this->get(route('payments.invoice.download', [
+            'payment' => $payment,
+            'access_token' => $booking->guest_access_token,
+        ]));
 
         $response->assertOk()
             ->assertHeader('content-type', 'application/pdf');
+
+        $this->assertStringContainsString(
+            'attachment',
+            (string) $response->headers->get('content-disposition'),
+        );
     }
 
     public function test_failed_payment_page_still_offers_continue_to_pay(): void
