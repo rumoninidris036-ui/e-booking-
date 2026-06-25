@@ -38,6 +38,30 @@ class BookingLifecycleTest extends TestCase
             ->assertJsonPath('data.booking_code', 'BK-2026-0001');
     }
 
+    public function test_booking_creation_sets_a_ten_minute_payment_window(): void
+    {
+        $user = User::factory()->create();
+        $bookingDate = now()->addDay()->format('Y-m-d');
+        $field = BadmintonField::query()->create([
+            'name' => 'Arena Window',
+            'slug' => 'arena-window',
+            'price_per_hour' => 80000,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user)->postJson(route('public.fields.bookings.store', [
+            'slug' => $field->slug,
+        ]), [
+            'booking_date' => $bookingDate,
+            'start_time' => '08:00',
+        ])->assertCreated();
+
+        $booking = Booking::query()->firstOrFail();
+
+        $this->assertNotNull($booking->expires_at);
+        $this->assertSame(10, $booking->created_at->diffInMinutes($booking->expires_at));
+    }
+
     public function test_user_can_view_booking_history_and_detail(): void
     {
         $user = User::factory()->create();
@@ -110,6 +134,35 @@ class BookingLifecycleTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('data.status', Booking::STATUS_CANCELLED)
             ->assertJsonPath('data.cancellation_reason', 'Ada keperluan mendadak');
+    }
+
+    public function test_artisan_command_auto_cancels_expired_pending_bookings(): void
+    {
+        $field = BadmintonField::query()->create([
+            'name' => 'Arena Expired',
+            'slug' => 'arena-expired',
+            'price_per_hour' => 60000,
+            'is_active' => true,
+        ]);
+
+        $booking = Booking::query()->create([
+            'booking_code' => 'BK-2026-0001',
+            'badminton_field_id' => $field->id,
+            'booking_date' => now()->addDay()->format('Y-m-d'),
+            'start_time' => '09:00:00',
+            'end_time' => '10:00:00',
+            'status' => Booking::STATUS_PENDING,
+            'expires_at' => now()->subMinute(),
+            'price_per_hour' => 60000,
+        ]);
+
+        $this->artisan('bookings:expire-pending')->assertExitCode(0);
+
+        $booking->refresh();
+
+        $this->assertSame(Booking::STATUS_CANCELLED, $booking->status);
+        $this->assertSame('Auto-cancelled after 10 minutes without payment.', $booking->cancellation_reason);
+        $this->assertNotNull($booking->cancelled_at);
     }
 
     public function test_owner_can_view_and_update_booking_status(): void

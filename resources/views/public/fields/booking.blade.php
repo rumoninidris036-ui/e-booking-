@@ -163,25 +163,7 @@
             ];
         @endphp
 
-        <header class="fixed top-0 z-50 w-full border-b border-white/10 bg-surface/80 shadow-lg backdrop-blur-xl">
-            <nav class="flex h-16 w-full items-center justify-between px-[20px] md:px-[40px]">
-                <div class="flex items-center gap-8">
-                    <a href="{{ url('/') }}" class="font-headline-md text-headline-md font-extrabold tracking-tighter text-secondary">SmashCourt</a>
-                    <div class="hidden items-center gap-6 md:flex">
-                        <a class="border-b-2 border-secondary pb-1 font-label-bold text-label-bold text-secondary transition-all duration-200" href="{{ url('/#arenas') }}">Courts</a>
-                        <a class="font-label-bold text-label-bold text-on-surface-variant transition-all duration-200 hover:text-primary" href="{{ route('bookings.index') }}">My Bookings</a>
-                        <a class="font-label-bold text-label-bold text-on-surface-variant transition-all duration-200 hover:text-primary" href="{{ route('public.fields.show', ['slug' => $field->slug]) }}">Court Detail</a>
-                    </div>
-                </div>
-                <div class="flex items-center gap-4">
-                    @auth
-                        <a href="{{ \App\Support\RoleHome::urlFor(auth()->user()) }}" class="material-symbols-outlined text-on-surface-variant transition-transform hover:text-primary active:scale-95">account_circle</a>
-                    @else
-                        <a href="{{ route('login') }}" class="rounded-full border border-white/10 px-4 py-2 font-label-bold text-label-bold uppercase text-on-surface-variant transition-colors hover:text-primary">Login</a>
-                    @endauth
-                </div>
-            </nav>
-        </header>
+        <x-public-navbar />
 
         <main class="pb-24 pt-16">
             <section class="relative flex h-[409px] items-end overflow-hidden md:h-[512px]">

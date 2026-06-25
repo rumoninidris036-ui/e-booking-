@@ -123,62 +123,51 @@
                 transform: translateY(2px);
                 box-shadow: 0 2px 0 0 #3c4d00;
             }
+
+            .detail-link {
+                transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+            }
+
+            .detail-link:hover {
+                transform: translateY(-1px);
+                border-color: #c3f400;
+                background: rgba(195, 244, 0, 0.12);
+                color: #c3f400;
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            }
+
+            .detail-link:active {
+                transform: translateY(1px);
+                box-shadow: none;
+            }
         </style>
     </head>
     <body class="overflow-x-hidden bg-surface font-body-md text-on-surface">
         @php
             $fallbackImage = 'https://lh3.googleusercontent.com/aida-public/AB6AXuB59syCrEtoscrLtnVVbKFlVvYLgoQiQKa20vyksDs2Eq_taI-K_yu4U1RCbSt4osetGfsidCQzQ8GdqVYnQld6BAUziQKOZlTa0egECgMHdPUNRxGzg0vzY83Pk2t-b5uU76rsMj4_KzJ4XhaJCMRir6D7Gl3dKAd_U-OBM70re_uqNRz2R8_ZnNHFoaz_Pnb8OYxRGrJDt-jhH70Vx1zn_kQxXIPQRDfP0k6p5dX1gvO_Z_Ko_l1JAOXd_KBEzS8kf9xgIIklZ2bY';
-            $featuredCourts = collect($homepageFields ?? [])->map(fn ($field) => [
-                'name' => $field->name,
-                'slug' => $field->slug,
-                'rating' => '4.9',
-                'location' => $field->address ?: 'Lokasi tersedia',
-                'price' => 'Rp'.number_format((float) $field->price_per_hour, 0, ',', '.').'/jam',
-                'badge' => 'Available',
-                'badge_class' => 'bg-secondary-container/90 text-on-secondary',
-                'image' => $field->cover_image_url ?: $fallbackImage,
-            ])->values();
+            $recommendedCourts = collect($recommendedCourts ?? [])->map(function (array $recommendation) use ($fallbackImage): array {
+                $field = $recommendation['field'];
+
+                return [
+                    'name' => $field->name,
+                    'slug' => $field->slug,
+                    'score' => (float) $recommendation['score'],
+                    'rating_average' => (float) ($field->ratings_avg_score ?? 0),
+                    'location' => $field->address ?: 'Lokasi tersedia',
+                    'price' => 'Rp'.number_format((float) $field->price_per_hour, 0, ',', '.').'/jam',
+                    'badge' => 'Recommended',
+                    'badge_class' => 'bg-secondary-container/90 text-on-secondary',
+                    'image' => $field->cover_image_url ?: $fallbackImage,
+                    'reasons' => $recommendation['reasons'] ?? [],
+                    'facilities_count' => $field->facilities->count(),
+                ];
+            })->values();
 
             $primaryCta = route('public.fields.index');
             $secondaryCta = auth()->check() ? \App\Support\RoleHome::urlFor(auth()->user()) : route('login');
         @endphp
 
-        <nav class="fixed top-0 z-50 w-full border-b border-white/10 bg-surface/80 shadow-sm backdrop-blur-md">
-            <div class="mx-auto flex max-w-7xl items-center justify-between px-gutter py-4 md:px-margin-desktop">
-                <a href="{{ url('/') }}" class="font-headline-md text-headline-md font-black italic tracking-tighter text-secondary-container">
-                    SMASHCOURT
-                </a>
-
-                <div class="hidden items-center gap-8 md:flex">
-                    <a class="border-b-2 border-secondary-container pb-1 font-body-md text-body-md font-bold text-secondary-container" href="{{ route('public.fields.index') }}">
-                        Explore Courts
-                    </a>
-                    <a class="font-body-md text-body-md text-on-surface transition-colors hover:text-secondary-container" href="#benefits">
-                        Memberships
-                    </a>
-                    <a class="font-body-md text-body-md text-on-surface transition-colors hover:text-secondary-container" href="#arenas">
-                        Featured
-                    </a>
-
-                </div>
-
-                <div class="flex items-center gap-4">
-                    @guest
-                        <a href="{{ route('login') }}" class="hidden font-body-md text-body-md text-on-surface transition-colors hover:text-secondary-container md:block">
-                            Login
-                        </a>
-                    @else
-                        <a href="{{ \App\Support\RoleHome::urlFor(auth()->user()) }}" class="hidden font-body-md text-body-md text-on-surface transition-colors hover:text-secondary-container md:block">
-                            Dashboard
-                        </a>
-                    @endguest
-
-                    <a href="{{ $primaryCta }}" class="rounded-full bg-secondary-container px-6 py-2.5 font-label-bold text-label-bold uppercase text-on-secondary btn-tactile">
-                        Explore Court
-                    </a>
-                </div>
-            </div>
-        </nav>
+        <x-public-navbar />
 
         <section class="relative flex min-h-[921px] items-center pt-20">
             <div class="absolute inset-0 z-0 overflow-hidden">
@@ -208,7 +197,7 @@
                         </a>
 
                         <a href="#arenas" class="flex items-center justify-center gap-3 rounded-lg border-2 border-primary px-10 py-5 font-headline-md text-headline-md uppercase text-primary transition-all hover:bg-primary/10">
-                            Featured Courts
+                            Recommended Courts
                         </a>
                     </div>
                 </div>
@@ -297,7 +286,7 @@
         <section id="arenas" class="mx-auto max-w-7xl px-gutter py-24 md:px-margin-desktop">
             <div class="mb-12 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
                 <div>
-                    <h2 class="mb-2 font-headline-lg text-headline-lg uppercase italic tracking-tight text-secondary">Explore Courts</h2>
+                    <h2 class="mb-2 font-headline-lg text-headline-lg uppercase italic tracking-tight text-secondary">Recommended Courts</h2>
                     <div class="h-1 w-24 bg-secondary-container"></div>
                 </div>
 
@@ -307,13 +296,16 @@
             </div>
 
             <div class="grid grid-cols-1 gap-base md:grid-cols-2 md:gap-8 lg:grid-cols-3">
-                @forelse ($featuredCourts as $court)
+                @forelse ($recommendedCourts as $court)
                     <article class="group overflow-hidden rounded-xl border border-white/5 bg-surface-container shadow-xl transition-all hover:border-primary/30">
                         <a href="{{ route('public.fields.show', ['slug' => $court['slug']]) }}" class="block">
                             <div class="relative h-64 overflow-hidden">
                                 <img class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" src="{{ $court['image'] }}" alt="{{ $court['name'] }} court">
                                 <div class="absolute left-4 top-4">
                                     <span class="rounded px-3 py-1 font-label-bold text-label-bold uppercase backdrop-blur-sm {{ $court['badge_class'] }}">{{ $court['badge'] }}</span>
+                                </div>
+                                <div class="absolute bottom-4 right-4 rounded-full bg-surface/80 px-3 py-1 text-[12px] font-label-bold text-secondary-container">
+                                    Score {{ number_format($court['score'], 0) }}
                                 </div>
                             </div>
                         </a>
@@ -322,12 +314,12 @@
                                 <a href="{{ route('public.fields.show', ['slug' => $court['slug']]) }}" class="font-headline-md text-headline-md text-secondary hover:text-secondary-container">
                                     {{ $court['name'] }}
                                 </a>
-                                <div class="flex items-center text-secondary-container">
-                                    <span class="material-symbols-outlined !text-lg">star</span>
-                                    <span class="ml-1 font-label-bold text-label-bold">{{ $court['rating'] }}</span>
+                                <div class="flex items-center gap-1 rounded-full border border-secondary-container/20 px-3 py-1 text-secondary-container">
+                                    <span class="material-symbols-outlined !text-lg">verified</span>
+                                    <span class="font-label-bold text-label-bold">Match</span>
                                 </div>
                             </div>
-                            <div class="mb-6 flex items-center gap-4">
+                            <div class="mb-4 flex items-center gap-4">
                                 <div class="flex items-center gap-1 text-on-surface-variant">
                                     <span class="material-symbols-outlined !text-lg">location_on</span>
                                     <span class="text-label-bold">{{ $court['location'] }}</span>
@@ -337,7 +329,20 @@
                                     <span class="font-bold text-secondary">{{ $court['price'] }}</span>
                                 </div>
                             </div>
-                            <a href="{{ route('public.fields.show', ['slug' => $court['slug']]) }}" class="block w-full rounded {{ $loop->last ? 'bg-secondary-container text-on-secondary btn-tactile' : 'bg-surface-variant text-on-surface hover:bg-secondary-container hover:text-on-secondary' }} py-3 text-center font-label-bold text-label-bold uppercase transition-colors">
+                            <div class="mb-5 flex items-center gap-2 text-secondary-container">
+                                <span class="material-symbols-outlined !text-lg">star</span>
+                                <span class="font-label-bold text-label-bold">{{ number_format($court['rating_average'], 1) }}</span>
+                            </div>
+                            @if (! empty($court['reasons']))
+                                <div class="mb-5 flex flex-wrap gap-2">
+                                    @foreach (array_slice($court['reasons'], 0, 2) as $reason)
+                                        <span class="rounded-full border border-white/10 bg-surface-container-low px-3 py-1 text-[12px] text-on-surface-variant">
+                                            {{ $reason }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @endif
+                            <a href="{{ route('public.fields.show', ['slug' => $court['slug']]) }}" class="detail-link block w-full rounded bg-surface-variant py-3 text-center font-label-bold text-label-bold uppercase text-on-surface">
                                 View Details
                             </a>
                         </div>

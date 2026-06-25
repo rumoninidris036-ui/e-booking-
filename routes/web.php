@@ -7,28 +7,36 @@ use App\Http\Controllers\PublicPage\BadmintonFieldController as PublicBadmintonF
 use App\Http\Controllers\PublicPage\BookingController as PublicBookingController;
 use App\Http\Controllers\PublicPage\FieldBookingPageController as PublicFieldBookingPageController;
 use App\Http\Controllers\PublicPage\FieldScheduleController as PublicFieldScheduleController;
+use App\Http\Controllers\PublicPage\GuestRatingController as PublicGuestRatingController;
 use App\Http\Controllers\PublicPage\PaymentController as PublicPaymentController;
 use App\Http\Controllers\Webhooks\MidtransWebhookController;
-use App\Models\BadmintonField;
+use App\Services\Recommendations\FieldRecommendationCriteria;
+use App\Services\Recommendations\FieldRecommendationService;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
+    $recommendationService = app(FieldRecommendationService::class);
+
     return view('welcome', [
-        'homepageFields' => BadmintonField::query()
-            ->with(['facilities', 'owner:id,name'])
-            ->where('is_active', true)
-            ->latest()
-            ->limit(3)
-            ->get(),
+        'recommendedCourts' => $recommendationService->recommend(
+            FieldRecommendationCriteria::fromArray(['limit' => 3], 3)
+        ),
     ]);
 });
 
 Route::get('/fields', [PublicBadmintonFieldController::class, 'index'])->name('public.fields.index');
 Route::get('/fields/markers', [PublicBadmintonFieldController::class, 'markers'])->name('public.fields.markers');
+Route::get('/fields/recommendations', [PublicBadmintonFieldController::class, 'recommendations'])->name('public.fields.recommendations');
 Route::get('/fields/{slug}/booking', [PublicFieldBookingPageController::class, 'show'])->name('public.fields.booking');
 Route::get('/fields/{slug}/schedule', [PublicFieldScheduleController::class, 'show'])->name('public.fields.schedule');
 Route::get('/fields/{slug}', [PublicBadmintonFieldController::class, 'show'])->name('public.fields.show');
 Route::post('/fields/{slug}/bookings', [PublicBookingController::class, 'store'])->name('public.fields.bookings.store');
+Route::get('/guest-rating/{booking}', [PublicGuestRatingController::class, 'create'])
+    ->middleware('signed')
+    ->name('public.rating.create');
+Route::post('/guest-rating/{booking}', [PublicGuestRatingController::class, 'store'])
+    ->middleware('signed')
+    ->name('public.rating.store');
 Route::post('/bookings/{booking}/payments', [PublicPaymentController::class, 'store'])
     ->middleware('throttle:payment-create')
     ->name('payments.store');

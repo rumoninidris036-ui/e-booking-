@@ -11,11 +11,14 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class BookingService
 {
+    public const EXPIRED_PENDING_BOOKING_REASON = 'Auto-cancelled after 10 minutes without payment.';
+
     public function __construct(
         private readonly FieldScheduleService $fieldScheduleService,
     ) {}
@@ -48,10 +51,12 @@ class BookingService
 
         try {
             return DB::transaction(function () use ($field, $user, $customer, $scheduleDate, $slotStart, $slotEnd): Booking {
+                $this->expireOverdueBookingsForFieldOnDate($field->id, $scheduleDate->toDateString());
+
                 $conflictExists = Booking::query()
                     ->where('badminton_field_id', $field->id)
                     ->whereDate('booking_date', $scheduleDate->toDateString())
-                    ->whereIn('status', Booking::ACTIVE_SLOT_STATUSES)
+                    ->blocksSchedule()
                     ->where('start_time', '<', $slotEnd->format('H:i:s'))
                     ->where('end_time', '>', $slotStart->format('H:i:s'))
                     ->lockForUpdate()
@@ -63,7 +68,7 @@ class BookingService
                     ]);
                 }
 
-                return Booking::query()->create([
+                $bookingAttributes = [
                     'booking_code' => $this->generateBookingCode($scheduleDate->year),
                     'badminton_field_id' => $field->id,
                     'user_id' => $user?->id,
@@ -76,7 +81,13 @@ class BookingService
                     'end_time' => $slotEnd->format('H:i:s'),
                     'status' => Booking::STATUS_PENDING,
                     'price_per_hour' => $field->price_per_hour,
-                ])->load(['field:id,name,slug', 'user:id,name,email']);
+                ];
+
+                if (Schema::hasColumn((new Booking())->getTable(), 'expires_at')) {
+                    $bookingAttributes['expires_at'] = now()->addMinutes(Booking::PENDING_PAYMENT_TIMEOUT_MINUTES);
+                }
+
+                return Booking::query()->create($bookingAttributes)->load(['field:id,name,slug', 'user:id,name,email']);
             });
         } catch (QueryException $exception) {
             if ($this->isUniqueSlotViolation($exception)) {
@@ -109,25 +120,16 @@ class BookingService
             ]);
         }
 
-        $booking->forceFill([
-            'status' => Booking::STATUS_CANCELLED,
-            'cancellation_reason' => $reason,
-            'cancelled_at' => now(),
-        ])->save();
-
-        $booking->payments()
-            ->where('status', Payment::STATUS_PENDING)
-            ->update([
-                'status' => Payment::STATUS_FAILED,
-                'failed_at' => now(),
-            ]);
-
-        return $booking->fresh(['field:id,name,slug', 'user:id,name,email']);
+        return $this->markBookingAsCancelled($booking, $reason);
     }
 
     public function updateStatus(Booking $booking, string $status): Booking
     {
         $this->assertValidTransition($booking, $status);
+
+        if ($status === Booking::STATUS_CANCELLED) {
+            return $this->markBookingAsCancelled($booking);
+        }
 
         $attributes = [
             'status' => $status,
@@ -141,22 +143,60 @@ class BookingService
             $attributes['finished_at'] = now();
         }
 
-        if ($status === Booking::STATUS_CANCELLED) {
-            $attributes['cancelled_at'] = now();
-        }
-
         $booking->forceFill($attributes)->save();
 
-        if ($status === Booking::STATUS_CANCELLED) {
-            $booking->payments()
-                ->where('status', Payment::STATUS_PENDING)
-                ->update([
-                    'status' => Payment::STATUS_FAILED,
-                    'failed_at' => now(),
-                ]);
+        return $booking->fresh(['field:id,name,slug', 'user:id,name,email']);
+    }
+
+    public function expirePendingBooking(Booking $booking): Booking
+    {
+        if ($booking->status !== Booking::STATUS_PENDING) {
+            return $booking->fresh(['field:id,name,slug', 'user:id,name,email']);
         }
 
-        return $booking->fresh(['field:id,name,slug', 'user:id,name,email']);
+        return $this->markBookingAsCancelled($booking, self::EXPIRED_PENDING_BOOKING_REASON);
+    }
+
+    public function expireOverduePendingBookings(): int
+    {
+        if (! Schema::hasColumn((new Booking())->getTable(), 'expires_at')) {
+            return 0;
+        }
+
+        return DB::transaction(function (): int {
+            $expiredBookings = Booking::query()
+                ->where('status', Booking::STATUS_PENDING)
+                ->whereNotNull('expires_at')
+                ->where('expires_at', '<=', now())
+                ->lockForUpdate()
+                ->get();
+
+            foreach ($expiredBookings as $booking) {
+                $this->markBookingAsCancelled($booking, self::EXPIRED_PENDING_BOOKING_REASON);
+            }
+
+            return $expiredBookings->count();
+        });
+    }
+
+    private function expireOverdueBookingsForFieldOnDate(int $fieldId, string $bookingDate): void
+    {
+        if (! Schema::hasColumn((new Booking())->getTable(), 'expires_at')) {
+            return;
+        }
+
+        $expiredBookings = Booking::query()
+            ->where('badminton_field_id', $fieldId)
+            ->whereDate('booking_date', $bookingDate)
+            ->where('status', Booking::STATUS_PENDING)
+            ->whereNotNull('expires_at')
+            ->where('expires_at', '<=', now())
+            ->lockForUpdate()
+            ->get();
+
+        foreach ($expiredBookings as $booking) {
+            $this->markBookingAsCancelled($booking, self::EXPIRED_PENDING_BOOKING_REASON);
+        }
     }
 
     private function generateBookingCode(int $year): string
@@ -192,5 +232,23 @@ class BookingService
                 'status' => [sprintf('Booking status cannot change from %s to %s.', $booking->status, $targetStatus)],
             ]);
         }
+    }
+
+    private function markBookingAsCancelled(Booking $booking, ?string $reason = null): Booking
+    {
+        $booking->forceFill([
+            'status' => Booking::STATUS_CANCELLED,
+            'cancellation_reason' => $reason,
+            'cancelled_at' => now(),
+        ])->save();
+
+        $booking->payments()
+            ->where('status', Payment::STATUS_PENDING)
+            ->update([
+                'status' => Payment::STATUS_FAILED,
+                'failed_at' => now(),
+            ]);
+
+        return $booking->fresh(['field:id,name,slug', 'user:id,name,email']);
     }
 }

@@ -129,27 +129,7 @@
             ];
         @endphp
 
-        <nav class="glass-nav fixed top-0 z-50 w-full shadow-sm">
-            <div class="mx-auto flex max-w-7xl items-center justify-between px-gutter py-4 md:px-margin-desktop">
-                <div class="flex items-center gap-2">
-                    <a href="{{ url('/') }}" class="font-headline-md text-headline-md font-black italic tracking-tighter text-secondary-container">SMASHCOURT</a>
-                </div>
-                <div class="hidden items-center gap-8 md:flex">
-                    <a class="border-b-2 border-secondary-container pb-1 font-body-md text-body-md font-bold text-secondary-container" href="{{ url('/') }}">Find Courts</a>
-                    <a class="font-body-md text-body-md text-on-surface transition-colors hover:text-secondary-container" href="#facilities">Facilities</a>
-                    <a class="font-body-md text-body-md text-on-surface transition-colors hover:text-secondary-container" href="#location">Location</a>
-                    <a class="font-body-md text-body-md text-on-surface transition-colors hover:text-secondary-container" href="#cta">Booking</a>
-                </div>
-                <div class="flex items-center gap-4">
-                    @guest
-                        <a href="{{ route('login') }}" class="hidden font-label-bold text-label-bold uppercase text-on-surface transition-colors hover:text-secondary-container md:block">Login</a>
-                    @else
-                        <a href="{{ \App\Support\RoleHome::urlFor(auth()->user()) }}" class="hidden font-label-bold text-label-bold uppercase text-on-surface transition-colors hover:text-secondary-container md:block">Dashboard</a>
-                    @endguest
-                    <a href="{{ $primaryCta }}" class="rounded-lg bg-secondary-container px-6 py-2 font-label-bold text-label-bold uppercase text-on-secondary neon-glow transition-transform hover:scale-105 active:scale-95">Book Now</a>
-                </div>
-            </div>
-        </nav>
+        <x-public-navbar />
 
         <main class="pt-20">
             <section class="mx-auto max-w-7xl px-gutter py-8 md:px-margin-desktop">
@@ -265,6 +245,78 @@
                             Open Booking Page
                             <span class="material-symbols-outlined">arrow_forward</span>
                         </a>
+                    </div>
+                </div>
+            </section>
+
+            @php
+                $ratingAverage = (float) ($field->ratings_avg_score ?? 0);
+                $ratingCount = $field->ratings?->count() ?? 0;
+            @endphp
+
+            <section id="ratings" class="mx-auto max-w-7xl px-gutter pb-24 md:px-margin-desktop">
+                <div class="rounded-3xl border border-white/10 bg-surface-container p-8 md:p-10">
+                    <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+                        <div>
+                            <p class="mb-2 font-label-bold text-label-bold uppercase tracking-widest text-secondary-container">Guest Ratings</p>
+                            <h3 class="font-headline-md text-headline-md text-secondary">Apa kata tamu setelah booking?</h3>
+                            <p class="mt-3 max-w-2xl text-on-surface-variant">
+                                Rating ini dikirim oleh tamu yang menerima tautan signed setelah booking selesai. Satu booking hanya bisa mengirim satu rating.
+                            </p>
+                        </div>
+
+                        <div class="rounded-2xl border border-secondary-container/20 bg-secondary-container/10 px-5 py-4 text-secondary">
+                            <div class="flex items-center gap-3">
+                                <span class="font-headline-lg text-headline-lg">{{ number_format($ratingAverage, 1) }}</span>
+                                <div class="flex items-center gap-1 text-secondary-container">
+                                    @for ($i = 1; $i <= 5; $i++)
+                                        @if ($i <= floor($ratingAverage))
+                                            <span class="material-symbols-outlined !text-xl">star</span>
+                                        @elseif ($i === (int) floor($ratingAverage) + 1 && ($ratingAverage - floor($ratingAverage)) >= 0.5)
+                                            <span class="material-symbols-outlined !text-xl">star_half</span>
+                                        @else
+                                            <span class="material-symbols-outlined !text-xl">star_outline</span>
+                                        @endif
+                                    @endfor
+                                </div>
+                            </div>
+                            <p class="mt-2 text-[12px] uppercase tracking-[0.2em] text-on-surface-variant">
+                                {{ $ratingCount }} rating{{ $ratingCount === 1 ? '' : 's' }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                        @forelse ($field->ratings as $rating)
+                            <article class="rounded-2xl border border-white/10 bg-surface-container-low p-5 shadow-lg">
+                                <div class="flex items-start justify-between gap-4">
+                                    <div>
+                                        <p class="font-headline-md text-headline-md text-secondary">
+                                            {{ $rating->booking?->customer_name ?: $rating->booking?->user?->name ?: 'Guest' }}
+                                        </p>
+                                        <p class="mt-1 text-[12px] uppercase tracking-[0.18em] text-on-surface-variant">
+                                            {{ $rating->created_at?->format('d M Y, H:i') }}
+                                        </p>
+                                    </div>
+
+                                    <div class="flex items-center gap-1 text-secondary-container">
+                                        @for ($i = 1; $i <= 5; $i++)
+                                            <span class="material-symbols-outlined !text-lg">
+                                                {{ $i <= (int) $rating->score ? 'star' : 'star_outline' }}
+                                            </span>
+                                        @endfor
+                                    </div>
+                                </div>
+
+                                <p class="mt-4 text-on-surface-variant">
+                                    {{ $rating->comment ?: 'Tidak ada komentar tambahan.' }}
+                                </p>
+                            </article>
+                        @empty
+                            <div class="col-span-full rounded-2xl border border-dashed border-outline-variant bg-surface-container-low p-8 text-center text-on-surface-variant">
+                                Belum ada rating yang masuk. Nanti setelah tamu memakai signed link, ulasan akan tampil di sini.
+                            </div>
+                        @endforelse
                     </div>
                 </div>
             </section>

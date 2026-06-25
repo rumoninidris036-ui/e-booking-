@@ -7,6 +7,7 @@ namespace App\Services\Payments;
 use App\Contracts\Payments\MidtransGateway;
 use App\Models\Booking;
 use App\Models\Payment;
+use App\Services\Booking\BookingService;
 use App\Services\Invoices\InvoiceService;
 use App\Services\Notifications\BookingPaymentWhatsAppNotificationService;
 use Illuminate\Support\Facades\DB;
@@ -20,10 +21,21 @@ class PaymentService
         private readonly MidtransGateway $midtransGateway,
         private readonly InvoiceService $invoiceService,
         private readonly BookingPaymentWhatsAppNotificationService $whatsAppNotificationService,
+        private readonly BookingService $bookingService,
     ) {}
 
     public function createOrGetSnapPayment(Booking $booking): Payment
     {
+        $latestBooking = $booking->fresh();
+
+        if ($latestBooking !== null && $latestBooking->isPendingPaymentExpired()) {
+            $this->bookingService->expirePendingBooking($latestBooking);
+
+            throw ValidationException::withMessages([
+                'booking' => ['This booking has expired because payment was not completed within 10 minutes. Please book the slot again.'],
+            ]);
+        }
+
         return DB::transaction(function () use ($booking): Payment {
             $lockedBooking = Booking::query()
                 ->with(['field', 'user'])
@@ -219,10 +231,16 @@ class PaymentService
                 'failed_at' => $resolvedStatus === Payment::STATUS_FAILED ? ($lockedPayment->failed_at ?? now()) : $lockedPayment->failed_at,
             ])->save();
 
-            if ($resolvedStatus === Payment::STATUS_SUCCESS && $lockedPayment->booking->status === Booking::STATUS_PENDING) {
-                $lockedPayment->booking->forceFill([
+            $booking = $lockedPayment->booking;
+
+            if ($booking->status === Booking::STATUS_PENDING && $booking->isPendingPaymentExpired()) {
+                $booking = $this->bookingService->expirePendingBooking($booking);
+            }
+
+            if ($resolvedStatus === Payment::STATUS_SUCCESS && $booking->status === Booking::STATUS_PENDING) {
+                $booking->forceFill([
                     'status' => Booking::STATUS_PAID,
-                    'paid_at' => $lockedPayment->booking->paid_at ?? now(),
+                    'paid_at' => $booking->paid_at ?? now(),
                 ])->save();
             }
 
@@ -285,6 +303,14 @@ class PaymentService
             $customerDetails['phone'] = $booking->customer_contact;
         }
 
+        $expiryStartTime = now()->format('Y-m-d H:i:s O');
+        $expiryDurationMinutes = (int) max(
+            1,
+            $booking->expires_at !== null
+                ? now()->diffInMinutes($booking->expires_at, false)
+                : Booking::PENDING_PAYMENT_TIMEOUT_MINUTES,
+        );
+
         $returnRouteParameters = array_filter([
             'payment' => $payment,
             'access_token' => $booking->guest_access_token,
@@ -322,6 +348,11 @@ class PaymentService
                     ...$returnRouteParameters,
                     'callback_state' => 'error',
                 ]),
+            ],
+            'expiry' => [
+                'start_time' => $expiryStartTime,
+                'unit' => 'minute',
+                'duration' => $expiryDurationMinutes,
             ],
         ];
     }
@@ -447,10 +478,16 @@ class PaymentService
 
         $payment->forceFill($attributes)->save();
 
-        if ($resolvedStatus === Payment::STATUS_SUCCESS && $payment->booking->status === Booking::STATUS_PENDING) {
-            $payment->booking->forceFill([
+        $booking = $payment->booking;
+
+        if ($booking->status === Booking::STATUS_PENDING && $booking->isPendingPaymentExpired()) {
+            $booking = $this->bookingService->expirePendingBooking($booking);
+        }
+
+        if ($resolvedStatus === Payment::STATUS_SUCCESS && $booking->status === Booking::STATUS_PENDING) {
+            $booking->forceFill([
                 'status' => Booking::STATUS_PAID,
-                'paid_at' => $payment->booking->paid_at ?? now(),
+                'paid_at' => $booking->paid_at ?? now(),
             ])->save();
         }
 

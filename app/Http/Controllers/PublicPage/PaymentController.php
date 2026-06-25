@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PaymentController extends Controller
@@ -28,6 +29,14 @@ class PaymentController extends Controller
     public function store(Request $request, Booking $booking): JsonResponse|RedirectResponse
     {
         $this->authorizePaymentAccess($request, $booking);
+
+        if ($booking->isPendingPaymentExpired()) {
+            $booking = app(\App\Services\Booking\BookingService::class)->expirePendingBooking($booking);
+
+            throw ValidationException::withMessages([
+                'booking' => ['This booking has expired because payment was not completed within 10 minutes. Please book the slot again.'],
+            ]);
+        }
 
         $payment = $this->paymentService->createOrGetSnapPayment(
             $booking->loadMissing(['field', 'user']),
@@ -56,6 +65,12 @@ class PaymentController extends Controller
         $this->authorizePaymentAccess($request, $payment->booking);
 
         $payment->load(['booking.field', 'booking.user']);
+        $bookingExpired = false;
+
+        if ($payment->booking->status === Booking::STATUS_PENDING && $payment->booking->isPendingPaymentExpired()) {
+            $payment->booking = app(\App\Services\Booking\BookingService::class)->expirePendingBooking($payment->booking);
+            $bookingExpired = true;
+        }
 
         if ($payment->provider === 'midtrans' && $payment->status !== Payment::STATUS_SUCCESS) {
             try {
@@ -78,6 +93,8 @@ class PaymentController extends Controller
                 'payment' => $payment,
                 'booking' => $payment->booking,
                 'field' => $payment->booking->field,
+                'bookingExpiresAt' => $payment->booking->expires_at?->toIso8601String(),
+                'bookingExpired' => $bookingExpired,
                 'snapRedirectUrl' => $this->trustedSnapRedirectUrl($payment->snap_redirect_url),
                 'paymentUrl' => $this->paymentUrl($payment),
                 'paymentStoreUrl' => $this->paymentStoreUrl($payment->booking),
