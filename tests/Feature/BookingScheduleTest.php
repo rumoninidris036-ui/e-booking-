@@ -154,6 +154,50 @@ class BookingScheduleTest extends TestCase
         $this->assertDatabaseCount('bookings', 1);
     }
 
+    public function test_expired_pending_bookings_do_not_block_the_slot_anymore(): void
+    {
+        $firstUser = User::factory()->create();
+        $secondUser = User::factory()->create();
+        $bookingDate = now()->addDay()->format('Y-m-d');
+        $field = BadmintonField::query()->create([
+            'name' => 'Arena Expired Slot',
+            'slug' => 'arena-expired-slot',
+            'price_per_hour' => 90000,
+            'is_active' => true,
+        ]);
+
+        Booking::query()->create([
+            'badminton_field_id' => $field->id,
+            'user_id' => $firstUser->id,
+            'booking_date' => $bookingDate,
+            'start_time' => '10:00:00',
+            'end_time' => '11:00:00',
+            'status' => Booking::STATUS_PENDING,
+            'expires_at' => now()->subMinute(),
+            'price_per_hour' => 90000,
+        ]);
+
+        $scheduleResponse = $this->getJson(route('public.fields.schedule', [
+            'slug' => $field->slug,
+            'date' => $bookingDate,
+        ]));
+
+        $scheduleResponse->assertOk()
+            ->assertJsonPath('data.slots.2.status', 'available');
+
+        $bookingResponse = $this->actingAs($secondUser)->postJson(route('public.fields.bookings.store', [
+            'slug' => $field->slug,
+        ]), [
+            'booking_date' => $bookingDate,
+            'start_time' => '10:00',
+        ]);
+
+        $bookingResponse->assertCreated()
+            ->assertJsonPath('data.status', Booking::STATUS_PENDING);
+
+        $this->assertDatabaseCount('bookings', 2);
+    }
+
     public function test_owner_can_view_schedule_for_owned_field(): void
     {
         Role::findOrCreate('owner', 'web');

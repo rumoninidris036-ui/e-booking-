@@ -59,6 +59,41 @@ class MidtransPaymentTest extends TestCase
         );
     }
 
+    public function test_payment_creation_rejects_expired_pending_booking(): void
+    {
+        $gateway = new FakeMidtransGateway;
+        $this->app->instance(MidtransGateway::class, $gateway);
+
+        $user = User::factory()->create();
+        $field = BadmintonField::query()->create([
+            'name' => 'Arena Expired Payment',
+            'slug' => 'arena-expired-payment',
+            'price_per_hour' => 80000,
+            'is_active' => true,
+        ]);
+
+        $booking = Booking::query()->create([
+            'booking_code' => 'BK-2026-0001',
+            'badminton_field_id' => $field->id,
+            'user_id' => $user->id,
+            'booking_date' => now()->addDay()->format('Y-m-d'),
+            'start_time' => '08:00:00',
+            'end_time' => '09:00:00',
+            'status' => Booking::STATUS_PENDING,
+            'expires_at' => now()->subMinute(),
+            'price_per_hour' => 80000,
+        ]);
+
+        $response = $this->actingAs($user)->postJson(route('payments.store', $booking));
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['booking']);
+
+        $booking->refresh();
+
+        $this->assertSame(Booking::STATUS_CANCELLED, $booking->status);
+    }
+
     public function test_web_booking_flow_redirects_to_internal_payment_page(): void
     {
         $gateway = new FakeMidtransGateway;

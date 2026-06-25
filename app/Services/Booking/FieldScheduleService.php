@@ -31,7 +31,7 @@ class FieldScheduleService
 
         $bookings = $field->bookings()
             ->whereDate('booking_date', $scheduleDate->toDateString())
-            ->whereIn('status', Booking::ACTIVE_SLOT_STATUSES)
+            ->blocksSchedule()
             ->orderBy('start_time')
             ->get();
 

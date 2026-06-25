@@ -73,6 +73,11 @@ class BadmintonField extends Model
         return $this->hasMany(Booking::class);
     }
 
+    public function ratings(): HasMany
+    {
+        return $this->hasMany(Rating::class, 'badminton_field_id');
+    }
+
     public function getCoverImageUrlAttribute(): ?string
     {
         if ($this->cover_image === null) {

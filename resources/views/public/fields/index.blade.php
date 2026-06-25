@@ -77,6 +77,29 @@
             .btn-tactile { box-shadow: 0 4px 0 0 #8eb000; transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease; }
             .btn-tactile:hover { filter: brightness(1.05); transform: translateY(-1px); }
             .btn-tactile:active { box-shadow: 0 2px 0 0 #3c4d00; transform: translateY(2px); }
+            .detail-link {
+                transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+            }
+            .detail-link:hover {
+                transform: translateY(-1px);
+                border-color: #c3f400;
+                background: rgba(195, 244, 0, 0.12);
+                color: #c3f400;
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            }
+            .detail-link:active {
+                transform: translateY(1px);
+                box-shadow: none;
+            }
+            .popup-detail-link {
+                display: inline-block;
+                margin-top: 8px;
+                padding: 8px 12px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                border-radius: 10px;
+                color: #e2e2e6;
+                text-decoration: none;
+            }
             .leaflet-container { background: #1a1c1f; }
         </style>
     </head>
@@ -86,26 +109,7 @@
             $markers = $mapMeta['markers'] ?? collect();
         @endphp
 
-        <nav class="glass-nav fixed top-0 z-50 w-full shadow-sm">
-            <div class="mx-auto flex max-w-7xl items-center justify-between px-gutter py-4 md:px-margin-desktop">
-                <a href="{{ url('/') }}" class="font-headline-md text-headline-md font-black italic tracking-tighter text-secondary-container">SMASHCOURT</a>
-
-                <div class="hidden items-center gap-8 md:flex">
-                    <a class="border-b-2 border-secondary-container pb-1 font-body-md text-body-md font-bold text-secondary-container" href="{{ route('public.fields.index') }}">Explore Courts</a>
-                    <a class="font-body-md text-body-md text-on-surface transition-colors hover:text-secondary-container" href="{{ url('/#benefits') }}">Memberships</a>
-                    <a class="font-body-md text-body-md text-on-surface transition-colors hover:text-secondary-container" href="#map">Map</a>
-                </div>
-
-                <div class="flex items-center gap-4">
-                    @guest
-                        <a href="{{ route('login') }}" class="hidden font-label-bold text-label-bold uppercase text-on-surface transition-colors hover:text-secondary-container md:block">Login</a>
-                    @else
-                        <a href="{{ \App\Support\RoleHome::urlFor(auth()->user()) }}" class="hidden font-label-bold text-label-bold uppercase text-on-surface transition-colors hover:text-secondary-container md:block">Dashboard</a>
-                    @endguest
-                    <a href="#courts" class="rounded-lg bg-secondary-container px-6 py-2.5 font-label-bold text-label-bold uppercase text-on-secondary btn-tactile">Find Court</a>
-                </div>
-            </div>
-        </nav>
+        <x-public-navbar />
 
         <main class="pt-20">
             <section class="relative overflow-hidden">
@@ -192,7 +196,7 @@
                                 </div>
 
                                 <div class="mt-6 grid grid-cols-2 gap-3">
-                                    <a href="{{ route('public.fields.show', ['slug' => $field->slug]) }}" class="rounded-lg border border-outline-variant py-3 text-center font-label-bold text-label-bold uppercase text-on-surface transition hover:border-secondary-container hover:text-secondary-container">Details</a>
+                                    <a href="{{ route('public.fields.show', ['slug' => $field->slug]) }}" class="detail-link rounded-lg border border-outline-variant bg-surface-container-low py-3 text-center font-label-bold text-label-bold uppercase text-on-surface hover:shadow-[0_8px_20px_rgba(0,0,0,0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary-container/70">View Details</a>
                                     <a href="{{ route('public.fields.booking', ['slug' => $field->slug]) }}" class="rounded-lg bg-secondary-container py-3 text-center font-label-bold text-label-bold uppercase text-on-secondary btn-tactile">Book</a>
                                 </div>
                             </div>
@@ -265,7 +269,7 @@
                                 <strong>${marker.name}</strong><br>
                                 <span>${marker.address ?? ''}</span><br>
                                 <span>Rp${new Intl.NumberFormat('id-ID').format(marker.price_per_hour ?? 0)}/jam</span><br>
-                                <a href="/fields/${marker.slug}" style="color: #0054d6; font-weight: 700;">View details</a>
+                                <a href="/fields/${marker.slug}" class="detail-link popup-detail-link">View Details</a>
                             </div>
                         `);
                 });

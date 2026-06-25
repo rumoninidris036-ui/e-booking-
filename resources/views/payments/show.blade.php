@@ -67,6 +67,8 @@
             data-payment-show-url="{{ $paymentUrl }}"
             data-payment-store-url="{{ $paymentStoreUrl }}"
             data-invoice-download-url="{{ $invoiceDownloadUrl }}"
+            data-booking-expires-at="{{ $bookingExpiresAt ?? '' }}"
+            data-booking-expired="{{ $bookingExpired ? '1' : '0' }}"
             data-booking-url="{{ route('public.fields.booking', ['slug' => $field->slug, 'date' => $booking->booking_date->format('Y-m-d'), 'slot' => substr((string) $booking->start_time, 0, 5)]) }}"
             data-payment-status="{{ $paymentStatus }}"
             data-booking-status="{{ $bookingStatus }}"
@@ -109,6 +111,20 @@
                             <p id="payment-status-description" class="mt-3 text-sm leading-7 text-inherit/90">
                                 {{ $statusPalette['description'] }}
                             </p>
+                            <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                                <div class="rounded-2xl border border-white/10 bg-black/10 px-4 py-4">
+                                    <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-inherit/70">Payment Window</p>
+                                    <p id="booking-expiry-countdown" class="mt-2 font-display text-2xl font-bold text-white">
+                                        --
+                                    </p>
+                                </div>
+                                <div class="rounded-2xl border border-white/10 bg-black/10 px-4 py-4">
+                                    <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-inherit/70">Expires At</p>
+                                    <p id="booking-expiry-label" class="mt-2 text-sm font-semibold text-white">
+                                        {{ $booking->expires_at?->format('d M Y, H:i') ?? 'Not set' }}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="rounded-3xl border border-white/10 bg-panel px-5 py-6">
@@ -237,16 +253,21 @@
                 const paymentActionArea = document.getElementById('payment-action-area');
                 const paymentLiveStatus = document.getElementById('payment-live-status');
                 const refreshPaymentStatusButton = document.getElementById('refresh-payment-status-button');
+                const bookingExpiryCountdown = document.getElementById('booking-expiry-countdown');
+                const bookingExpiryLabel = document.getElementById('booking-expiry-label');
 
                 const state = {
                     paymentShowUrl: paymentPage.dataset.paymentShowUrl,
                     paymentStoreUrl: paymentPage.dataset.paymentStoreUrl,
                     invoiceDownloadUrl: paymentPage.dataset.invoiceDownloadUrl,
+                    bookingExpiresAt: paymentPage.dataset.bookingExpiresAt || null,
+                    bookingExpired: paymentPage.dataset.bookingExpired === '1',
                     bookingUrl: paymentPage.dataset.bookingUrl,
                     paymentStatus: paymentPage.dataset.paymentStatus,
                     bookingStatus: paymentPage.dataset.bookingStatus,
                     snapRedirectUrl: paymentPage.dataset.snapRedirectUrl,
                     pollingHandle: null,
+                    expiryTimerHandle: null,
                     isRefreshing: false,
                 };
 
@@ -275,6 +296,21 @@
                 };
 
                 function renderActionArea() {
+                    if (state.bookingExpired || state.bookingStatus === 'cancelled') {
+                        paymentActionArea.innerHTML = `
+                            <div class="mt-8 rounded-2xl border border-danger/30 bg-danger/10 px-4 py-4 text-sm leading-6 text-danger">
+                                Booking ini sudah expired. Silakan buat booking baru untuk melanjutkan pembayaran.
+                            </div>
+                            <a
+                                href="${state.bookingUrl}"
+                                class="mt-4 block w-full rounded-2xl border border-white/10 px-6 py-4 text-center text-sm font-bold uppercase tracking-[0.18em] text-white transition-colors hover:bg-white/5"
+                            >
+                                Back To Booking
+                            </a>
+                        `;
+                        return;
+                    }
+
                     if (state.paymentStatus === 'success') {
                         paymentActionArea.innerHTML = `
                             <div class="mt-8 rounded-2xl border border-accent/30 bg-accent/10 px-4 py-5 text-sm leading-6 text-white">
@@ -329,6 +365,57 @@
                     `;
                 }
 
+                function formatCountdown(totalSeconds) {
+                    const safeSeconds = Math.max(0, Math.floor(totalSeconds));
+                    const hours = Math.floor(safeSeconds / 3600);
+                    const minutes = Math.floor((safeSeconds % 3600) / 60);
+                    const seconds = safeSeconds % 60;
+
+                    if (hours > 0) {
+                        return [hours, minutes, seconds]
+                            .map((value) => String(value).padStart(2, '0'))
+                            .join(':');
+                    }
+
+                    return [minutes, seconds]
+                        .map((value) => String(value).padStart(2, '0'))
+                        .join(':');
+                }
+
+                function updateExpiryCountdown() {
+                    if (!bookingExpiryCountdown || !state.bookingExpiresAt) {
+                        return;
+                    }
+
+                    const expiresAt = new Date(state.bookingExpiresAt).getTime();
+                    const remainingSeconds = Math.floor((expiresAt - Date.now()) / 1000);
+
+                    if (Number.isNaN(expiresAt)) {
+                        bookingExpiryCountdown.textContent = '--';
+                        return;
+                    }
+
+                    if (remainingSeconds <= 0) {
+                        bookingExpiryCountdown.textContent = 'Expired';
+                        bookingExpiryCountdown.classList.remove('text-white');
+                        bookingExpiryCountdown.classList.add('text-danger');
+                        state.bookingExpired = true;
+
+                        if (bookingExpiryLabel) {
+                            bookingExpiryLabel.textContent = 'Session expired';
+                        }
+
+                        renderActionArea();
+                        stopPolling();
+
+                        return;
+                    }
+
+                    bookingExpiryCountdown.textContent = formatCountdown(remainingSeconds);
+                    bookingExpiryCountdown.classList.remove('text-danger');
+                    bookingExpiryCountdown.classList.add('text-white');
+                }
+
                 function applyStatusUi() {
                     const config = statusMap[state.paymentStatus] ?? statusMap.pending;
 
@@ -341,6 +428,7 @@
                     paymentLiveStatus.textContent = config.liveText;
 
                     renderActionArea();
+                    updateExpiryCountdown();
                 }
 
                 function stopPolling() {
@@ -417,9 +505,14 @@
                 });
 
                 applyStatusUi();
+                updateExpiryCountdown();
 
-                if (state.paymentStatus === 'pending') {
+                if (state.paymentStatus === 'pending' && !state.bookingExpired) {
                     state.pollingHandle = window.setInterval(refreshPaymentStatus, 6000);
+                }
+
+                if (state.bookingExpiresAt && !state.bookingExpired) {
+                    state.expiryTimerHandle = window.setInterval(updateExpiryCountdown, 1000);
                 }
             }
         </script>

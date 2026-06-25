@@ -6,6 +6,8 @@ namespace App\Http\Controllers\PublicPage;
 
 use App\Http\Controllers\Controller;
 use App\Models\BadmintonField;
+use App\Services\Recommendations\FieldRecommendationCriteria;
+use App\Services\Recommendations\FieldRecommendationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -62,6 +64,13 @@ class BadmintonFieldController extends Controller
             ->firstOrFail();
 
         if (! $request->expectsJson()) {
+            $field->loadAvg('ratings', 'score');
+            $field->load([
+                'ratings' => fn ($query) => $query
+                    ->latest()
+                    ->with(['booking:id,booking_code,customer_name,user_id', 'booking.user:id,name']),
+            ]);
+
             return view('public.fields.show', [
                 'field' => $field,
                 'mapMeta' => [
@@ -100,6 +109,61 @@ class BadmintonFieldController extends Controller
             'meta' => [
                 'provider' => 'OpenStreetMap',
                 'library' => 'Leaflet.js',
+            ],
+        ]);
+    }
+
+    public function recommendations(
+        Request $request,
+        FieldRecommendationService $recommendationService,
+    ): JsonResponse {
+        $criteria = FieldRecommendationCriteria::fromArray([
+            'limit' => $request->integer('limit', 5),
+            'date' => $request->string('date')->toString(),
+            'start_time' => $request->string('start_time')->toString(),
+            'end_time' => $request->string('end_time')->toString(),
+            'budget' => $request->input('budget'),
+            'latitude' => $request->input('latitude'),
+            'longitude' => $request->input('longitude'),
+            'facility_slugs' => $request->input('facility_slugs', []),
+            'exclude_field_ids' => $request->input('exclude_field_ids', []),
+        ], 5);
+
+        $recommendations = $recommendationService->recommend($criteria);
+
+        return response()->json([
+            'data' => $recommendations->map(static function (array $recommendation): array {
+                /** @var BadmintonField $field */
+                $field = $recommendation['field'];
+
+                return [
+                    'score' => $recommendation['score'],
+                    'reasons' => $recommendation['reasons'],
+                    'field' => [
+                        'id' => $field->id,
+                        'name' => $field->name,
+                        'slug' => $field->slug,
+                        'address' => $field->address,
+                        'price_per_hour' => (float) $field->price_per_hour,
+                        'cover_image_url' => $field->cover_image_url,
+                        'facilities_count' => $field->facilities->count(),
+                        'booking_url' => route('public.fields.booking', ['slug' => $field->slug]),
+                        'show_url' => route('public.fields.show', ['slug' => $field->slug]),
+                    ],
+                ];
+            })->values(),
+            'meta' => [
+                'limit' => $criteria->limit,
+                'filters' => [
+                    'date' => $criteria->date,
+                    'start_time' => $criteria->startTime,
+                    'end_time' => $criteria->endTime,
+                    'budget' => $criteria->budget,
+                    'latitude' => $criteria->latitude,
+                    'longitude' => $criteria->longitude,
+                    'facility_slugs' => $criteria->facilitySlugs,
+                    'exclude_field_ids' => $criteria->excludeFieldIds,
+                ],
             ],
         ]);
     }
