@@ -13,6 +13,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Tests\Fakes\FakeMidtransGateway;
 use Tests\TestCase;
 
@@ -336,7 +337,10 @@ class MidtransPaymentTest extends TestCase
                     'access_token' => 'guest-token-123',
                 ]))
                 && str_contains((string) $request['caption'], 'Kode booking: BK-2026-0001')
-                && str_contains((string) $request['caption'], 'PDF booking/invoice terlampir');
+                && str_contains((string) $request['caption'], 'PDF booking/invoice terlampir')
+                && str_contains((string) $request['caption'], URL::signedRoute('public.rating.create', [
+                    'booking' => $payment->booking_id,
+                ]));
         });
     }
 
