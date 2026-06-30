@@ -35,7 +35,7 @@ class FlowKirimWhatsAppServiceTest extends TestCase
         Http::assertSent(function (Request $request): bool {
             return $request->url() === 'https://api.flowkirim.test/api/whatsapp/messages/text'
                 && $request->hasHeader('Authorization', 'Bearer test-token')
-                && $request['sessionId'] === 'session-123'
+                && $request['session_id'] === 'session-123'
                 && $request['to'] === '6281234567890@s.whatsapp.net'
                 && $request['message'] === 'Halo dari test';
         });

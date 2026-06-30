@@ -330,7 +330,7 @@ class MidtransPaymentTest extends TestCase
         Http::assertSent(function (Request $request) use ($payment): bool {
             return $request->url() === 'https://api.flowkirim.test/api/whatsapp/messages/media'
                 && $request['session_id'] === 'session-123'
-                && $request['to'] === '6281234567890@s.whatsapp.net'
+                && $request['to'] === '6281234567890'
                 && $request['type'] === 'document'
                 && str_contains((string) $request['media_url'], route('payments.invoice.download', [
                     'payment' => $payment,
