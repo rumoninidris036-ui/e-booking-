@@ -7,7 +7,6 @@ namespace App\Services\Notifications;
 use App\Contracts\Notifications\WhatsAppNotificationGateway;
 use App\Models\Payment;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\URL;
 
 class BookingPaymentWhatsAppNotificationService
 {
@@ -45,18 +44,14 @@ class BookingPaymentWhatsAppNotificationService
         }
 
         try {
+            // Gabungkan teks info booking dengan link download PDF internal aplikasi
             $downloadUrl = $this->invoiceDownloadUrl($payment);
-            $ratingUrl = URL::signedRoute('public.rating.create', ['booking' => $booking->id]);
-            $caption = $this->successCaption($payment)
-                . "\n\nPDF booking/invoice terlampir."
-                . "\n\nSetelah selesai bermain, beri rating lapangan di sini:\n"
-                . $ratingUrl;
+            $messageText = $this->successCaption($payment) . "\n\nUnduh Bukti Booking / Invoice Anda di sini:\n" . $downloadUrl;
 
-            $response = $this->whatsAppGateway->sendDocumentMessage(
+            // Panggil pengiriman text message biasa agar super ringan dan instan
+            $response = $this->whatsAppGateway->sendTextMessage(
                 to: $recipient,
-                documentUrl: $downloadUrl,
-                caption: $caption,
-                filename: sprintf('%s.pdf', $payment->invoice_number ?? $booking->booking_code)
+                message: $messageText
             );
 
             $payment->forceFill([
