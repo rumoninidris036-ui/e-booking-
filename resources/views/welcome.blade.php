@@ -206,12 +206,12 @@
 
         <div id="search" class="relative z-30 mx-auto -mt-12 max-w-6xl px-gutter md:px-margin-desktop">
             <div class="rounded-xl border border-white/5 bg-surface-container-high p-4 shadow-2xl backdrop-blur-xl md:p-6">
-                <form class="grid grid-cols-1 gap-4 md:grid-cols-4" action="{{ route('public.fields.index') }}" method="GET">
+                <form id="court-search-form" class="grid grid-cols-1 gap-4 md:grid-cols-4" action="{{ route('public.fields.index') }}" method="GET">
                     <div class="flex flex-col gap-2">
                         <label class="ml-1 font-label-bold text-label-bold uppercase text-on-surface-variant">Location</label>
                         <div class="relative">
                             <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">location_on</span>
-                            <input class="w-full rounded-lg border border-outline-variant bg-surface-container-low py-3 pl-10 text-on-surface transition-all focus:border-primary-container focus:ring-1 focus:ring-primary-container" placeholder="Where do you play?" type="text">
+                            <input id="court-location-input" name="location" value="{{ request('location') }}" list="court-location-suggestions" autocomplete="off" class="w-full rounded-lg border border-outline-variant bg-surface-container-low py-3 pl-10 text-on-surface transition-all focus:border-primary-container focus:ring-1 focus:ring-primary-container" placeholder="Where do you play?" type="text">
                         </div>
                     </div>
 
@@ -219,7 +219,7 @@
                         <label class="ml-1 font-label-bold text-label-bold uppercase text-on-surface-variant">Date</label>
                         <div class="relative">
                             <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">calendar_today</span>
-                            <input class="w-full rounded-lg border border-outline-variant bg-surface-container-low py-3 pl-10 text-on-surface transition-all focus:border-primary-container focus:ring-1 focus:ring-primary-container" type="date">
+                            <input name="date" value="{{ request('date') }}" class="w-full rounded-lg border border-outline-variant bg-surface-container-low py-3 pl-10 text-on-surface transition-all focus:border-primary-container focus:ring-1 focus:ring-primary-container" type="date">
                         </div>
                     </div>
 
@@ -227,22 +227,23 @@
                         <label class="ml-1 font-label-bold text-label-bold uppercase text-on-surface-variant">Time</label>
                         <div class="relative">
                             <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">schedule</span>
-                            <select class="w-full appearance-none rounded-lg border border-outline-variant bg-surface-container-low py-3 pl-10 text-on-surface transition-all focus:border-primary-container focus:ring-1 focus:ring-primary-container">
-                                <option>Any Time</option>
-                                <option>Morning (6am-12pm)</option>
-                                <option>Afternoon (12pm-5pm)</option>
-                                <option>Evening (5pm-11pm)</option>
+                            <select name="time" class="w-full appearance-none rounded-lg border border-outline-variant bg-surface-container-low py-3 pl-10 text-on-surface transition-all focus:border-primary-container focus:ring-1 focus:ring-primary-container">
+                                <option value="any" @selected(request('time', 'any') === 'any')>Any Time</option>
+                                <option value="morning" @selected(request('time') === 'morning')>Morning (6am-12pm)</option>
+                                <option value="afternoon" @selected(request('time') === 'afternoon')>Afternoon (12pm-5pm)</option>
+                                <option value="evening" @selected(request('time') === 'evening')>Evening (5pm-11pm)</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="flex items-end">
-                        <a href="{{ route('public.fields.index') }}" class="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-container py-4 font-label-bold text-label-bold uppercase text-on-primary-container transition-all hover:brightness-110">
+                        <button type="submit" class="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-container py-4 font-label-bold text-label-bold uppercase text-on-primary-container transition-all hover:brightness-110">
                             <span class="material-symbols-outlined">search</span>
                             Find My Court
-                        </a>
+                        </button>
                     </div>
                 </form>
+                <datalist id="court-location-suggestions"></datalist>
             </div>
         </div>
 
@@ -372,6 +373,91 @@
                 </div>
             </div>
         </section>
+
+        <script>
+            (() => {
+                const form = document.getElementById('court-search-form');
+                const input = document.getElementById('court-location-input');
+                const datalist = document.getElementById('court-location-suggestions');
+
+                if (!form || !input || !datalist) {
+                    return;
+                }
+
+                const endpoint = @json(route('public.fields.suggestions'));
+                let debounceId = null;
+                let activeController = null;
+
+                const renderSuggestions = (items) => {
+                    datalist.replaceChildren(
+                        ...items.map((item) => {
+                            const option = document.createElement('option');
+                            option.value = item.value;
+                            option.label = item.label;
+
+                            return option;
+                        }),
+                    );
+                };
+
+                const fetchSuggestions = async () => {
+                    const params = new URLSearchParams();
+                    const q = input.value.trim();
+                    const dateInput = form.querySelector('input[name="date"]');
+                    const timeInput = form.querySelector('select[name="time"]');
+
+                    if (q !== '') {
+                        params.set('q', q);
+                    }
+
+                    if (dateInput?.value) {
+                        params.set('date', dateInput.value);
+                    }
+
+                    if (timeInput?.value) {
+                        params.set('time', timeInput.value);
+                    }
+
+                    if (activeController) {
+                        activeController.abort();
+                    }
+
+                    activeController = new AbortController();
+
+                    try {
+                        const response = await fetch(`${endpoint}?${params.toString()}`, {
+                            headers: {
+                                Accept: 'application/json',
+                            },
+                            signal: activeController.signal,
+                        });
+
+                        if (!response.ok) {
+                            return;
+                        }
+
+                        const payload = await response.json();
+                        renderSuggestions(Array.isArray(payload.data) ? payload.data : []);
+                    } catch (error) {
+                        if (error?.name !== 'AbortError') {
+                            console.warn('Unable to load location suggestions.', error);
+                        }
+                    }
+                };
+
+                const queueSuggestions = () => {
+                    window.clearTimeout(debounceId);
+                    debounceId = window.setTimeout(fetchSuggestions, 180);
+                };
+
+                input.addEventListener('input', queueSuggestions);
+                input.addEventListener('focus', fetchSuggestions);
+                form.querySelector('input[name="date"]')?.addEventListener('change', fetchSuggestions);
+                form.querySelector('select[name="time"]')?.addEventListener('change', fetchSuggestions);
+
+                fetchSuggestions();
+            })();
+        </script>
 
         <footer class="w-full border-t border-outline-variant bg-surface-container-lowest py-12">
             <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-base px-gutter md:flex-row md:px-margin-desktop">

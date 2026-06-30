@@ -6,25 +6,62 @@ namespace App\Http\Controllers\PublicPage;
 
 use App\Http\Controllers\Controller;
 use App\Models\BadmintonField;
+use App\Models\Booking;
 use App\Services\Recommendations\FieldRecommendationCriteria;
 use App\Services\Recommendations\FieldRecommendationService;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 
 class BadmintonFieldController extends Controller
 {
     public function index(Request $request): JsonResponse|View
     {
+        $filters = $this->filtersFromRequest($request);
+
         $fields = BadmintonField::query()
             ->with(['facilities', 'owner:id,name', 'galleryImages'])
             ->where('is_active', true)
+            ->when($filters['location'] !== '', function (Builder $query) use ($filters): void {
+                $search = $this->likePattern($filters['location']);
+
+                $query->where(function (Builder $query) use ($search): void {
+                    $query->where('name', 'like', $search)
+                        ->orWhere('address', 'like', $search)
+                        ->orWhereHas('owner', function (Builder $query) use ($search): void {
+                            $query->where('name', 'like', $search);
+                        });
+                });
+            })
+            ->when(
+                $filters['date'] !== null && $filters['timeWindow'] !== null,
+                function (Builder $query) use ($filters): void {
+                    $query->whereDoesntHave('bookings', function (Builder $query) use ($filters): void {
+                        $query->whereDate('booking_date', $filters['date'])
+                            ->blocksSchedule()
+                            ->where('start_time', '<', $filters['timeWindow']['end'])
+                            ->where('end_time', '>', $filters['timeWindow']['start']);
+                    });
+                },
+            )
+            ->when(
+                $filters['timeWindow'] !== null,
+                function (Builder $query) use ($filters): void {
+                    $query->where('open_time', '<=', $filters['timeWindow']['start'])
+                        ->where('close_time', '>=', $filters['timeWindow']['end']);
+                },
+            )
             ->latest()
-            ->paginate(12);
+            ->paginate(12)
+            ->withQueryString();
 
         if (! $request->expectsJson()) {
             return view('public.fields.index', [
                 'fields' => $fields,
+                'filters' => $filters,
                 'mapMeta' => [
                     'provider' => 'OpenStreetMap',
                     'library' => 'Leaflet.js',
@@ -114,6 +151,58 @@ class BadmintonFieldController extends Controller
         ]);
     }
 
+    public function suggestions(Request $request): JsonResponse
+    {
+        $filters = $this->filtersFromRequest($request);
+        $query = trim($request->string('q')->toString());
+        $queryLower = Str::lower($query);
+
+        $fields = BadmintonField::query()
+            ->where('is_active', true)
+            ->when(
+                $filters['date'] !== null && $filters['timeWindow'] !== null,
+                function (Builder $query) use ($filters): void {
+                    $query->whereDoesntHave('bookings', function (Builder $query) use ($filters): void {
+                        $query->whereDate('booking_date', $filters['date'])
+                            ->blocksSchedule()
+                            ->where('start_time', '<', $filters['timeWindow']['end'])
+                            ->where('end_time', '>', $filters['timeWindow']['start']);
+                    });
+                },
+            )
+            ->when(
+                $filters['timeWindow'] !== null,
+                function (Builder $query) use ($filters): void {
+                    $query->where('open_time', '<=', $filters['timeWindow']['start'])
+                        ->where('close_time', '>=', $filters['timeWindow']['end']);
+                },
+            )
+            ->get(['address']);
+
+        $cities = $fields
+            ->map(fn (BadmintonField $field): ?string => $this->cityFromAddress($field->address))
+            ->filter()
+            ->unique(fn (string $city): string => Str::lower($city))
+            ->filter(function (string $city) use ($queryLower): bool {
+                return $queryLower === '' || Str::contains(Str::lower($city), $queryLower);
+            })
+            ->sortBy(fn (string $city): string => Str::lower($city))
+            ->take(8)
+            ->values()
+            ->map(fn (string $city): array => [
+                'value' => $city,
+                'label' => $city,
+            ]);
+
+        return response()->json([
+            'data' => $cities,
+            'meta' => [
+                'query' => $query,
+                'count' => $cities->count(),
+            ],
+        ]);
+    }
+
     public function recommendations(
         Request $request,
         FieldRecommendationService $recommendationService,
@@ -167,5 +256,67 @@ class BadmintonFieldController extends Controller
                 ],
             ],
         ]);
+    }
+
+    /**
+     * @return array{location: string, date: ?string, time: string, timeWindow: ?array{label: string, start: string, end: string}}
+     */
+    private function filtersFromRequest(Request $request): array
+    {
+        $location = trim($request->string('location')->toString());
+        $date = trim($request->string('date')->toString());
+        $time = trim($request->string('time')->toString() ?: 'any');
+
+        $normalizedDate = null;
+
+        if ($date !== '') {
+            try {
+                $parsedDate = CarbonImmutable::createFromFormat('Y-m-d', $date);
+                $normalizedDate = $parsedDate instanceof CarbonImmutable ? $parsedDate->toDateString() : null;
+            } catch (\Throwable) {
+                $normalizedDate = null;
+            }
+        }
+
+        return [
+            'location' => $location,
+            'date' => $normalizedDate,
+            'time' => $time,
+            'timeWindow' => $this->timeWindowFor($time),
+        ];
+    }
+
+    /**
+     * @return array{label: string, start: string, end: string}|null
+     */
+    private function timeWindowFor(string $time): ?array
+    {
+        return match ($time) {
+            'morning' => ['label' => 'Morning', 'start' => '06:00:00', 'end' => '12:00:00'],
+            'afternoon' => ['label' => 'Afternoon', 'start' => '12:00:00', 'end' => '17:00:00'],
+            'evening' => ['label' => 'Evening', 'start' => '17:00:00', 'end' => '23:00:00'],
+            default => null,
+        };
+    }
+
+    private function likePattern(string $value): string
+    {
+        return '%'.Str::of($value)->replace(['\\', '%', '_'], ['\\\\', '\%', '\_'])->toString().'%';
+    }
+
+    private function cityFromAddress(?string $address): ?string
+    {
+        $segments = collect(explode(',', (string) $address))
+            ->map(fn (string $segment): string => trim($segment))
+            ->filter()
+            ->values();
+
+        if ($segments->isEmpty()) {
+            return null;
+        }
+
+        return $segments->count() >= 3
+            ? $segments->slice(-2, 1)->first()
+            : $segments->last();
     }
 }

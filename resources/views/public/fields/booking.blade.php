@@ -139,6 +139,9 @@
     <body class="overflow-x-hidden bg-background font-body-md text-on-background selection:bg-secondary-container selection:text-black">
         @php
             $coverImage = $field->cover_image_url ?: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAhdBw-PaiSWK4P8gnpAPJY-s617sXbd_2ldvDJWE5ktxsMPeGCYflbTZX-ANdN3aJ2tft1lRBGVkTuIE0mv9E4qWV8lp3jZR-C-7K9oEwW-4LvMJzr9676APnUkjvMOzo2kA8kJ63bhrQ_UJ-YVW2BstnzHhZVwYZatrqFbhmjZxVEOD-YatkuuhqUiQLQ47JAXNVrzK4AmlLd-_9OZWL0OEuzZ0wsVi0sOt0v7KQ90r2yLAprZ38wv4jeN6Vh6WTNvLEBv-bu6MVe';
+            $serverNow = now();
+            $serverDate = $serverNow->toDateString();
+            $serverTime = $serverNow->format('H:i:s');
             $featureIcons = [
                 ['icon' => 'grid_view', 'title' => 'Synthetic Mat', 'subtitle' => 'Olympic standard'],
                 ['icon' => 'lightbulb', 'title' => 'HD Lighting', 'subtitle' => 'Flicker-free'],
@@ -146,12 +149,23 @@
                 ['icon' => 'shower', 'title' => 'Locker Rooms', 'subtitle' => 'Premium facilities'],
             ];
             $selectedSlotData = collect($slots)->firstWhere('start_time', $selectedSlot);
+            $selectedSlotIsFuture = $selectedSlotData !== null && (
+                ! $selectedDate->isSameDay($serverNow)
+                || (int) substr((string) $selectedSlotData['start_time'], 0, 2) * 60 + (int) substr((string) $selectedSlotData['start_time'], 3, 2)
+                    >= (
+                        $serverNow->minute === 0 && $serverNow->second === 0
+                            ? ((int) $serverNow->format('H') * 60)
+                            : (((int) $serverNow->format('H') + 1) * 60)
+                    )
+            );
             $scheduleState = [
                 'selectedDate' => $selectedDate->toDateString(),
-                'selectedSlot' => $selectedSlotData !== null && ($selectedSlotData['status'] ?? null) !== 'booked'
+                'selectedSlot' => $selectedSlotData !== null && ($selectedSlotData['status'] ?? null) !== 'booked' && $selectedSlotIsFuture
                     ? $selectedSlotData['start_time']
                     : null,
                 'slots' => $slots,
+                'serverDate' => $serverDate,
+                'serverTime' => $serverTime,
                 'dateOptions' => collect($dateOptions)->map(fn ($dateOption) => [
                     'value' => $dateOption->toDateString(),
                     'dayLabel' => $dateOption->format('D'),
@@ -419,6 +433,48 @@
             const slotButtonClass = 'border border-white/10 bg-surface-variant/20 text-on-surface hover:bg-surface-variant hover:text-secondary';
             const slotSelectedClass = 'bg-secondary-container font-bold text-black shadow-[0_0_15px_rgba(195,244,0,0.3)]';
 
+            function timeToMinutes(timeString) {
+                const [hours, minutes] = timeString.split(':').map((value) => Number.parseInt(value, 10));
+
+                if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+                    return null;
+                }
+
+                return (hours * 60) + minutes;
+            }
+
+            function getServerSlotThresholdMinutes() {
+                if (scheduleState.selectedDate !== scheduleState.serverDate) {
+                    return null;
+                }
+
+                const [hours, minutes, seconds] = scheduleState.serverTime.split(':').map((value) => Number.parseInt(value, 10));
+
+                if ([hours, minutes, seconds].some((value) => Number.isNaN(value))) {
+                    return null;
+                }
+
+                if (minutes === 0 && seconds === 0) {
+                    return hours * 60;
+                }
+
+                return (hours + 1) * 60;
+            }
+
+            function getVisibleSlots() {
+                const thresholdMinutes = getServerSlotThresholdMinutes();
+
+                if (thresholdMinutes === null) {
+                    return scheduleState.slots;
+                }
+
+                return scheduleState.slots.filter((slot) => {
+                    const slotMinutes = timeToMinutes(slot.start_time);
+
+                    return slotMinutes !== null && slotMinutes >= thresholdMinutes;
+                });
+            }
+
             function formatMonthLabel(dateString) {
                 return new Intl.DateTimeFormat('en-US', {
                     month: 'long',
@@ -435,7 +491,7 @@
             }
 
             function selectedSlotDetails() {
-                return scheduleState.slots.find((slot) => slot.start_time === scheduleState.selectedSlot) ?? null;
+                return getVisibleSlots().find((slot) => slot.start_time === scheduleState.selectedSlot) ?? null;
             }
 
             function updateSummary() {
@@ -492,15 +548,23 @@
             }
 
             function renderSlots() {
+                const visibleSlots = getVisibleSlots();
+                const hasSelectedSlot = visibleSlots.some((slot) => slot.start_time === scheduleState.selectedSlot);
+
+                if (scheduleState.selectedSlot && ! hasSelectedSlot) {
+                    scheduleState.selectedSlot = null;
+                    syncUrl();
+                }
+
                 slotSelector.innerHTML = '';
 
-                if (! scheduleState.slots.length) {
+                if (! visibleSlots.length) {
                     slotSelector.innerHTML = '<div class="col-span-full rounded-xl border border-outline-variant bg-surface-container-low p-4 text-center text-sm text-on-surface-variant">Belum ada slot untuk tanggal ini.</div>';
                     updateSummary();
                     return;
                 }
 
-                scheduleState.slots.forEach((slot) => {
+                visibleSlots.forEach((slot) => {
                     if (slot.status === 'booked') {
                         const blockedSlot = document.createElement('div');
                         blockedSlot.className = 'cursor-not-allowed rounded-lg border border-white/5 bg-surface-container-high py-3 text-center text-on-surface-variant opacity-50 line-through';
