@@ -387,6 +387,14 @@
                         return;
                     }
 
+                    if (state.paymentStatus === 'success') {
+                        bookingExpiryCountdown.textContent = 'Paid';
+                        bookingExpiryCountdown.classList.remove('text-danger');
+                        bookingExpiryCountdown.classList.add('text-accent');
+                        stopExpiryCountdown();
+                        return;
+                    }
+
                     const expiresAt = new Date(state.bookingExpiresAt).getTime();
                     const remainingSeconds = Math.floor((expiresAt - Date.now()) / 1000);
 
@@ -429,12 +437,23 @@
 
                     renderActionArea();
                     updateExpiryCountdown();
+
+                    if (state.paymentStatus === 'success') {
+                        stopExpiryCountdown();
+                    }
                 }
 
                 function stopPolling() {
                     if (state.pollingHandle) {
                         window.clearInterval(state.pollingHandle);
                         state.pollingHandle = null;
+                    }
+                }
+
+                function stopExpiryCountdown() {
+                    if (state.expiryTimerHandle) {
+                        window.clearInterval(state.expiryTimerHandle);
+                        state.expiryTimerHandle = null;
                     }
                 }
 
@@ -470,6 +489,7 @@
 
                         if (state.paymentStatus === 'success') {
                             stopPolling();
+                            stopExpiryCountdown();
                         }
                     } catch (error) {
                         paymentLiveStatus.textContent = 'Belum bisa mengambil status terbaru. Coba refresh status lagi sebentar.';
@@ -511,7 +531,7 @@
                     state.pollingHandle = window.setInterval(refreshPaymentStatus, 6000);
                 }
 
-                if (state.bookingExpiresAt && !state.bookingExpired) {
+                if (state.bookingExpiresAt && !state.bookingExpired && state.paymentStatus !== 'success') {
                     state.expiryTimerHandle = window.setInterval(updateExpiryCountdown, 1000);
                 }
             }
