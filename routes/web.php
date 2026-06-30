@@ -27,6 +27,7 @@ Route::get('/', function () {
 Route::get('/fields', [PublicBadmintonFieldController::class, 'index'])->name('public.fields.index');
 Route::get('/fields/markers', [PublicBadmintonFieldController::class, 'markers'])->name('public.fields.markers');
 Route::get('/fields/recommendations', [PublicBadmintonFieldController::class, 'recommendations'])->name('public.fields.recommendations');
+Route::get('/fields/suggestions', [PublicBadmintonFieldController::class, 'suggestions'])->name('public.fields.suggestions');
 Route::get('/fields/{slug}/booking', [PublicFieldBookingPageController::class, 'show'])->name('public.fields.booking');
 Route::get('/fields/{slug}/schedule', [PublicFieldScheduleController::class, 'show'])->name('public.fields.schedule');
 Route::get('/fields/{slug}', [PublicBadmintonFieldController::class, 'show'])->name('public.fields.show');

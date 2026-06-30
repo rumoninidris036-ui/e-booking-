@@ -10,6 +10,8 @@ return new class extends Migration
 {
     public function up(): void
     {
+        Schema::dropIfExists('badminton_field_gallery_images');
+
         Schema::create('badminton_field_gallery_images', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('badminton_field_id')->constrained()->cascadeOnDelete();
@@ -17,7 +19,7 @@ return new class extends Migration
             $table->unsignedInteger('sort_order')->default(0);
             $table->timestamps();
 
-            $table->index(['badminton_field_id', 'sort_order']);
+            $table->index(['badminton_field_id', 'sort_order'], 'bf_gallery_field_sort_idx');
         });
     }
 
