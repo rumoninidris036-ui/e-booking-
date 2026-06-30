@@ -41,6 +41,7 @@ class BadmintonField extends Model
      */
     protected $appends = [
         'cover_image_url',
+        'gallery_image_urls',
         'map_marker',
     ];
 
@@ -68,6 +69,11 @@ class BadmintonField extends Model
         return $this->belongsToMany(Facility::class);
     }
 
+    public function galleryImages(): HasMany
+    {
+        return $this->hasMany(BadmintonFieldGalleryImage::class, 'badminton_field_id')->orderBy('sort_order')->orderBy('id');
+    }
+
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
@@ -85,6 +91,16 @@ class BadmintonField extends Model
         }
 
         return Storage::disk('public')->url($this->cover_image);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function getGalleryImageUrlsAttribute(): array
+    {
+        return $this->relationLoaded('galleryImages')
+            ? $this->galleryImages->map(fn (BadmintonFieldGalleryImage $image): string => $image->url)->all()
+            : $this->galleryImages()->get()->map(fn (BadmintonFieldGalleryImage $image): string => $image->url)->all();
     }
 
     /**

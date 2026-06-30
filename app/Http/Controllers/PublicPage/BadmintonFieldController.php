@@ -17,7 +17,7 @@ class BadmintonFieldController extends Controller
     public function index(Request $request): JsonResponse|View
     {
         $fields = BadmintonField::query()
-            ->with(['facilities', 'owner:id,name'])
+            ->with(['facilities', 'owner:id,name', 'galleryImages'])
             ->where('is_active', true)
             ->latest()
             ->paginate(12);
@@ -58,7 +58,7 @@ class BadmintonFieldController extends Controller
     public function show(Request $request, string $slug): JsonResponse|View
     {
         $field = BadmintonField::query()
-            ->with(['facilities', 'owner:id,name'])
+            ->with(['facilities', 'owner:id,name', 'galleryImages'])
             ->where('is_active', true)
             ->where('slug', $slug)
             ->firstOrFail();
@@ -66,6 +66,7 @@ class BadmintonFieldController extends Controller
         if (! $request->expectsJson()) {
             $field->loadAvg('ratings', 'score');
             $field->load([
+                'galleryImages' => fn ($query) => $query->orderBy('sort_order')->orderBy('id'),
                 'ratings' => fn ($query) => $query
                     ->latest()
                     ->with(['booking:id,booking_code,customer_name,user_id', 'booking.user:id,name']),

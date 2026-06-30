@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Field;
 
 use App\Models\BadmintonField;
+use App\Models\BadmintonFieldGalleryImage;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -15,9 +16,9 @@ class CreateBadmintonFieldAction
     /**
      * @param  array{name: string, description?: string|null, address?: string|null, latitude?: numeric-string|int|float|null, longitude?: numeric-string|int|float|null, price_per_hour: numeric-string|int|float, open_time: string, close_time: string, slot_duration_minutes: int, is_active?: bool, facility_ids?: array<int, int>}  $attributes
      */
-    public function handle(User $owner, array $attributes, ?UploadedFile $coverImage = null): BadmintonField
+    public function handle(User $owner, array $attributes, ?UploadedFile $coverImage = null, array $galleryImages = []): BadmintonField
     {
-        return DB::transaction(function () use ($owner, $attributes, $coverImage): BadmintonField {
+        return DB::transaction(function () use ($owner, $attributes, $coverImage, $galleryImages): BadmintonField {
             $field = BadmintonField::query()->create([
                 'owner_id' => $owner->id,
                 'name' => $attributes['name'],
@@ -36,7 +37,19 @@ class CreateBadmintonFieldAction
 
             $field->facilities()->sync($attributes['facility_ids'] ?? []);
 
-            return $field->load(['facilities', 'owner']);
+            foreach ($galleryImages as $index => $galleryImage) {
+                if (! $galleryImage instanceof UploadedFile) {
+                    continue;
+                }
+
+                BadmintonFieldGalleryImage::query()->create([
+                    'badminton_field_id' => $field->id,
+                    'path' => $galleryImage->store('badminton-fields/galleries', 'public'),
+                    'sort_order' => $index,
+                ]);
+            }
+
+            return $field->load(['facilities', 'owner', 'galleryImages']);
         });
     }
 

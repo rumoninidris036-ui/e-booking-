@@ -14,12 +14,17 @@ class DeleteBadmintonFieldAction
     {
         DB::transaction(function () use ($badmintonField): void {
             $coverImage = $badmintonField->cover_image;
+            $galleryImages = $badmintonField->galleryImages()->get(['id', 'path']);
 
             $badmintonField->facilities()->detach();
             $badmintonField->delete();
 
             if ($coverImage !== null) {
                 Storage::disk('public')->delete($coverImage);
+            }
+
+            foreach ($galleryImages as $galleryImage) {
+                Storage::disk('public')->delete($galleryImage->path);
             }
         });
     }
