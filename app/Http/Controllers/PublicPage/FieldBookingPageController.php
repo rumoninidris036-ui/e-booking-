@@ -22,7 +22,7 @@ class FieldBookingPageController extends Controller
     public function show(Request $request, string $slug): View
     {
         $field = BadmintonField::query()
-            ->with(['facilities', 'owner:id,name'])
+            ->with(['facilities', 'owner:id,name', 'galleryImages'])
             ->where('is_active', true)
             ->where('slug', $slug)
             ->firstOrFail();

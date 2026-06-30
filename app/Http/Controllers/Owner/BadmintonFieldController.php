@@ -32,7 +32,7 @@ class BadmintonFieldController extends Controller
 
         $fields = $owner
             ->ownedFields()
-            ->with(['facilities', 'owner:id,name,email'])
+            ->with(['facilities', 'owner:id,name,email', 'galleryImages'])
             ->withCount([
                 'bookings',
                 'bookings as pending_bookings_count' => fn ($query) => $query->where('status', Booking::STATUS_PENDING),
@@ -138,6 +138,7 @@ class BadmintonFieldController extends Controller
             owner: $request->user(),
             attributes: $request->validated(),
             coverImage: $request->file('cover_image'),
+            galleryImages: $request->file('gallery_images', []),
         );
 
         if (! $request->expectsJson()) {
@@ -161,7 +162,7 @@ class BadmintonFieldController extends Controller
         }
 
         return response()->json([
-            'data' => $badmintonField->load(['facilities', 'owner']),
+            'data' => $badmintonField->load(['facilities', 'owner', 'galleryImages']),
             'meta' => [
                 'map' => [
                     'provider' => 'OpenStreetMap',
@@ -183,6 +184,7 @@ class BadmintonFieldController extends Controller
             badmintonField: $badmintonField,
             attributes: $request->validated(),
             coverImage: $request->file('cover_image'),
+            galleryImages: $request->file('gallery_images', []),
         );
 
         if (! $request->expectsJson()) {

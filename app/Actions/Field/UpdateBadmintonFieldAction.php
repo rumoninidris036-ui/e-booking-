@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actions\Field;
 
 use App\Models\BadmintonField;
+use App\Models\BadmintonFieldGalleryImage;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -15,9 +16,9 @@ class UpdateBadmintonFieldAction
     /**
      * @param  array{name: string, description?: string|null, address?: string|null, latitude?: numeric-string|int|float|null, longitude?: numeric-string|int|float|null, price_per_hour: numeric-string|int|float, open_time: string, close_time: string, slot_duration_minutes: int, is_active?: bool, facility_ids?: array<int, int>, remove_cover_image?: bool}  $attributes
      */
-    public function handle(BadmintonField $badmintonField, array $attributes, ?UploadedFile $coverImage = null): BadmintonField
+    public function handle(BadmintonField $badmintonField, array $attributes, ?UploadedFile $coverImage = null, array $galleryImages = []): BadmintonField
     {
-        return DB::transaction(function () use ($badmintonField, $attributes, $coverImage): BadmintonField {
+        return DB::transaction(function () use ($badmintonField, $attributes, $coverImage, $galleryImages): BadmintonField {
             $oldCoverImage = $badmintonField->cover_image;
             $newCoverImage = $oldCoverImage;
 
@@ -48,11 +49,23 @@ class UpdateBadmintonFieldAction
 
             $badmintonField->facilities()->sync($attributes['facility_ids'] ?? []);
 
+            foreach ($galleryImages as $index => $galleryImage) {
+                if (! $galleryImage instanceof UploadedFile) {
+                    continue;
+                }
+
+                BadmintonFieldGalleryImage::query()->create([
+                    'badminton_field_id' => $badmintonField->id,
+                    'path' => $galleryImage->store('badminton-fields/galleries', 'public'),
+                    'sort_order' => (int) $badmintonField->galleryImages()->count() + $index,
+                ]);
+            }
+
             if ($oldCoverImage !== null && $oldCoverImage !== $newCoverImage) {
                 Storage::disk('public')->delete($oldCoverImage);
             }
 
-            return $badmintonField->load(['facilities', 'owner']);
+            return $badmintonField->load(['facilities', 'owner', 'galleryImages']);
         });
     }
 
