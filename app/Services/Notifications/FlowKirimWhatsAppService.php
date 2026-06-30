@@ -54,7 +54,7 @@ class FlowKirimWhatsAppService implements WhatsAppNotificationGateway
             ->timeout($this->timeout())
             ->post('/api/whatsapp/messages/media', array_filter([
                 'session_id' => $sessionId,
-                'to' => $this->normalizeRecipient($to), // Otomatis nambah @s.whatsapp.net
+                'to' => $this->normalizeRecipientForMedia($to),
                 'media_url' => trim($documentUrl),
                 'type' => 'document', // Pakai document karena kita kirim PDF
                 'caption' => trim($caption),
@@ -85,6 +85,24 @@ class FlowKirimWhatsAppService implements WhatsAppNotificationGateway
 
         // KEMBALIKAN @s.whatsapp.net SESUAI FORMAT YANG DIMINTA FLOWKIRIM
         return $number . '@s.whatsapp.net';
+    }
+
+    private function normalizeRecipientForMedia(string $recipient): string
+    {
+        $recipient = trim($recipient);
+        $recipient = explode('@', $recipient, 2)[0];
+
+        $number = preg_replace('/\D+/', '', $recipient) ?? '';
+
+        if (str_starts_with($number, '0')) {
+            $number = '62' . substr($number, 1);
+        }
+
+        if ($number === '') {
+            throw new InvalidArgumentException('Nomor WhatsApp tujuan tidak valid.');
+        }
+
+        return $number;
     }
 
     private function baseUrl(): string
