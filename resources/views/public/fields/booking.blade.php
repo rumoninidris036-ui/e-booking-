@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title>SmashCourt | Book {{ $field->name }}</title>
+        <title>SmashCourt | Booking {{ $field->name }}</title>
 
         <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -143,10 +143,10 @@
             $serverDate = $serverNow->toDateString();
             $serverTime = $serverNow->format('H:i:s');
             $featureIcons = [
-                ['icon' => 'grid_view', 'title' => 'Synthetic Mat', 'subtitle' => 'Olympic standard'],
-                ['icon' => 'lightbulb', 'title' => 'HD Lighting', 'subtitle' => 'Flicker-free'],
-                ['icon' => 'ac_unit', 'title' => 'Air Conditioned', 'subtitle' => 'Climate control'],
-                ['icon' => 'shower', 'title' => 'Locker Rooms', 'subtitle' => 'Premium facilities'],
+                ['icon' => 'grid_view', 'title' => 'Mat Sintetis', 'subtitle' => 'Standar pertandingan'],
+                ['icon' => 'lightbulb', 'title' => 'Lampu Terang', 'subtitle' => 'Nyaman dilihat'],
+                ['icon' => 'ac_unit', 'title' => 'Ruang Sejuk', 'subtitle' => 'Sirkulasi terjaga'],
+                ['icon' => 'shower', 'title' => 'Ruang Ganti', 'subtitle' => 'Fasilitas dasar'],
             ];
             $selectedSlotData = collect($slots)->firstWhere('start_time', $selectedSlot);
             $selectedSlotIsFuture = $selectedSlotData !== null && (
@@ -185,16 +185,16 @@
                 <div class="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent"></div>
                 <div class="relative w-full px-[20px] pb-12 md:px-[40px]">
                     <div class="mx-auto max-w-7xl">
-                        <span class="mb-4 inline-block rounded-full bg-secondary-container px-3 py-1 font-label-bold text-label-bold text-black">PREMIUM COURT</span>
+                        <span class="mb-4 inline-block rounded-full bg-secondary-container px-3 py-1 font-label-bold text-label-bold text-black">LAPANGAN PILIHAN</span>
                         <h1 class="font-headline-xl-mobile text-headline-xl-mobile uppercase text-secondary md:font-headline-xl md:text-headline-xl">{{ $field->name }}</h1>
                         <div class="mt-4 flex flex-wrap gap-6">
                             <div class="flex items-center gap-2 text-on-surface-variant">
                                 <span class="material-symbols-outlined">location_on</span>
-                                <span class="font-body-md text-body-md">{{ $field->address ?? 'Location pending' }}</span>
+                                <span class="font-body-md text-body-md">{{ $field->address ?? 'Lokasi belum diisi' }}</span>
                             </div>
                             <div class="flex items-center gap-2 text-on-surface-variant">
                                 <span class="material-symbols-outlined">star</span>
-                                <span class="font-body-md text-body-md">{{ $field->facilities->count() }} facility highlights</span>
+                                <span class="font-body-md text-body-md">{{ $field->facilities->count() }} fasilitas</span>
                             </div>
                         </div>
                     </div>
@@ -216,7 +216,7 @@
 
                         <div class="rounded-2xl bg-surface-container p-6 md:p-8">
                             <div class="mb-6 flex items-center justify-between">
-                                <h2 class="font-headline-md text-headline-md text-secondary">Select Date</h2>
+                                <h2 class="font-headline-md text-headline-md text-secondary">Pilih Tanggal</h2>
                                 <div id="selected-month-label" class="rounded-full border border-secondary-container/20 bg-secondary-container/10 px-4 py-2 text-[12px] font-label-bold uppercase text-secondary-container">
                                     {{ $selectedDate->format('F Y') }}
                                 </div>
@@ -244,15 +244,15 @@
 
                         <div class="rounded-2xl bg-surface-container p-6 md:p-8">
                             <div class="mb-6 flex items-center justify-between">
-                                <h2 class="font-headline-md text-headline-md text-secondary">Available Slots</h2>
+                                <h2 class="font-headline-md text-headline-md text-secondary">Slot Tersedia</h2>
                                 <div class="flex gap-4">
                                     <div class="flex items-center gap-2">
                                         <div class="h-3 w-3 rounded-full bg-secondary-container"></div>
-                                        <span class="text-[12px] font-label-bold uppercase text-on-surface-variant">Selected</span>
+                                        <span class="text-[12px] font-label-bold uppercase text-on-surface-variant">Terpilih</span>
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <div class="h-3 w-3 rounded-full bg-surface-variant"></div>
-                                        <span class="text-[12px] font-label-bold uppercase text-on-surface-variant">Booked</span>
+                                        <span class="text-[12px] font-label-bold uppercase text-on-surface-variant">Terisi</span>
                                     </div>
                                 </div>
                             </div>
@@ -288,7 +288,7 @@
                             <div class="mb-4 flex items-center justify-between">
                                 <div class="flex items-center gap-2 text-secondary">
                                     <span class="material-symbols-outlined text-secondary-container">location_on</span>
-                                    <h2 class="font-headline-md text-headline-md">{{ $field->name }} Location</h2>
+                                    <h2 class="font-headline-md text-headline-md">{{ $field->name }} - Lokasi</h2>
                                 </div>
                                 <a
                                     href="https://www.openstreetmap.org/?mlat={{ $mapMeta['marker']['latitude'] ?? '' }}&mlon={{ $mapMeta['marker']['longitude'] ?? '' }}#map=16/{{ $mapMeta['marker']['latitude'] ?? '' }}/{{ $mapMeta['marker']['longitude'] ?? '' }}"
@@ -297,7 +297,7 @@
                                     class="flex items-center gap-2 rounded-lg border border-secondary-container px-4 py-2 text-[12px] font-label-bold uppercase text-secondary-container transition-colors hover:bg-secondary-container/10"
                                 >
                                     <span class="material-symbols-outlined text-sm">open_in_new</span>
-                                    View Full Map
+                                    Lihat Peta Lengkap
                                 </a>
                             </div>
 
@@ -308,14 +308,14 @@
 
                             <div class="mt-4 flex items-center justify-between text-on-surface-variant">
                                 <p class="font-body-md text-body-md">{{ $field->address ?? 'Alamat belum tersedia.' }}</p>
-                                <span class="text-[12px] font-label-bold uppercase">OSM Enabled</span>
+                                <span class="text-[12px] font-label-bold uppercase">Peta aktif</span>
                             </div>
                         </div>
                     </div>
 
                     <aside class="space-y-6 lg:col-span-4">
                         <div class="glass-panel sticky top-24 rounded-2xl p-6">
-                            <h2 class="mb-6 font-headline-md text-headline-md text-secondary">Booking Summary</h2>
+                            <h2 class="mb-6 font-headline-md text-headline-md text-secondary">Ringkasan Booking</h2>
 
                             <div class="space-y-4">
                                 <div class="flex items-center justify-between">
@@ -323,15 +323,15 @@
                                     <span class="font-semibold text-secondary">{{ $field->name }}</span>
                                 </div>
                                 <div class="flex items-center justify-between">
-                                    <span class="text-on-surface-variant">Date</span>
+                                    <span class="text-on-surface-variant">Tanggal</span>
                                     <span id="booking-summary-date" class="font-semibold text-secondary">{{ $selectedDate->format('d M Y') }}</span>
                                 </div>
                                 <div class="flex items-center justify-between">
                                     <span class="text-on-surface-variant">Slot</span>
-                                    <span id="booking-summary-slot" class="font-semibold text-secondary">{{ $selectedSlotData !== null ? $selectedSlotData['start_time'].'-'.$selectedSlotData['end_time'] : 'Choose a slot' }}</span>
+                                    <span id="booking-summary-slot" class="font-semibold text-secondary">{{ $selectedSlotData !== null ? $selectedSlotData['start_time'].'-'.$selectedSlotData['end_time'] : 'Pilih slot' }}</span>
                                 </div>
                                 <div class="flex items-center justify-between">
-                                    <span class="text-on-surface-variant">Duration</span>
+                                    <span class="text-on-surface-variant">Durasi</span>
                                     <span id="booking-summary-duration" class="font-semibold text-secondary">{{ (int) ($field->slot_duration_minutes ?? \App\Services\Booking\FieldScheduleService::DEFAULT_SLOT_DURATION_MINUTES) }} menit</span>
                                 </div>
                                 <div class="border-t border-white/10 pt-4">
@@ -351,7 +351,7 @@
                             @endif
 
                             <div id="booking-summary-hint" class="mt-8 rounded-xl border border-outline-variant bg-surface-container-low p-4 text-sm text-on-surface-variant">
-                                Isi data customer dan pilih slot terlebih dulu untuk mengaktifkan tombol booking.
+                                Isi data pemesan dan pilih slot terlebih dulu untuk lanjut booking.
                             </div>
 
                             <form method="POST" action="{{ route('public.fields.bookings.store', ['slug' => $field->slug]) }}" class="mt-4 space-y-4">
@@ -360,7 +360,7 @@
                                 <input id="booking-slot-input" type="hidden" name="start_time" value="{{ $selectedSlotData['start_time'] ?? '' }}">
 
                                 <div>
-                                    <label for="customer_name" class="mb-2 block text-[12px] font-label-bold uppercase text-on-surface-variant">Nama Customer</label>
+                                    <label for="customer_name" class="mb-2 block text-[12px] font-label-bold uppercase text-on-surface-variant">Nama Pemesan</label>
                                     <input
                                         id="customer_name"
                                         name="customer_name"
@@ -374,7 +374,7 @@
                                 </div>
 
                                 <div>
-                                    <label for="customer_contact" class="mb-2 block text-[12px] font-label-bold uppercase text-on-surface-variant">Nomor WhatsApp / Telegram</label>
+                                    <label for="customer_contact" class="mb-2 block text-[12px] font-label-bold uppercase text-on-surface-variant">Kontak WhatsApp / Telegram</label>
                                     <input
                                         id="customer_contact"
                                         name="customer_contact"
@@ -389,7 +389,7 @@
                                 </div>
 
                                 <div>
-                                    <label for="customer_email" class="mb-2 block text-[12px] font-label-bold uppercase text-on-surface-variant">Email Opsional</label>
+                                    <label for="customer_email" class="mb-2 block text-[12px] font-label-bold uppercase text-on-surface-variant">Email (opsional)</label>
                                     <input
                                         id="customer_email"
                                         name="customer_email"
@@ -402,12 +402,12 @@
                                 </div>
 
                                 <button id="confirm-booking-button" type="submit" @disabled($selectedSlotData === null) class="w-full rounded-xl bg-secondary-container py-4 font-label-bold text-label-bold uppercase text-black neon-glow-secondary transition-transform disabled:cursor-not-allowed disabled:opacity-50 active:translate-y-[2px]">
-                                    Confirm Booking
+                                    Konfirmasi Booking
                                 </button>
                             </form>
 
                             <a href="{{ route('public.fields.show', ['slug' => $field->slug]) }}" class="mt-4 block w-full rounded-xl border border-primary px-6 py-4 text-center font-label-bold text-label-bold uppercase text-primary transition-all hover:bg-primary/10">
-                                Back To Detail
+                                Kembali ke Detail
                             </a>
                         </div>
                     </aside>
@@ -499,9 +499,9 @@
 
                 selectedMonthLabel.textContent = formatMonthLabel(scheduleState.selectedDate);
                 bookingSummaryDate.textContent = formatSummaryDate(scheduleState.selectedDate);
-                bookingSummarySlot.textContent = selectedSlot
+                    bookingSummarySlot.textContent = selectedSlot
                     ? `${selectedSlot.start_time}-${selectedSlot.end_time}`
-                    : 'Choose a slot';
+                    : 'Pilih slot';
 
                 if (bookingSummaryDuration) {
                     bookingSummaryDuration.textContent = `${scheduleState.slotDurationMinutes ?? 60} menit`;

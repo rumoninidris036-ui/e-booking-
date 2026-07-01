@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'SmashCourt') }} | Login</title>
+        <title>{{ config('app.name', 'SmashCourt') }} | Masuk</title>
 
         <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -72,14 +72,14 @@
         <header class="fixed top-0 z-50 flex h-16 w-full items-center justify-between border-b border-white/10 bg-background/80 px-[20px] backdrop-blur-md md:px-[40px]">
             <a href="{{ url('/') }}" class="font-headline-lg text-2xl font-extrabold uppercase tracking-tighter text-secondary-fixed">SmashCourt</a>
             <nav class="hidden items-center gap-8 md:flex">
-                <a class="font-label-bold text-label-bold text-on-surface-variant transition-colors hover:text-secondary-fixed" href="{{ url('/#arenas') }}">Courts</a>
-                <a class="font-label-bold text-label-bold text-on-surface-variant transition-colors hover:text-secondary-fixed" href="{{ url('/#benefits') }}">Tournaments</a>
-                <a class="font-label-bold text-label-bold text-on-surface-variant transition-colors hover:text-secondary-fixed" href="{{ url('/#cta') }}">Leagues</a>
+                <a class="font-label-bold text-label-bold text-on-surface-variant transition-colors hover:text-secondary-fixed" href="{{ url('/#arenas') }}">Lapangan</a>
+                <a class="font-label-bold text-label-bold text-on-surface-variant transition-colors hover:text-secondary-fixed" href="{{ url('/#benefits') }}">Keunggulan</a>
+                <a class="font-label-bold text-label-bold text-on-surface-variant transition-colors hover:text-secondary-fixed" href="{{ url('/#cta') }}">Booking</a>
             </nav>
             <div class="flex items-center gap-4">
                 @if (Route::has('register'))
                     <a href="{{ route('register') }}" class="rounded-full bg-secondary-fixed px-6 py-2 font-label-bold text-label-bold uppercase text-black transition-transform active:scale-95">
-                        Sign Up
+                        Daftar
                     </a>
                 @endif
             </div>
@@ -103,8 +103,8 @@
                     <div class="absolute -right-16 -top-16 h-32 w-32 bg-secondary-fixed/10 blur-3xl transition-all duration-500 group-hover:bg-secondary-fixed/20"></div>
 
                     <div class="mb-10 text-center">
-                        <h1 class="mb-2 font-headline-lg text-headline-lg tracking-tight md:text-headline-xl-mobile">WELCOME BACK, ATHLETE</h1>
-                        <p class="text-on-surface-variant">Ready to claim your court today?</p>
+                        <h1 class="mb-2 font-headline-lg text-headline-lg tracking-tight md:text-headline-xl-mobile">Selamat datang kembali</h1>
+                        <p class="text-on-surface-variant">Masuk dulu, lalu lanjut pilih lapangan yang kamu butuhkan.</p>
                     </div>
 
                     <x-auth-session-status class="mb-6 rounded-lg border border-secondary-fixed/20 bg-secondary-fixed/10 px-4 py-3 text-sm text-secondary-fixed" :status="session('status')" />
@@ -113,7 +113,7 @@
                         @csrf
 
                         <div class="space-y-2">
-                            <label for="email" class="ml-1 block font-label-bold text-label-bold uppercase text-on-surface-variant">Email Address</label>
+                            <label for="email" class="ml-1 block font-label-bold text-label-bold uppercase text-on-surface-variant">Email</label>
                             <div class="relative">
                                 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[20px] text-outline">mail</span>
                                 <input
@@ -124,7 +124,7 @@
                                     required
                                     autofocus
                                     autocomplete="username"
-                                    placeholder="name@athlete.com"
+                                    placeholder="nama@email.com"
                                     class="w-full rounded-lg border border-outline-variant bg-surface-container-low py-4 pl-12 pr-4 text-on-surface outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-secondary-fixed"
                                 >
                             </div>
@@ -132,7 +132,7 @@
                         </div>
 
                         <div class="space-y-2">
-                            <label for="password" class="ml-1 block font-label-bold text-label-bold uppercase text-on-surface-variant">Password</label>
+                            <label for="password" class="ml-1 block font-label-bold text-label-bold uppercase text-on-surface-variant">Kata Sandi</label>
                             <div class="relative">
                                 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[20px] text-outline">lock</span>
                                 <input
@@ -151,25 +151,25 @@
                         <div class="flex items-center justify-between font-label-bold text-label-bold">
                             <label for="remember_me" class="group flex cursor-pointer items-center gap-2">
                                 <input id="remember_me" name="remember" type="checkbox" class="rounded border-outline-variant bg-surface-container-low text-secondary-fixed focus:ring-secondary-fixed focus:ring-offset-background">
-                                <span class="text-on-surface-variant transition-colors group-hover:text-on-surface">Remember Me</span>
+                                <span class="text-on-surface-variant transition-colors group-hover:text-on-surface">Ingat saya</span>
                             </label>
 
                             @if (Route::has('password.request'))
                                 <a href="{{ route('password.request') }}" class="text-secondary-fixed transition-colors hover:text-secondary-fixed-dim">
-                                    Forgot Password?
+                                    Lupa kata sandi?
                                 </a>
                             @endif
                         </div>
 
                         <button type="submit" class="flex w-full items-center justify-center gap-2 rounded-lg bg-secondary-fixed py-4 font-label-bold text-label-bold uppercase tracking-widest text-black shadow-[0_4px_0_0_#abd600] transition-all active:translate-y-[2px] active:shadow-none">
-                            Login to Dashboard
+                            Masuk ke Dashboard
                             <span class="material-symbols-outlined">bolt</span>
                         </button>
                     </form>
 
                     <div class="relative my-8 flex items-center justify-center">
                         <div class="absolute w-full border-t border-outline-variant"></div>
-                        <span class="relative bg-surface-container px-4 font-label-bold text-label-bold uppercase text-outline">Or Continue With</span>
+                        <span class="relative bg-surface-container px-4 font-label-bold text-label-bold uppercase text-outline">Atau lanjut dengan</span>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
@@ -185,9 +185,9 @@
 
                     <div class="mt-10 text-center">
                         <p class="text-on-surface-variant">
-                            Don't have an account?
+                            Belum punya akun?
                             <a href="{{ route('register') }}" class="ml-2 font-label-bold text-label-bold uppercase text-secondary-fixed decoration-2 underline-offset-4 hover:underline">
-                                Sign Up
+                                Daftar
                             </a>
                         </p>
                     </div>
@@ -199,11 +199,11 @@
 
         <footer class="flex w-full flex-col items-center justify-between gap-4 bg-surface-container-lowest px-[20px] py-8 md:flex-row md:px-[40px]">
             <div class="font-headline-lg text-2xl text-secondary-fixed">SmashCourt</div>
-            <div class="text-body-md text-outline">© {{ now()->year }} SmashCourt. Engineered for Performance.</div>
+            <div class="text-body-md text-outline">© {{ now()->year }} SmashCourt. Booking lapangan jadi lebih mudah.</div>
             <div class="flex gap-6">
-                <a class="text-body-md text-outline transition-colors hover:text-secondary-fixed-dim" href="{{ url('/') }}">Terms</a>
-                <a class="text-body-md text-outline transition-colors hover:text-secondary-fixed-dim" href="{{ url('/') }}">Privacy</a>
-                <a class="text-body-md text-outline transition-colors hover:text-secondary-fixed-dim" href="{{ url('/') }}">Support</a>
+                <a class="text-body-md text-outline transition-colors hover:text-secondary-fixed-dim" href="{{ url('/') }}">Ketentuan</a>
+                <a class="text-body-md text-outline transition-colors hover:text-secondary-fixed-dim" href="{{ url('/') }}">Privasi</a>
+                <a class="text-body-md text-outline transition-colors hover:text-secondary-fixed-dim" href="{{ url('/') }}">Bantuan</a>
             </div>
         </footer>
 

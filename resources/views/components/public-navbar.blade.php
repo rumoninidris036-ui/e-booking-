@@ -25,13 +25,13 @@
                 class="{{ $isCourts ? 'border-b-2 border-secondary-container pb-1 font-body-md text-body-md font-bold text-secondary-container' : 'font-body-md text-body-md text-on-surface transition-colors hover:text-secondary-container' }}"
                 href="{{ $courtsUrl }}"
             >
-                Courts
+                Lapangan
             </a>
             <a
                 class="font-body-md text-body-md text-on-surface transition-colors hover:text-secondary-container"
                 href="{{ $recommendedUrl }}"
             >
-                Recommended
+                Rekomendasi
             </a>
         </div>
 
@@ -41,7 +41,7 @@
             </a>
 
             <a href="{{ $courtsUrl }}" class="rounded-full bg-secondary-container px-6 py-2.5 font-label-bold text-label-bold uppercase text-on-secondary shadow-[0_4px_0_0_#3c4d00] transition-transform hover:-translate-y-px active:translate-y-[2px]">
-                Explore Courts
+                Lihat Lapangan
             </a>
 
             <button @click="open = ! open" class="inline-flex items-center justify-center rounded-md p-2 text-on-surface transition-colors hover:bg-white/5 hover:text-secondary-container md:hidden" aria-label="Toggle navigation">
@@ -60,10 +60,10 @@
                     Home
                 </a>
                 <a class="rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface transition-colors hover:bg-white/5 hover:text-secondary-container" href="{{ $courtsUrl }}">
-                    Courts
+                    Lapangan
                 </a>
                 <a class="rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface transition-colors hover:bg-white/5 hover:text-secondary-container" href="{{ $recommendedUrl }}">
-                    Recommended
+                    Rekomendasi
                 </a>
                 <a class="rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface transition-colors hover:bg-white/5 hover:text-secondary-container" href="{{ $authUrl }}">
                     {{ $authLabel }}

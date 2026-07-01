@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'SMASHCOURT') }} | Guest Rating</title>
+        <title>{{ config('app.name', 'SMASHCOURT') }} | Ulasan Tamu</title>
 
         <script src="https://cdn.tailwindcss.com"></script>
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,25 +20,25 @@
                 <section class="relative overflow-hidden bg-gradient-to-br from-lime-400/20 via-slate-900 to-slate-900 px-6 py-8 sm:px-10 sm:py-12">
                     <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(195,244,0,0.18),_transparent_35%)]"></div>
                     <div class="relative">
-                        <p class="text-xs font-semibold uppercase tracking-[0.3em] text-lime-300">Guest Rating</p>
+                        <p class="text-xs font-semibold uppercase tracking-[0.3em] text-lime-300">Ulasan Tamu</p>
                         <h1 class="mt-4 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">{{ $field->name }}</h1>
                         <p class="mt-4 max-w-xl text-sm leading-7 text-slate-300 sm:text-base">
-                            Terima kasih sudah booking di SMASHCOURT. Bagikan pengalamanmu supaya pemain lain bisa memilih lapangan dengan lebih yakin.
+                            Terima kasih sudah main di SMASHCOURT. Ceritakan pengalamanmu supaya orang lain punya gambaran yang lebih jelas.
                         </p>
 
                         <div class="mt-8 space-y-4">
                             <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
-                                <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">Booking Code</p>
+                                <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">Kode Booking</p>
                                 <p class="mt-2 font-semibold text-white">{{ $booking->booking_code }}</p>
                             </div>
                             <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
-                                <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">Court</p>
+                                <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">Lapangan</p>
                                 <p class="mt-2 font-semibold text-white">{{ $field->name }}</p>
                             </div>
                         </div>
 
                         <div class="mt-8 rounded-2xl border border-lime-400/20 bg-lime-400/10 p-4 text-sm leading-6 text-lime-50">
-                            Satu booking hanya bisa mengirim satu rating. Link signed akan otomatis ditolak jika sudah pernah dipakai.
+                            Satu booking hanya bisa mengirim satu ulasan. Tautan ini akan ditolak kalau sudah pernah dipakai.
                         </div>
                     </div>
                 </section>
@@ -47,9 +47,9 @@
                     <div class="mx-auto max-w-xl">
                         <div class="flex items-center gap-3">
                             <span class="h-2.5 w-2.5 rounded-full bg-lime-400"></span>
-                            <p class="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">Public Rating</p>
+                            <p class="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">Ulasan Publik</p>
                         </div>
-                        <h2 class="mt-4 text-2xl font-bold tracking-tight text-white">Submit Your Rating</h2>
+                        <h2 class="mt-4 text-2xl font-bold tracking-tight text-white">Kirim Ulasan</h2>
                         <p class="mt-2 text-sm leading-6 text-slate-400">
                             Pilih bintang lalu tulis komentar singkat jika ingin memberi masukan.
                         </p>
@@ -64,7 +64,7 @@
                             @csrf
 
                             <div>
-                                <label class="mb-3 block text-sm font-semibold text-slate-200">Score</label>
+                                <label class="mb-3 block text-sm font-semibold text-slate-200">Nilai</label>
                                 <div class="grid grid-cols-5 gap-2">
                                     @for ($score = 5; $score >= 1; $score--)
                                         <label class="cursor-pointer">
@@ -81,22 +81,22 @@
                                         </label>
                                     @endfor
                                 </div>
-                                <p class="mt-2 text-xs text-slate-500">Default ke 5 bintang. Silakan ubah sesuai pengalamanmu.</p>
+                                <p class="mt-2 text-xs text-slate-500">Bawaan 5 bintang. Silakan sesuaikan dengan pengalamanmu.</p>
                             </div>
 
                             <div>
-                                <label for="comment" class="mb-3 block text-sm font-semibold text-slate-200">Comment</label>
+                                <label for="comment" class="mb-3 block text-sm font-semibold text-slate-200">Komentar</label>
                                 <textarea
                                     id="comment"
                                     name="comment"
                                     rows="5"
                                     class="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-slate-100 placeholder:text-slate-500 transition focus:border-lime-400 focus:outline-none focus:ring-2 focus:ring-lime-400/20"
-                                    placeholder="Tulis pengalaman singkatmu di lapangan ini..."
+                                    placeholder="Tulis sedikit catatan tentang lapangan ini..."
                                 >{{ old('comment') }}</textarea>
                             </div>
 
                             <button type="submit" class="w-full rounded-2xl bg-lime-400 px-6 py-4 text-sm font-bold uppercase tracking-[0.2em] text-slate-950 transition-transform hover:-translate-y-0.5 hover:shadow-lg hover:shadow-lime-400/20">
-                                Submit Rating
+                                Kirim Ulasan
                             </button>
                         </form>
                     </div>
