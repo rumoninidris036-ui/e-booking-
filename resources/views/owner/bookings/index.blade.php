@@ -76,6 +76,7 @@
                 \App\Models\Booking::STATUS_PAID => 'bg-emerald-50 text-emerald-700 ring-emerald-200',
                 \App\Models\Booking::STATUS_CANCELLED => 'bg-rose-50 text-rose-700 ring-rose-200',
                 \App\Models\Booking::STATUS_FINISHED => 'bg-blue-50 text-blue-700 ring-blue-200',
+                'expired' => 'bg-rose-50 text-rose-700 ring-rose-200',
                 default => 'bg-amber-50 text-amber-700 ring-amber-200',
             };
             $paymentBadge = fn (?string $status): string => match ($status) {
@@ -186,9 +187,11 @@
                                             $payment = $booking->payments->first();
                                             $customerName = $booking->customer_name ?? $booking->user?->name ?? 'Tamu';
                                             $customerContact = $booking->customer_contact ?? $booking->customer_email ?? $booking->user?->email ?? '-';
-                                            $canMarkPaid = $booking->status === \App\Models\Booking::STATUS_PENDING;
+                                            $isExpiredPending = $booking->status === \App\Models\Booking::STATUS_PENDING && $booking->isPendingPaymentExpired();
+                                            $displayStatus = $isExpiredPending ? 'expired' : $booking->status;
+                                            $canMarkPaid = $booking->status === \App\Models\Booking::STATUS_PENDING && ! $isExpiredPending;
                                             $canFinish = $booking->status === \App\Models\Booking::STATUS_PAID;
-                                            $canCancel = in_array($booking->status, [\App\Models\Booking::STATUS_PENDING, \App\Models\Booking::STATUS_PAID], true);
+                                            $canCancel = in_array($booking->status, [\App\Models\Booking::STATUS_PENDING, \App\Models\Booking::STATUS_PAID], true) && ! $isExpiredPending;
                                         @endphp
                                         <tr id="booking-{{ $booking->id }}" class="{{ (string) request('focus') === (string) $booking->id ? 'bg-brandSoft/40' : '' }}">
                                             <td class="px-5 py-4 align-top">
@@ -205,7 +208,7 @@
                                             </td>
                                             <td class="px-5 py-4 align-top">
                                                 <div class="flex flex-wrap gap-2">
-                                                    <span class="rounded-full px-2.5 py-1 text-xs font-bold ring-1 {{ $bookingBadge($booking->status) }}">{{ $booking->status }}</span>
+                                                    <span class="rounded-full px-2.5 py-1 text-xs font-bold ring-1 {{ $bookingBadge($displayStatus) }}">{{ $displayStatus }}</span>
                                                     <span class="rounded-full px-2.5 py-1 text-xs font-bold ring-1 {{ $paymentBadge($payment?->status) }}">{{ $payment?->status ?? 'unpaid' }}</span>
                                                 </div>
                                                 @if ($payment?->invoice_number)
@@ -243,7 +246,7 @@
                                                         </form>
                                                     @endif
                                                     @unless ($canMarkPaid || $canFinish || $canCancel)
-                                                        <span class="rounded-xl bg-slate-50 px-3 py-2 text-xs font-bold text-slateSoft ring-1 ring-line">Final</span>
+                                                        <span class="rounded-xl bg-slate-50 px-3 py-2 text-xs font-bold text-slateSoft ring-1 ring-line">{{ $displayStatus === 'expired' ? 'Expired' : 'Final' }}</span>
                                                     @endunless
                                                 </div>
                                             </td>
