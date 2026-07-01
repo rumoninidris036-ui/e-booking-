@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title>SmashCourt | Booking Owner</title>
+        <title>SmashCourt | Daftar Booking</title>
 
         <script src="https://cdn.tailwindcss.com"></script>
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -86,10 +86,10 @@
             };
             $kpis = [
                 ['label' => 'Total Booking', 'value' => number_format((int) $summary['total_bookings']), 'hint' => 'semua status', 'tone' => 'text-brand bg-brandSoft', 'icon' => 'BK'],
-                ['label' => 'Pending', 'value' => number_format((int) $summary['pending_bookings']), 'hint' => 'menunggu payment', 'tone' => 'text-amber-700 bg-amber-50', 'icon' => 'PN'],
+                ['label' => 'Pending', 'value' => number_format((int) $summary['pending_bookings']), 'hint' => 'menunggu pembayaran', 'tone' => 'text-amber-700 bg-amber-50', 'icon' => 'PN'],
                 ['label' => 'Paid', 'value' => number_format((int) $summary['paid_bookings']), 'hint' => 'siap dimainkan', 'tone' => 'text-emerald-700 bg-emerald-50', 'icon' => 'PD'],
                 ['label' => 'Finished', 'value' => number_format((int) $summary['finished_bookings']), 'hint' => 'selesai', 'tone' => 'text-blue-700 bg-blue-50', 'icon' => 'FN'],
-                ['label' => 'Revenue', 'value' => $compactRupiah((float) $summary['total_revenue']), 'hint' => 'payment sukses', 'tone' => 'text-lime-700 bg-lime-50', 'icon' => 'RV'],
+                ['label' => 'Revenue', 'value' => $compactRupiah((float) $summary['total_revenue']), 'hint' => 'pembayaran sukses', 'tone' => 'text-lime-700 bg-lime-50', 'icon' => 'RV'],
             ];
         @endphp
 
@@ -100,7 +100,7 @@
                 <header class="sticky top-0 z-30 border-b border-line bg-white/90 backdrop-blur-xl">
                     <div class="flex min-h-16 items-center justify-between gap-4 px-4 py-3 md:px-6">
                         <div>
-                            <p class="hidden text-xs font-bold uppercase tracking-[0.22em] text-brand md:block">Booking Operations</p>
+                            <p class="hidden text-xs font-bold uppercase tracking-[0.22em] text-brand md:block">Operasi Booking</p>
                             <h1 class="font-display text-xl font-bold md:text-2xl">Daftar Booking</h1>
                         </div>
 
@@ -145,7 +145,7 @@
                     <section class="rounded-3xl border border-line bg-panel shadow-card">
                         <div class="flex flex-col gap-4 border-b border-line px-5 py-5 xl:flex-row xl:items-end xl:justify-between">
                             <div>
-                                <p class="text-xs font-bold uppercase tracking-[0.22em] text-brand">Booking List</p>
+                                <p class="text-xs font-bold uppercase tracking-[0.22em] text-brand">Daftar Booking</p>
                                 <h2 class="mt-1 font-display text-2xl font-bold">Booking Masuk</h2>
                                 <p class="mt-2 text-sm text-slateSoft">{{ $bookings->total() }} booking cocok dengan filter saat ini</p>
                             </div>
@@ -176,7 +176,7 @@
                                         <th class="px-5 py-4">Customer</th>
                                         <th class="px-5 py-4">Lapangan</th>
                                         <th class="px-5 py-4">Status</th>
-                                        <th class="px-5 py-4 text-right">Amount</th>
+                                        <th class="px-5 py-4 text-right">Nominal</th>
                                         <th class="px-5 py-4">Aksi</th>
                                     </tr>
                                 </thead>
@@ -184,7 +184,7 @@
                                     @forelse ($bookings as $booking)
                                         @php
                                             $payment = $booking->payments->first();
-                                            $customerName = $booking->customer_name ?? $booking->user?->name ?? 'Guest Customer';
+                                            $customerName = $booking->customer_name ?? $booking->user?->name ?? 'Tamu';
                                             $customerContact = $booking->customer_contact ?? $booking->customer_email ?? $booking->user?->email ?? '-';
                                             $canMarkPaid = $booking->status === \App\Models\Booking::STATUS_PENDING;
                                             $canFinish = $booking->status === \App\Models\Booking::STATUS_PAID;
@@ -252,7 +252,7 @@
                                         <tr>
                                             <td colspan="6" class="px-5 py-12 text-center">
                                                 <h3 class="font-display text-2xl font-bold">Belum ada booking</h3>
-                                                <p class="mt-2 text-sm text-slateSoft">Booking akan muncul saat customer memilih slot lapangan kamu.</p>
+                            <p class="mt-2 text-sm text-slateSoft">Booking akan muncul saat customer memilih slot lapangan kamu.</p>
                                             </td>
                                         </tr>
                                     @endforelse

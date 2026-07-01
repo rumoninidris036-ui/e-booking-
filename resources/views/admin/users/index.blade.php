@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title>SmashCourt | Admin Users</title>
+        <title>SmashCourt | Pengguna Admin</title>
 
         <script src="https://cdn.tailwindcss.com"></script>
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -56,7 +56,7 @@
                     <div class="flex min-h-16 items-center justify-between gap-4 px-4 py-3 md:px-6">
                         <div>
                             <p class="hidden text-xs font-bold uppercase tracking-[0.22em] text-brand md:block">User Control</p>
-                            <h1 class="font-display text-xl font-bold md:text-2xl">Users Owner</h1>
+                            <h1 class="font-display text-xl font-bold md:text-2xl">Pengguna Owner</h1>
                         </div>
 
                         <div class="ml-auto flex items-center gap-3">

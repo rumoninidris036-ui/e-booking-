@@ -72,8 +72,8 @@
             $kpis = [
                 ['label' => 'Owner Terdaftar', 'value' => number_format((int) $summary['total_owners']), 'hint' => 'user register', 'tone' => 'text-brand bg-brandSoft', 'icon' => 'OW'],
                 ['label' => 'Total Lapangan', 'value' => number_format((int) $dashboard['field_monitoring']['total_fields']), 'hint' => $dashboard['field_monitoring']['active_fields'].' aktif', 'tone' => 'text-sky-700 bg-sky-50', 'icon' => 'LP'],
-                ['label' => 'Total Booking', 'value' => number_format((int) $dashboard['booking_monitoring']['total_bookings']), 'hint' => $dashboard['booking_monitoring']['pending_bookings'].' pending', 'tone' => 'text-amber-700 bg-amber-50', 'icon' => 'BK'],
-                ['label' => 'Transaksi Sukses', 'value' => number_format((int) $summary['successful_transactions']), 'hint' => 'payment success', 'tone' => 'text-emerald-700 bg-emerald-50', 'icon' => 'OK'],
+                ['label' => 'Total Booking', 'value' => number_format((int) $dashboard['booking_monitoring']['total_bookings']), 'hint' => $dashboard['booking_monitoring']['pending_bookings'].' menunggu', 'tone' => 'text-amber-700 bg-amber-50', 'icon' => 'BK'],
+                ['label' => 'Transaksi Sukses', 'value' => number_format((int) $summary['successful_transactions']), 'hint' => 'pembayaran sukses', 'tone' => 'text-emerald-700 bg-emerald-50', 'icon' => 'OK'],
                 ['label' => 'Revenue', 'value' => $compactRupiah((float) $summary['total_transaction_amount']), 'hint' => 'semua owner', 'tone' => 'text-lime-700 bg-lime-50', 'icon' => 'RV'],
             ];
         @endphp
@@ -85,14 +85,14 @@
                 <header class="sticky top-0 z-30 border-b border-line bg-white/90 backdrop-blur-xl">
                     <div class="flex min-h-16 items-center justify-between gap-4 px-4 py-3 md:px-6">
                         <div>
-                            <p class="hidden text-xs font-bold uppercase tracking-[0.22em] text-brand md:block">Admin Workspace</p>
+                            <p class="hidden text-xs font-bold uppercase tracking-[0.22em] text-brand md:block">Ruang Admin</p>
                             <h1 class="font-display text-xl font-bold md:text-2xl">Dashboard Admin</h1>
                         </div>
 
                         <div class="ml-auto flex items-center gap-3">
-                            <a href="{{ route('public.fields.index') }}" class="hidden rounded-xl border border-line px-4 py-2 text-sm font-bold text-ink transition hover:border-brand hover:text-brand md:inline-flex">View Public</a>
+                            <a href="{{ route('public.fields.index') }}" class="hidden rounded-xl border border-line px-4 py-2 text-sm font-bold text-ink transition hover:border-brand hover:text-brand md:inline-flex">Lihat Publik</a>
                             <a href="{{ route('admin.fields.index') }}" class="rounded-xl border border-line px-4 py-2 text-sm font-bold text-ink transition hover:border-brand hover:text-brand">Lapangan</a>
-                            <a href="{{ route('admin.users.index') }}" class="rounded-xl border border-line px-4 py-2 text-sm font-bold text-ink transition hover:border-brand hover:text-brand">Users</a>
+                            <a href="{{ route('admin.users.index') }}" class="rounded-xl border border-line px-4 py-2 text-sm font-bold text-ink transition hover:border-brand hover:text-brand">Pengguna</a>
                             <div class="border-l border-line pl-4">
                                 @include('layouts.topbar-profile-menu')
                             </div>
@@ -102,9 +102,9 @@
 
                 <main class="space-y-6 px-4 py-6 md:px-6">
                     <section>
-                        <p class="text-xs font-bold uppercase tracking-[0.24em] text-brand">Platform Overview</p>
+                        <p class="text-xs font-bold uppercase tracking-[0.24em] text-brand">Ringkasan Platform</p>
                         <h2 class="mt-2 font-display text-3xl font-bold tracking-tight md:text-4xl">Monitor owner, lapangan, booking, dan pembayaran</h2>
-                        <p class="mt-2 text-sm text-slateSoft">User yang register masuk sebagai owner dan bisa dipantau dari menu Users.</p>
+                        <p class="mt-2 text-sm text-slateSoft">User yang daftar masuk sebagai owner dan bisa dipantau dari menu pengguna.</p>
                     </section>
 
                     <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -129,7 +129,7 @@
                                     <h2 class="font-display text-lg font-bold">Owner Terbaru</h2>
                                     <p class="text-xs text-slateSoft">Akun owner yang baru mendaftar.</p>
                                 </div>
-                                <a href="{{ route('admin.users.index') }}" class="text-sm font-bold text-brand">Manage</a>
+                                <a href="{{ route('admin.users.index') }}" class="text-sm font-bold text-brand">Kelola</a>
                             </div>
                             <div class="divide-y divide-line">
                                 @forelse ($recentOwners as $owner)
@@ -148,8 +148,8 @@
 
                         <article class="rounded-3xl border border-line bg-panel shadow-card">
                             <div class="border-b border-line px-5 py-4">
-                                <h2 class="font-display text-lg font-bold">Top Owner</h2>
-                                <p class="text-xs text-slateSoft">Ranking berdasarkan revenue sukses.</p>
+                                <h2 class="font-display text-lg font-bold">Owner Teratas</h2>
+                                <p class="text-xs text-slateSoft">Urutan berdasarkan revenue sukses.</p>
                             </div>
                             <div class="space-y-4 p-5">
                                 @forelse ($topOwners as $owner)

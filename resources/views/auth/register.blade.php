@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'SmashCourt') }} | Sign Up</title>
+        <title>{{ config('app.name', 'SmashCourt') }} | Daftar</title>
 
         <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -72,13 +72,13 @@
         <header class="fixed top-0 z-50 flex h-16 w-full items-center justify-between border-b border-white/10 bg-background/80 px-[20px] backdrop-blur-md md:px-[40px]">
             <a href="{{ url('/') }}" class="font-headline-lg text-2xl font-extrabold uppercase tracking-tighter text-secondary-fixed">SmashCourt</a>
             <nav class="hidden items-center gap-8 md:flex">
-                <a class="font-label-bold text-label-bold text-on-surface-variant transition-colors hover:text-secondary-fixed" href="{{ url('/#arenas') }}">Courts</a>
-                <a class="font-label-bold text-label-bold text-on-surface-variant transition-colors hover:text-secondary-fixed" href="{{ url('/#benefits') }}">Tournaments</a>
-                <a class="font-label-bold text-label-bold text-on-surface-variant transition-colors hover:text-secondary-fixed" href="{{ url('/#cta') }}">Leagues</a>
+                <a class="font-label-bold text-label-bold text-on-surface-variant transition-colors hover:text-secondary-fixed" href="{{ url('/#arenas') }}">Lapangan</a>
+                <a class="font-label-bold text-label-bold text-on-surface-variant transition-colors hover:text-secondary-fixed" href="{{ url('/#benefits') }}">Keunggulan</a>
+                <a class="font-label-bold text-label-bold text-on-surface-variant transition-colors hover:text-secondary-fixed" href="{{ url('/#cta') }}">Booking</a>
             </nav>
             <div class="flex items-center gap-4">
                 <a href="{{ route('login') }}" class="rounded-full bg-secondary-fixed px-6 py-2 font-label-bold text-label-bold uppercase text-black transition-transform active:scale-95">
-                    Login
+                    Masuk
                 </a>
             </div>
         </header>
@@ -101,15 +101,15 @@
                     <div class="absolute -left-16 -top-16 h-32 w-32 bg-secondary-fixed/10 blur-3xl transition-all duration-500 group-hover:bg-secondary-fixed/20"></div>
 
                     <div class="mb-10 text-center">
-                        <h1 class="mb-2 font-headline-lg text-headline-lg tracking-tight md:text-headline-xl-mobile">START YOUR COURT ERA</h1>
-                        <p class="text-on-surface-variant">Create your account and get ready to book faster.</p>
+                        <h1 class="mb-2 font-headline-lg text-headline-lg tracking-tight md:text-headline-xl-mobile">Buat akun dulu</h1>
+                        <p class="text-on-surface-variant">Daftar sekali, lalu booking lapangan jadi lebih cepat.</p>
                     </div>
 
                     <form method="POST" action="{{ route('register') }}" class="space-y-6">
                         @csrf
 
                         <div class="space-y-2">
-                            <label for="name" class="ml-1 block font-label-bold text-label-bold uppercase text-on-surface-variant">Full Name</label>
+                            <label for="name" class="ml-1 block font-label-bold text-label-bold uppercase text-on-surface-variant">Nama Lengkap</label>
                             <div class="relative">
                                 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[20px] text-outline">person</span>
                                 <input
@@ -120,7 +120,7 @@
                                     required
                                     autofocus
                                     autocomplete="name"
-                                    placeholder="Your full name"
+                                    placeholder="Nama lengkap kamu"
                                     class="w-full rounded-lg border border-outline-variant bg-surface-container-low py-4 pl-12 pr-4 text-on-surface outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-secondary-fixed"
                                 >
                             </div>
@@ -128,7 +128,7 @@
                         </div>
 
                         <div class="space-y-2">
-                            <label for="email" class="ml-1 block font-label-bold text-label-bold uppercase text-on-surface-variant">Email Address</label>
+                            <label for="email" class="ml-1 block font-label-bold text-label-bold uppercase text-on-surface-variant">Email</label>
                             <div class="relative">
                                 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[20px] text-outline">mail</span>
                                 <input
@@ -138,7 +138,7 @@
                                     value="{{ old('email') }}"
                                     required
                                     autocomplete="username"
-                                    placeholder="name@athlete.com"
+                                    placeholder="nama@email.com"
                                     class="w-full rounded-lg border border-outline-variant bg-surface-container-low py-4 pl-12 pr-4 text-on-surface outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-secondary-fixed"
                                 >
                             </div>
@@ -146,7 +146,7 @@
                         </div>
 
                         <div class="space-y-2">
-                            <label for="password" class="ml-1 block font-label-bold text-label-bold uppercase text-on-surface-variant">Password</label>
+                            <label for="password" class="ml-1 block font-label-bold text-label-bold uppercase text-on-surface-variant">Kata Sandi</label>
                             <div class="relative">
                                 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[20px] text-outline">lock</span>
                                 <input
@@ -155,7 +155,7 @@
                                     type="password"
                                     required
                                     autocomplete="new-password"
-                                    placeholder="Create a strong password"
+                                    placeholder="Buat kata sandi yang kuat"
                                     class="w-full rounded-lg border border-outline-variant bg-surface-container-low py-4 pl-12 pr-4 text-on-surface outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-secondary-fixed"
                                 >
                             </div>
@@ -163,7 +163,7 @@
                         </div>
 
                         <div class="space-y-2">
-                            <label for="password_confirmation" class="ml-1 block font-label-bold text-label-bold uppercase text-on-surface-variant">Confirm Password</label>
+                            <label for="password_confirmation" class="ml-1 block font-label-bold text-label-bold uppercase text-on-surface-variant">Ulangi Kata Sandi</label>
                             <div class="relative">
                                 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[20px] text-outline">verified</span>
                                 <input
@@ -172,7 +172,7 @@
                                     type="password"
                                     required
                                     autocomplete="new-password"
-                                    placeholder="Repeat your password"
+                                    placeholder="Ketik ulang kata sandi"
                                     class="w-full rounded-lg border border-outline-variant bg-surface-container-low py-4 pl-12 pr-4 text-on-surface outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-secondary-fixed"
                                 >
                             </div>
@@ -180,14 +180,14 @@
                         </div>
 
                         <button type="submit" class="flex w-full items-center justify-center gap-2 rounded-lg bg-secondary-fixed py-4 font-label-bold text-label-bold uppercase tracking-widest text-black shadow-[0_4px_0_0_#abd600] transition-all active:translate-y-[2px] active:shadow-none">
-                            Create Account
+                            Buat Akun
                             <span class="material-symbols-outlined">bolt</span>
                         </button>
                     </form>
 
                     <div class="relative my-8 flex items-center justify-center">
                         <div class="absolute w-full border-t border-outline-variant"></div>
-                        <span class="relative bg-surface-container px-4 font-label-bold text-label-bold uppercase text-outline">Or Continue With</span>
+                        <span class="relative bg-surface-container px-4 font-label-bold text-label-bold uppercase text-outline">Atau lanjut dengan</span>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
@@ -203,9 +203,9 @@
 
                     <div class="mt-10 text-center">
                         <p class="text-on-surface-variant">
-                            Already have an account?
+                            Sudah punya akun?
                             <a href="{{ route('login') }}" class="ml-2 font-label-bold text-label-bold uppercase text-secondary-fixed decoration-2 underline-offset-4 hover:underline">
-                                Login
+                                Masuk
                             </a>
                         </p>
                     </div>
@@ -217,11 +217,11 @@
 
         <footer class="flex w-full flex-col items-center justify-between gap-4 bg-surface-container-lowest px-[20px] py-8 md:flex-row md:px-[40px]">
             <div class="font-headline-lg text-2xl text-secondary-fixed">SmashCourt</div>
-            <div class="text-body-md text-outline">© {{ now()->year }} SmashCourt. Engineered for Performance.</div>
+            <div class="text-body-md text-outline">© {{ now()->year }} SmashCourt. Booking lapangan jadi lebih mudah.</div>
             <div class="flex gap-6">
-                <a class="text-body-md text-outline transition-colors hover:text-secondary-fixed-dim" href="{{ url('/') }}">Terms</a>
-                <a class="text-body-md text-outline transition-colors hover:text-secondary-fixed-dim" href="{{ url('/') }}">Privacy</a>
-                <a class="text-body-md text-outline transition-colors hover:text-secondary-fixed-dim" href="{{ url('/') }}">Support</a>
+                <a class="text-body-md text-outline transition-colors hover:text-secondary-fixed-dim" href="{{ url('/') }}">Ketentuan</a>
+                <a class="text-body-md text-outline transition-colors hover:text-secondary-fixed-dim" href="{{ url('/') }}">Privasi</a>
+                <a class="text-body-md text-outline transition-colors hover:text-secondary-fixed-dim" href="{{ url('/') }}">Bantuan</a>
             </div>
         </footer>
 

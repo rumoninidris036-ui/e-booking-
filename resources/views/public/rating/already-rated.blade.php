@@ -16,9 +16,9 @@
             <div class="w-full rounded-3xl border border-white/10 bg-slate-900 p-8 shadow-2xl sm:p-10">
                 <div class="mx-auto max-w-2xl text-center">
                     <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-400/15 text-2xl text-amber-300">!</div>
-                    <h1 class="mt-6 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Rating already submitted</h1>
+                    <h1 class="mt-6 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Ulasan sudah dikirim</h1>
                     <p class="mt-4 text-sm leading-7 text-slate-400 sm:text-base">
-                        Link signed ini sudah pernah dipakai untuk booking {{ $booking->booking_code }}. Satu booking hanya bisa mengirim satu rating.
+                        Tautan ini sudah pernah dipakai untuk booking {{ $booking->booking_code }}. Satu booking hanya bisa mengirim satu ulasan.
                     </p>
 
                     <div class="mt-8 grid gap-4 sm:grid-cols-2">
@@ -27,7 +27,7 @@
                             <p class="mt-2 font-semibold text-white">{{ $field->name }}</p>
                         </div>
                         <div class="rounded-2xl border border-white/10 bg-white/5 p-5 text-left">
-                            <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">Score</p>
+                            <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">Nilai</p>
                             <p class="mt-2 font-semibold text-white">{{ $rating->score }}/5</p>
                         </div>
                     </div>
@@ -39,7 +39,7 @@
                     @endif
 
                     <a href="{{ route('public.fields.show', ['slug' => $field->slug]) }}" class="mt-8 inline-flex items-center justify-center rounded-2xl border border-white/10 px-6 py-4 text-sm font-bold uppercase tracking-[0.2em] text-white transition-colors hover:bg-white/5">
-                        Back To Court Detail
+                        Kembali ke Detail Lapangan
                     </a>
                 </div>
             </div>

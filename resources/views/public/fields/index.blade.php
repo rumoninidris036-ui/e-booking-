@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title>SMASHCOURT | Explore Courts</title>
+        <title>SMASHCOURT | Lapangan</title>
 
         <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -119,31 +119,31 @@
                 </div>
                 <div class="relative mx-auto grid min-h-[520px] max-w-7xl items-center gap-10 px-gutter py-20 md:grid-cols-2 md:px-margin-desktop">
                     <div>
-                        <span class="mb-4 inline-flex rounded-full bg-secondary-container px-4 py-1 font-label-bold text-label-bold uppercase text-on-secondary">Public Fields</span>
-                        <h1 class="font-headline-xl text-[40px] uppercase italic leading-tight text-secondary md:text-headline-xl">Explore Courts</h1>
+                        <span class="mb-4 inline-flex rounded-full bg-secondary-container px-4 py-1 font-label-bold text-label-bold uppercase text-on-secondary">Lapangan Publik</span>
+                        <h1 class="font-headline-xl text-[40px] uppercase italic leading-tight text-secondary md:text-headline-xl">Lapangan Tersedia</h1>
                         <p class="mt-5 max-w-xl font-body-lg text-body-lg text-on-surface-variant">
-                            Pilih lapangan aktif, lihat detail fasilitas, lalu lanjut booking dari halaman publik tanpa harus masuk ke dashboard.
+                            Pilih lapangan yang tersedia, cek fasilitasnya, lalu lanjut booking dari halaman ini.
                         </p>
                     </div>
 
                     <div class="rounded-xl border border-white/10 bg-surface-container/90 p-5 shadow-2xl backdrop-blur">
                         <div class="grid grid-cols-3 gap-3">
                             <div class="rounded-lg bg-surface-container-high p-4">
-                                <p class="font-label-bold text-label-bold uppercase text-on-surface-variant">Courts</p>
+                                <p class="font-label-bold text-label-bold uppercase text-on-surface-variant">Lapangan</p>
                                 <p class="mt-2 font-headline-md text-headline-md text-secondary">{{ $fields->total() }}</p>
                             </div>
                             <div class="rounded-lg bg-surface-container-high p-4">
-                                <p class="font-label-bold text-label-bold uppercase text-on-surface-variant">Mapped</p>
+                                <p class="font-label-bold text-label-bold uppercase text-on-surface-variant">Di peta</p>
                                 <p class="mt-2 font-headline-md text-headline-md text-secondary">{{ $markers instanceof \Illuminate\Support\Collection ? $markers->count() : count($markers) }}</p>
                             </div>
                             <div class="rounded-lg bg-surface-container-high p-4">
-                                <p class="font-label-bold text-label-bold uppercase text-on-surface-variant">Page</p>
+                                <p class="font-label-bold text-label-bold uppercase text-on-surface-variant">Halaman</p>
                                 <p class="mt-2 font-headline-md text-headline-md text-secondary">{{ $fields->currentPage() }}/{{ $fields->lastPage() }}</p>
                             </div>
                         </div>
                         <a href="#courts" class="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-primary-container py-4 font-label-bold text-label-bold uppercase text-on-primary-container transition hover:brightness-110">
                             <span class="material-symbols-outlined">sports_tennis</span>
-                            Browse Available Courts
+                            Lihat Lapangan
                         </a>
                     </div>
                 </div>
@@ -152,11 +152,11 @@
             <section id="courts" class="mx-auto max-w-7xl px-gutter py-20 md:px-margin-desktop">
                 <div class="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
                     <div>
-                        <h2 class="font-headline-lg text-headline-lg uppercase italic text-secondary">Available Courts</h2>
+                        <h2 class="font-headline-lg text-headline-lg uppercase italic text-secondary">Lapangan Tersedia</h2>
                         <div class="mt-3 h-1 w-24 bg-secondary-container"></div>
                     </div>
                     <p class="max-w-lg text-on-surface-variant">
-                        Menampilkan lapangan yang sudah aktif dari owner. Gunakan tombol detail untuk melihat fasilitas dan lokasi lengkap.
+                        Berikut daftar lapangan yang aktif. Buka detail untuk melihat fasilitas dan lokasi lengkap.
                     </p>
                 </div>
 
@@ -165,25 +165,25 @@
                         @php
                             $coverImage = $field->cover_image_url ?: $fallbackImage;
                         @endphp
-                        <article class="group overflow-hidden rounded-xl border border-white/10 bg-surface-container shadow-xl transition hover:border-secondary-container/50">
+                        <article class="group flex h-full flex-col overflow-hidden rounded-xl border border-white/10 bg-surface-container shadow-xl transition hover:border-secondary-container/50">
                             <a href="{{ route('public.fields.show', ['slug' => $field->slug]) }}" class="block">
                                 <div class="relative h-64 overflow-hidden">
                                     <img class="h-full w-full object-cover transition duration-500 group-hover:scale-105" src="{{ $coverImage }}" alt="{{ $field->name }} court">
                                     <div class="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent"></div>
-                                    <span class="absolute left-4 top-4 rounded bg-secondary-container px-3 py-1 font-label-bold text-label-bold uppercase text-on-secondary">Available</span>
+                                    <span class="absolute left-4 top-4 rounded bg-secondary-container px-3 py-1 font-label-bold text-label-bold uppercase text-on-secondary">Tersedia</span>
                                 </div>
                             </a>
 
-                            <div class="p-6">
+                            <div class="flex flex-1 flex-col p-6">
                                 <div class="mb-4 flex items-start justify-between gap-4">
-                                    <a href="{{ route('public.fields.show', ['slug' => $field->slug]) }}" class="font-headline-md text-headline-md text-secondary transition hover:text-secondary-container">{{ $field->name }}</a>
-                                    <span class="rounded-full border border-primary/20 px-3 py-1 text-[12px] font-bold uppercase text-primary">{{ $field->facilities->count() }} Facilities</span>
+                                    <a href="{{ route('public.fields.show', ['slug' => $field->slug]) }}" class="min-w-0 font-headline-md text-headline-md leading-tight text-secondary transition hover:text-secondary-container">{{ $field->name }}</a>
+                                    <span class="shrink-0 rounded-full border border-primary/20 px-3 py-1 text-[12px] font-bold uppercase text-primary">{{ $field->facilities->count() }} Fasilitas</span>
                                 </div>
 
                                 <div class="space-y-3 text-on-surface-variant">
                                     <p class="flex gap-2">
                                         <span class="material-symbols-outlined text-primary">location_on</span>
-                                        <span>{{ $field->address ?: 'Alamat belum tersedia' }}</span>
+                                        <span class="min-w-0">{{ $field->address ?: 'Alamat belum tersedia' }}</span>
                                     </p>
                                     <p class="flex gap-2">
                                         <span class="material-symbols-outlined text-secondary-container">payments</span>
@@ -195,9 +195,9 @@
                                     </p>
                                 </div>
 
-                                <div class="mt-6 grid grid-cols-2 gap-3">
-                                    <a href="{{ route('public.fields.show', ['slug' => $field->slug]) }}" class="detail-link rounded-lg border border-outline-variant bg-surface-container-low py-3 text-center font-label-bold text-label-bold uppercase text-on-surface hover:shadow-[0_8px_20px_rgba(0,0,0,0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary-container/70">View Details</a>
-                                    <a href="{{ route('public.fields.booking', ['slug' => $field->slug]) }}" class="rounded-lg bg-secondary-container py-3 text-center font-label-bold text-label-bold uppercase text-on-secondary btn-tactile">Book</a>
+                                <div class="mt-auto grid grid-cols-2 gap-3 pt-6">
+                                    <a href="{{ route('public.fields.show', ['slug' => $field->slug]) }}" class="detail-link rounded-xl border border-outline-variant bg-surface-container-low py-3 text-center font-label-bold text-label-bold uppercase text-on-surface hover:shadow-[0_8px_20px_rgba(0,0,0,0.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary-container/70">Lihat Detail</a>
+                                    <a href="{{ route('public.fields.booking', ['slug' => $field->slug]) }}" class="rounded-xl bg-secondary-container py-3 text-center font-label-bold text-label-bold uppercase text-on-secondary btn-tactile">Booking</a>
                                 </div>
                             </div>
                         </article>
@@ -236,11 +236,11 @@
             <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-gutter md:flex-row md:px-margin-desktop">
                 <div>
                     <span class="font-headline-md text-headline-md font-black italic text-secondary-container">SMASHCOURT</span>
-                    <p class="mt-2 text-on-surface-variant">Public court directory for fast booking.</p>
+                    <p class="mt-2 text-on-surface-variant">Daftar lapangan publik untuk booking yang cepat dan mudah.</p>
                 </div>
                 <div class="flex flex-wrap justify-center gap-6">
                     <a class="text-on-surface-variant transition hover:text-secondary-container" href="{{ url('/') }}">Home</a>
-                    <a class="text-on-surface-variant transition hover:text-secondary-container" href="#courts">Courts</a>
+                    <a class="text-on-surface-variant transition hover:text-secondary-container" href="#courts">Lapangan</a>
                     <a class="text-on-surface-variant transition hover:text-secondary-container" href="#map">Map</a>
                 </div>
             </div>
@@ -269,7 +269,7 @@
                                 <strong>${marker.name}</strong><br>
                                 <span>${marker.address ?? ''}</span><br>
                                 <span>Rp${new Intl.NumberFormat('id-ID').format(marker.price_per_hour ?? 0)}/jam</span><br>
-                                <a href="/fields/${marker.slug}" class="detail-link popup-detail-link">View Details</a>
+                                <a href="/fields/${marker.slug}" class="detail-link popup-detail-link">Lihat Detail</a>
                             </div>
                         `);
                 });

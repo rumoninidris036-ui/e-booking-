@@ -64,8 +64,8 @@
                 ['label' => 'Total Slot', 'value' => number_format((int) $summary['total_slots']), 'hint' => $openTime.'-'.$closeTime, 'tone' => 'text-brand bg-brandSoft', 'icon' => 'SL'],
                 ['label' => 'Tersedia', 'value' => number_format((int) $summary['available_slots']), 'hint' => 'bisa dibooking', 'tone' => 'text-emerald-700 bg-emerald-50', 'icon' => 'OK'],
                 ['label' => 'Terisi', 'value' => number_format((int) $summary['booked_slots']), 'hint' => 'punya booking', 'tone' => 'text-amber-700 bg-amber-50', 'icon' => 'BK'],
-                ['label' => 'Pending', 'value' => number_format((int) $summary['pending_bookings']), 'hint' => 'menunggu payment', 'tone' => 'text-orange-700 bg-orange-50', 'icon' => 'PN'],
-                ['label' => 'Paid', 'value' => number_format((int) $summary['paid_bookings']), 'hint' => 'slot aman', 'tone' => 'text-sky-700 bg-sky-50', 'icon' => 'PD'],
+                ['label' => 'Pending', 'value' => number_format((int) $summary['pending_bookings']), 'hint' => 'menunggu pembayaran', 'tone' => 'text-orange-700 bg-orange-50', 'icon' => 'PN'],
+                ['label' => 'Lunas', 'value' => number_format((int) $summary['paid_bookings']), 'hint' => 'slot aman', 'tone' => 'text-sky-700 bg-sky-50', 'icon' => 'PD'],
             ];
         @endphp
 
@@ -76,7 +76,7 @@
                 <header class="sticky top-0 z-30 border-b border-line bg-white/90 backdrop-blur-xl">
                     <div class="flex min-h-16 items-center justify-between gap-4 px-4 py-3 md:px-6">
                         <div>
-                            <p class="hidden text-xs font-bold uppercase tracking-[0.22em] text-brand md:block">Court Schedule</p>
+                            <p class="hidden text-xs font-bold uppercase tracking-[0.22em] text-brand md:block">Jadwal Lapangan</p>
                             <h1 class="font-display text-xl font-bold md:text-2xl">Jadwal Lapangan</h1>
                         </div>
 
@@ -93,7 +93,7 @@
                 <main class="space-y-6 px-4 py-6 md:px-6">
                     <section class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
                         <div>
-                            <p class="text-xs font-bold uppercase tracking-[0.24em] text-brand">Daily Schedule</p>
+                            <p class="text-xs font-bold uppercase tracking-[0.24em] text-brand">Jadwal Harian</p>
                             <h2 class="mt-2 font-display text-3xl font-bold tracking-tight text-ink md:text-4xl">{{ $selectedField?->name ?? 'Belum ada lapangan' }}</h2>
                             <p class="mt-2 text-sm text-slateSoft">Pantau slot tersedia dan slot yang sudah terisi untuk operasional harian.</p>
                         </div>
@@ -127,7 +127,7 @@
                     <section class="rounded-3xl border border-line bg-panel shadow-card">
                         <div class="flex flex-col gap-2 border-b border-line px-5 py-5 md:flex-row md:items-end md:justify-between">
                             <div>
-                                <p class="text-xs font-bold uppercase tracking-[0.22em] text-brand">Slot Timeline</p>
+                                <p class="text-xs font-bold uppercase tracking-[0.22em] text-brand">Timeline Slot</p>
                                 <h2 class="mt-1 font-display text-2xl font-bold">{{ \Carbon\CarbonImmutable::parse($date)->format('d M Y') }}</h2>
                             </div>
                             <p class="text-sm text-slateSoft">{{ $openTime }}-{{ $closeTime }} · {{ $slotDurationMinutes }} menit per slot</p>
@@ -152,10 +152,10 @@
                                         <div class="flex items-start justify-between gap-4">
                                             <div>
                                                 <p class="font-display text-xl font-bold">{{ $formatTime($slot['start_time'] ?? null, '00:00') }}-{{ $formatTime($slot['end_time'] ?? null, '00:00') }}</p>
-                                                <p class="mt-1 text-xs font-semibold text-slateSoft">{{ $booking === null ? 'Available' : $booking->booking_code }}</p>
+                                                <p class="mt-1 text-xs font-semibold text-slateSoft">{{ $booking === null ? 'Tersedia' : $booking->booking_code }}</p>
                                             </div>
                                             @if ($booking === null)
-                                                <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-200">available</span>
+                                                <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-200">tersedia</span>
                                             @else
                                                 <span class="rounded-full px-3 py-1 text-xs font-bold ring-1 {{ $bookingBadge($booking->status) }}">{{ $booking->status }}</span>
                                             @endif

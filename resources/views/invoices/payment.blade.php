@@ -148,11 +148,11 @@
                         <strong>{{ $customerName }}</strong><br>
                         {{ $customerContact ?? '-' }}<br>
                         {{ $customerEmail ?? '-' }}<br>
-                        Booking Code: {{ $booking->booking_code }}
+                        Kode Booking: {{ $booking->booking_code }}
                     </div>
                 </div>
                 <div class="col">
-                    <div class="label">Payment</div>
+                    <div class="label">Pembayaran</div>
                     <div class="box">
                         Order ID: {{ $payment->order_id }}<br>
                         Paid At: {{ optional($payment->paid_at)->format('d M Y H:i') ?? '-' }}<br>
@@ -166,7 +166,7 @@
                 <thead>
                     <tr>
                         <th>Description</th>
-                        <th class="right">Amount</th>
+                        <th class="right">Nominal</th>
                     </tr>
                 </thead>
                 <tbody>

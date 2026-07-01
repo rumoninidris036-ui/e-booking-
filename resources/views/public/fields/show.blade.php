@@ -138,7 +138,7 @@
                         <img class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" src="{{ $coverImage }}" alt="{{ $field->name }} main image">
                         <div class="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent opacity-60"></div>
                         <div class="absolute bottom-6 left-6 z-10">
-                            <span class="mb-2 inline-block rounded-full bg-secondary-container px-4 py-1 font-label-bold text-label-bold text-on-secondary">PREMIUM FACILITY</span>
+                            <span class="mb-2 inline-block rounded-full bg-secondary-container px-4 py-1 font-label-bold text-label-bold text-on-secondary">LAPANGAN PILIHAN</span>
                             <h1 class="font-headline-xl text-headline-xl-mobile uppercase italic text-secondary md:text-headline-xl">{{ $field->name }}</h1>
                         </div>
                     </div>
@@ -164,9 +164,9 @@
                             </p>
                         </div>
                         <div>
-                            <p class="mb-2 font-headline-md text-headline-md text-on-surface">Pro-Grade Surface</p>
+                            <p class="mb-2 font-headline-md text-headline-md text-on-surface">Kondisi Lapangan</p>
                             <p class="max-w-sm text-on-surface-variant">
-                                {{ $field->description ?: 'Lapangan premium dengan suasana kompetitif, pencahayaan terang, dan permukaan permainan yang nyaman untuk sesi latihan maupun pertandingan.' }}
+                                {{ $field->description ?: 'Lapangan ini cocok untuk latihan rutin maupun pertandingan santai, dengan pencahayaan yang terang dan area bermain yang nyaman.' }}
                             </p>
                         </div>
                     </div>
@@ -174,18 +174,18 @@
                     <div class="flex gap-4">
                         <div class="flex flex-col items-center rounded-xl bg-surface-variant px-6 py-4">
                             <span class="material-symbols-outlined mb-2 text-4xl text-secondary-container">timer</span>
-                            <span class="font-label-bold text-label-bold uppercase">Open 24/7</span>
+                            <span class="font-label-bold text-label-bold uppercase">Buka Setiap Hari</span>
                         </div>
                         <div class="flex flex-col items-center rounded-xl bg-surface-variant px-6 py-4">
                             <span class="material-symbols-outlined mb-2 text-4xl text-secondary-container">stadium</span>
-                            <span class="font-label-bold text-label-bold uppercase">{{ $field->facilities->count() }} Facilities</span>
+                            <span class="font-label-bold text-label-bold uppercase">{{ $field->facilities->count() }} Fasilitas</span>
                         </div>
                     </div>
                 </div>
             </section>
 
             <section id="facilities" class="mx-auto max-w-7xl px-gutter py-20 md:px-margin-desktop">
-                <h2 class="mb-12 border-l-8 border-secondary-container pl-6 font-headline-lg text-headline-lg uppercase italic text-secondary">Elite Facilities</h2>
+                <h2 class="mb-12 border-l-8 border-secondary-container pl-6 font-headline-lg text-headline-lg uppercase italic text-secondary">Fasilitas</h2>
 
                 <div class="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">
                     @forelse ($field->facilities as $facility)
@@ -207,15 +207,15 @@
                 <div class="grid grid-cols-1 items-stretch gap-8 md:grid-cols-2">
                     <div class="relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/5 bg-surface-container p-8 md:p-12">
                         <div class="z-10">
-                            <h3 class="mb-4 font-headline-lg text-headline-lg text-secondary">Location</h3>
+                            <h3 class="mb-4 font-headline-lg text-headline-lg text-secondary">Lokasi</h3>
                             <p class="mb-4 font-body-lg text-body-lg text-on-surface-variant">
-                                {{ $field->address ?: 'Alamat venue belum diisi.' }}
+                                {{ $field->address ?: 'Alamat belum diisi.' }}
                             </p>
                             <p class="mb-8 text-on-surface-variant">
-                                Dikelola oleh {{ $field->owner?->name ?? 'Owner Venue' }}. Peta menggunakan {{ $mapMeta['provider'] }} dengan {{ $mapMeta['library'] }}.
+                                Dikelola oleh {{ $field->owner?->name ?? 'pemilik lapangan' }}. Peta ditampilkan lewat {{ $mapMeta['provider'] }} dan {{ $mapMeta['library'] }}.
                             </p>
                             <a id="cta" href="{{ $primaryCta }}" class="inline-flex items-center gap-2 rounded-xl bg-secondary-container px-10 py-4 font-label-bold text-label-bold uppercase text-on-secondary transition-transform hover:scale-105">
-                                Continue To Booking
+                                Lanjut Booking
                                 <span class="material-symbols-outlined">arrow_forward</span>
                             </a>
                         </div>
@@ -234,15 +234,15 @@
                 <div class="rounded-3xl border border-white/10 bg-surface-container p-8 md:p-10">
                     <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                         <div>
-                            <p class="mb-2 font-label-bold text-label-bold uppercase tracking-widest text-secondary-container">Next Step</p>
+                            <p class="mb-2 font-label-bold text-label-bold uppercase tracking-widest text-secondary-container">Langkah Selanjutnya</p>
                             <h3 class="font-headline-md text-headline-md text-secondary">Lanjut pilih tanggal dan slot booking</h3>
                             <p class="mt-3 max-w-2xl text-on-surface-variant">
-                                Setelah melihat detail venue, publik sekarang bisa masuk ke halaman booking untuk memilih tanggal dan jam.
-                                Login baru dibutuhkan saat benar-benar melakukan konfirmasi booking.
+                                Kalau sudah cocok, kamu bisa lanjut ke halaman booking untuk pilih tanggal dan jam.
+                                Login baru diperlukan saat booking benar-benar dikonfirmasi.
                             </p>
                         </div>
                         <a href="{{ $primaryCta }}" class="inline-flex items-center gap-2 rounded-xl border border-primary px-6 py-4 font-label-bold text-label-bold uppercase text-primary transition-all hover:bg-primary/10">
-                            Open Booking Page
+                            Buka Booking
                             <span class="material-symbols-outlined">arrow_forward</span>
                         </a>
                     </div>
@@ -258,10 +258,10 @@
                 <div class="rounded-3xl border border-white/10 bg-surface-container p-8 md:p-10">
                     <div class="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
                         <div>
-                            <p class="mb-2 font-label-bold text-label-bold uppercase tracking-widest text-secondary-container">Guest Ratings</p>
-                            <h3 class="font-headline-md text-headline-md text-secondary">Apa kata tamu setelah booking?</h3>
+                            <p class="mb-2 font-label-bold text-label-bold uppercase tracking-widest text-secondary-container">Ulasan Tamu</p>
+                            <h3 class="font-headline-md text-headline-md text-secondary">Apa kata tamu setelah main?</h3>
                             <p class="mt-3 max-w-2xl text-on-surface-variant">
-                                Rating ini dikirim oleh tamu yang menerima tautan signed setelah booking selesai. Satu booking hanya bisa mengirim satu rating.
+                                Ulasan ini dikirim lewat tautan khusus setelah booking selesai. Satu booking hanya bisa kirim satu ulasan.
                             </p>
                         </div>
 
@@ -326,13 +326,13 @@
             <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-base px-gutter md:flex-row md:px-margin-desktop">
                 <div class="mb-6 md:mb-0">
                     <span class="font-headline-md text-headline-md font-black text-secondary-container">SMASHCOURT</span>
-                    <p class="mt-2 font-body-md text-body-md text-on-surface-variant">© {{ now()->year }} SMASHCOURT. Engineered for Performance.</p>
+                    <p class="mt-2 font-body-md text-body-md text-on-surface-variant">© {{ now()->year }} SMASHCOURT. Booking lapangan jadi lebih simpel.</p>
                 </div>
                 <div class="flex flex-wrap justify-center gap-6">
-                    <a class="font-body-md text-body-md text-on-surface-variant opacity-80 transition-colors hover:text-secondary-container hover:opacity-100" href="{{ url('/') }}">Find Courts</a>
-                    <a class="font-body-md text-body-md text-on-surface-variant opacity-80 transition-colors hover:text-secondary-container hover:opacity-100" href="#facilities">Facilities</a>
-                    <a class="font-body-md text-body-md text-on-surface-variant opacity-80 transition-colors hover:text-secondary-container hover:opacity-100" href="#location">Location</a>
-                    <a class="font-body-md text-body-md text-on-surface-variant opacity-80 transition-colors hover:text-secondary-container hover:opacity-100" href="{{ $primaryCta }}">Contact Support</a>
+                    <a class="font-body-md text-body-md text-on-surface-variant opacity-80 transition-colors hover:text-secondary-container hover:opacity-100" href="{{ url('/') }}">Beranda</a>
+                    <a class="font-body-md text-body-md text-on-surface-variant opacity-80 transition-colors hover:text-secondary-container hover:opacity-100" href="#facilities">Fasilitas</a>
+                    <a class="font-body-md text-body-md text-on-surface-variant opacity-80 transition-colors hover:text-secondary-container hover:opacity-100" href="#location">Lokasi</a>
+                    <a class="font-body-md text-body-md text-on-surface-variant opacity-80 transition-colors hover:text-secondary-container hover:opacity-100" href="{{ $primaryCta }}">Buka Booking</a>
                 </div>
             </div>
         </footer>

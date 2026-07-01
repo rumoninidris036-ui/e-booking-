@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title>{{ config('app.name', 'E-Booking Court') }} | Smash Your Limits</title>
+        <title>{{ config('app.name', 'E-Booking Court') }} | Booking Lapangan</title>
 
         <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -155,7 +155,7 @@
                     'rating_average' => (float) ($field->ratings_avg_score ?? 0),
                     'location' => $field->address ?: 'Lokasi tersedia',
                     'price' => 'Rp'.number_format((float) $field->price_per_hour, 0, ',', '.').'/jam',
-                    'badge' => 'Recommended',
+                    'badge' => 'Pilihan',
                     'badge_class' => 'bg-secondary-container/90 text-on-secondary',
                     'image' => $field->cover_image_url ?: $fallbackImage,
                     'reasons' => $recommendation['reasons'] ?? [],
@@ -186,18 +186,17 @@
                     </h1>
 
                     <p class="mb-10 max-w-lg font-body-lg text-body-lg text-on-surface-variant">
-                        Experience pro-grade badminton facilities with instant digital booking. High-intensity lighting,
-                        precision surfaces, and 24/7 access for the dedicated athlete.
+                        Cari lapangan badminton yang siap dipakai, cek jadwalnya, lalu lanjut booking dalam beberapa langkah saja.
                     </p>
 
                     <div class="flex flex-col gap-4 sm:flex-row">
                         <a href="{{ route('public.fields.index') }}" class="flex items-center justify-center gap-3 rounded-lg bg-secondary-container px-10 py-5 font-headline-md text-headline-md uppercase italic text-on-secondary btn-tactile">
-                            Explore Court
+                            Lihat Lapangan
                             <span class="material-symbols-outlined">bolt</span>
                         </a>
 
                         <a href="#arenas" class="flex items-center justify-center gap-3 rounded-lg border-2 border-primary px-10 py-5 font-headline-md text-headline-md uppercase text-primary transition-all hover:bg-primary/10">
-                            Recommended Courts
+                            Lapangan Rekomendasi
                         </a>
                     </div>
                 </div>
@@ -208,15 +207,15 @@
             <div class="rounded-xl border border-white/5 bg-surface-container-high p-4 shadow-2xl backdrop-blur-xl md:p-6">
                 <form id="court-search-form" class="grid grid-cols-1 gap-4 md:grid-cols-4" action="{{ route('public.fields.index') }}" method="GET">
                     <div class="flex flex-col gap-2">
-                        <label class="ml-1 font-label-bold text-label-bold uppercase text-on-surface-variant">Location</label>
+                        <label class="ml-1 font-label-bold text-label-bold uppercase text-on-surface-variant">Lokasi</label>
                         <div class="relative">
                             <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">location_on</span>
-                            <input id="court-location-input" name="location" value="{{ request('location') }}" list="court-location-suggestions" autocomplete="off" class="w-full rounded-lg border border-outline-variant bg-surface-container-low py-3 pl-10 text-on-surface transition-all focus:border-primary-container focus:ring-1 focus:ring-primary-container" placeholder="Where do you play?" type="text">
+                            <input id="court-location-input" name="location" value="{{ request('location') }}" list="court-location-suggestions" autocomplete="off" class="w-full rounded-lg border border-outline-variant bg-surface-container-low py-3 pl-10 text-on-surface transition-all focus:border-primary-container focus:ring-1 focus:ring-primary-container" placeholder="Mau main di mana?" type="text">
                         </div>
                     </div>
 
                     <div class="flex flex-col gap-2">
-                        <label class="ml-1 font-label-bold text-label-bold uppercase text-on-surface-variant">Date</label>
+                        <label class="ml-1 font-label-bold text-label-bold uppercase text-on-surface-variant">Tanggal</label>
                         <div class="relative">
                             <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">calendar_today</span>
                             <input name="date" value="{{ request('date') }}" class="w-full rounded-lg border border-outline-variant bg-surface-container-low py-3 pl-10 text-on-surface transition-all focus:border-primary-container focus:ring-1 focus:ring-primary-container" type="date">
@@ -224,14 +223,14 @@
                     </div>
 
                     <div class="flex flex-col gap-2">
-                        <label class="ml-1 font-label-bold text-label-bold uppercase text-on-surface-variant">Time</label>
+                        <label class="ml-1 font-label-bold text-label-bold uppercase text-on-surface-variant">Waktu</label>
                         <div class="relative">
                             <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">schedule</span>
                             <select name="time" class="w-full appearance-none rounded-lg border border-outline-variant bg-surface-container-low py-3 pl-10 text-on-surface transition-all focus:border-primary-container focus:ring-1 focus:ring-primary-container">
-                                <option value="any" @selected(request('time', 'any') === 'any')>Any Time</option>
-                                <option value="morning" @selected(request('time') === 'morning')>Morning (6am-12pm)</option>
-                                <option value="afternoon" @selected(request('time') === 'afternoon')>Afternoon (12pm-5pm)</option>
-                                <option value="evening" @selected(request('time') === 'evening')>Evening (5pm-11pm)</option>
+                                <option value="any" @selected(request('time', 'any') === 'any')>Kapan saja</option>
+                                <option value="morning" @selected(request('time') === 'morning')>Pagi (06.00-12.00)</option>
+                                <option value="afternoon" @selected(request('time') === 'afternoon')>Siang (12.00-17.00)</option>
+                                <option value="evening" @selected(request('time') === 'evening')>Malam (17.00-23.00)</option>
                             </select>
                         </div>
                     </div>
@@ -239,7 +238,7 @@
                     <div class="flex items-end">
                         <button type="submit" class="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-container py-4 font-label-bold text-label-bold uppercase text-on-primary-container transition-all hover:brightness-110">
                             <span class="material-symbols-outlined">search</span>
-                            Find My Court
+                            Cari Lapangan
                         </button>
                     </div>
                 </form>
@@ -255,9 +254,9 @@
                         <div class="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-secondary-container/20 bg-secondary-container/10 transition-transform group-hover:scale-110">
                             <span class="material-symbols-outlined !text-4xl text-secondary-container">verified</span>
                         </div>
-                        <h3 class="mb-3 font-headline-md text-headline-md uppercase italic text-secondary">Instant Confirmation</h3>
+                        <h3 class="mb-3 font-headline-md text-headline-md uppercase italic text-secondary">Konfirmasi Cepat</h3>
                         <p class="font-body-md text-body-md text-on-surface-variant">
-                            No waiting for callbacks. Your booking is confirmed the second you pay through our secure portal.
+                            Booking langsung tercatat setelah pembayaran selesai, jadi kamu tidak perlu menunggu lama.
                         </p>
                     </div>
 
@@ -265,9 +264,9 @@
                         <div class="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 transition-transform group-hover:scale-110">
                             <span class="material-symbols-outlined !text-4xl text-primary">sports_handball</span>
                         </div>
-                        <h3 class="mb-3 font-headline-md text-headline-md uppercase italic text-secondary">Pro-Grade Surface</h3>
+                        <h3 class="mb-3 font-headline-md text-headline-md uppercase italic text-secondary">Lapangan Siap Main</h3>
                         <p class="font-body-md text-body-md text-on-surface-variant">
-                            Tournament-standard mats, bright lighting, and reliable digital access built for serious rallies.
+                            Permukaan lapangan, pencahayaan, dan akses booking disiapkan supaya sesi main terasa nyaman.
                         </p>
                     </div>
 
@@ -275,9 +274,9 @@
                         <div class="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-tertiary/20 bg-tertiary/10 transition-transform group-hover:scale-110">
                             <span class="material-symbols-outlined !text-4xl text-tertiary">update</span>
                         </div>
-                        <h3 class="mb-3 font-headline-md text-headline-md uppercase italic text-secondary">24/7 Availability</h3>
+                        <h3 class="mb-3 font-headline-md text-headline-md uppercase italic text-secondary">Jadwal Fleksibel</h3>
                         <p class="font-body-md text-body-md text-on-surface-variant">
-                            From sunrise drills to late-night matches, the booking flow stays fast and available whenever you need it.
+                            Kamu bisa cek jadwal pagi, sore, atau malam tanpa perlu bolak-balik ke dashboard.
                         </p>
                     </div>
                 </div>
@@ -287,18 +286,18 @@
         <section id="arenas" class="mx-auto max-w-7xl px-gutter py-24 md:px-margin-desktop">
             <div class="mb-12 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
                 <div>
-                    <h2 class="mb-2 font-headline-lg text-headline-lg uppercase italic tracking-tight text-secondary">Recommended Courts</h2>
+                    <h2 class="mb-2 font-headline-lg text-headline-lg uppercase italic tracking-tight text-secondary">Lapangan Rekomendasi</h2>
                     <div class="h-1 w-24 bg-secondary-container"></div>
                 </div>
 
                 <a class="flex items-center gap-2 font-label-bold text-label-bold uppercase text-primary transition-all hover:gap-4" href="{{ route('public.fields.index') }}">
-                    View All Courts <span class="material-symbols-outlined">arrow_forward</span>
+                    Lihat Semua Lapangan <span class="material-symbols-outlined">arrow_forward</span>
                 </a>
             </div>
 
             <div class="grid grid-cols-1 gap-base md:grid-cols-2 md:gap-8 lg:grid-cols-3">
                 @forelse ($recommendedCourts as $court)
-                    <article class="group overflow-hidden rounded-xl border border-white/5 bg-surface-container shadow-xl transition-all hover:border-primary/30">
+                    <article class="group flex h-full flex-col overflow-hidden rounded-xl border border-white/5 bg-surface-container shadow-xl transition-all hover:border-primary/30">
                         <a href="{{ route('public.fields.show', ['slug' => $court['slug']]) }}" class="block">
                             <div class="relative h-64 overflow-hidden">
                                 <img class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" src="{{ $court['image'] }}" alt="{{ $court['name'] }} court">
@@ -310,17 +309,17 @@
                                 </div>
                             </div>
                         </a>
-                        <div class="p-6">
-                            <div class="mb-4 flex items-start justify-between">
-                                <a href="{{ route('public.fields.show', ['slug' => $court['slug']]) }}" class="font-headline-md text-headline-md text-secondary hover:text-secondary-container">
+                        <div class="flex flex-1 flex-col p-6">
+                            <div class="mb-4 flex items-start justify-between gap-4">
+                                <a href="{{ route('public.fields.show', ['slug' => $court['slug']]) }}" class="min-w-0 font-headline-md text-headline-md leading-tight text-secondary hover:text-secondary-container">
                                     {{ $court['name'] }}
                                 </a>
-                                <div class="flex items-center gap-1 rounded-full border border-secondary-container/20 px-3 py-1 text-secondary-container">
+                                <div class="flex shrink-0 items-center gap-1 rounded-full border border-secondary-container/20 px-3 py-1 text-secondary-container">
                                     <span class="material-symbols-outlined !text-lg">verified</span>
-                                    <span class="font-label-bold text-label-bold">Match</span>
+                                    <span class="font-label-bold text-label-bold">Cocok</span>
                                 </div>
                             </div>
-                            <div class="mb-4 flex items-center gap-4">
+                            <div class="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
                                 <div class="flex items-center gap-1 text-on-surface-variant">
                                     <span class="material-symbols-outlined !text-lg">location_on</span>
                                     <span class="text-label-bold">{{ $court['location'] }}</span>
@@ -343,8 +342,8 @@
                                     @endforeach
                                 </div>
                             @endif
-                            <a href="{{ route('public.fields.show', ['slug' => $court['slug']]) }}" class="detail-link block w-full rounded bg-surface-variant py-3 text-center font-label-bold text-label-bold uppercase text-on-surface">
-                                View Details
+                            <a href="{{ route('public.fields.show', ['slug' => $court['slug']]) }}" class="detail-link mt-auto block w-full rounded-xl bg-surface-variant py-3 text-center font-label-bold text-label-bold uppercase text-on-surface">
+                                Lihat Detail
                             </a>
                         </div>
                     </article>
@@ -362,13 +361,13 @@
                 <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
                 <div class="relative z-10">
                     <h2 class="mb-6 font-headline-xl-mobile text-headline-xl-mobile uppercase italic text-on-primary-container md:font-headline-xl md:text-headline-xl">
-                        Ready to Dominate?
+                        Siap Main?
                     </h2>
                     <p class="mx-auto mb-10 max-w-xl font-body-lg text-body-lg text-on-primary-container/80">
-                        Join players already smashing their limits with instant booking, premium courts, and fast online payment.
+                        Cek lapangan yang cocok, pilih waktu yang pas, lalu lanjut booking tanpa ribet.
                     </p>
                     <a href="{{ route('public.fields.index') }}" class="inline-block rounded-xl bg-secondary-container px-12 py-6 font-headline-md text-headline-md uppercase italic text-on-secondary btn-tactile">
-                        Explore Courts
+                        Lihat Lapangan
                     </a>
                 </div>
             </div>
@@ -469,11 +468,11 @@
                 </div>
 
                 <div class="flex flex-wrap justify-center gap-x-8 gap-y-4">
-                    <a class="font-body-md text-body-md text-on-surface-variant transition-colors hover:text-secondary-container" href="#benefits">Privacy Policy</a>
-                    <a class="font-body-md text-body-md text-on-surface-variant transition-colors hover:text-secondary-container" href="#arenas">Terms of Service</a>
+                    <a class="font-body-md text-body-md text-on-surface-variant transition-colors hover:text-secondary-container" href="#benefits">Kebijakan Privasi</a>
+                    <a class="font-body-md text-body-md text-on-surface-variant transition-colors hover:text-secondary-container" href="#arenas">Syarat Layanan</a>
                     <a class="font-body-md text-body-md text-on-surface-variant transition-colors hover:text-secondary-container" href="#cta">Partner with Us</a>
-                    <a class="font-body-md text-body-md text-on-surface-variant transition-colors hover:text-secondary-container" href="{{ $secondaryCta }}">Contact Support</a>
-                    <a class="font-body-md text-body-md text-on-surface-variant transition-colors hover:text-secondary-container" href="{{ route('public.fields.index') }}">Explore Courts</a>
+                    <a class="font-body-md text-body-md text-on-surface-variant transition-colors hover:text-secondary-container" href="{{ $secondaryCta }}">Hubungi Bantuan</a>
+                    <a class="font-body-md text-body-md text-on-surface-variant transition-colors hover:text-secondary-container" href="{{ route('public.fields.index') }}">Lihat Lapangan</a>
                 </div>
             </div>
         </footer>

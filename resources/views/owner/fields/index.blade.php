@@ -53,7 +53,7 @@
             $fieldIndexRoute = $isAdminFieldManagement ? route('admin.fields.index') : route('owner.fields.index');
             $fieldUpdateRouteName = $isAdminFieldManagement ? 'admin.fields.update' : 'owner.fields.update';
             $pageTitle = $isAdminFieldManagement ? 'Semua Lapangan' : 'Lapangan Saya';
-            $workspaceLabel = $isAdminFieldManagement ? 'Field Control' : 'Venue Management';
+            $workspaceLabel = $isAdminFieldManagement ? 'Kelola Lapangan' : 'Kelola Venue';
             $defaultLatitude = -3.6954;
             $defaultLongitude = 128.1814;
             $summary = $summary ?? [
@@ -309,7 +309,7 @@
                                                 <div class="flex items-center justify-between gap-3">
                                                     <span class="text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Status</span>
                                                     <span class="rounded-full px-3 py-1 text-xs font-bold {{ $field->is_active ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' }}">
-                                                        {{ $field->is_active ? 'Active' : 'Nonactive' }}
+                                                        {{ $field->is_active ? 'Aktif' : 'Nonaktif' }}
                                                     </span>
                                                 </div>
                                                 <div class="mt-3 text-sm font-bold">{{ $rupiah((float) $field->price_per_hour) }} / jam</div>

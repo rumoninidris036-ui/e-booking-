@@ -105,12 +105,12 @@
                 [
                     'label' => 'Booking Pending',
                     'value' => number_format((int) $summary['pending_bookings']),
-                    'hint' => 'menunggu payment',
+                    'hint' => 'menunggu pembayaran',
                     'tone' => 'text-amber-700 bg-amber-50',
                     'icon' => 'PN',
                 ],
                 [
-                    'label' => 'Booking Paid',
+                    'label' => 'Booking Lunas',
                     'value' => number_format((int) $summary['paid_bookings']),
                     'hint' => 'slot aman',
                     'tone' => 'text-emerald-700 bg-emerald-50',
@@ -124,7 +124,7 @@
                     'icon' => 'RV',
                 ],
                 [
-                    'label' => 'Active Fields',
+                    'label' => 'Lapangan Aktif',
                     'value' => number_format((int) $summary['active_fields']),
                     'hint' => number_format((int) $summary['total_fields']).' total lapangan',
                     'tone' => 'text-sky-700 bg-sky-50',
@@ -153,7 +153,7 @@
                         <a href="{{ route('owner.dashboard') }}" class="font-display text-lg font-bold text-brand md:hidden">SmashCourt</a>
 
                         <div class="ml-auto flex items-center gap-4">
-                            <a href="{{ route('public.fields.index') }}" class="hidden rounded-xl border border-line px-4 py-2 text-sm font-bold text-ink transition hover:border-brand hover:text-brand md:inline-flex">View Public</a>
+                            <a href="{{ route('public.fields.index') }}" class="hidden rounded-xl border border-line px-4 py-2 text-sm font-bold text-ink transition hover:border-brand hover:text-brand md:inline-flex">Lihat Publik</a>
                             <div class="relative hidden h-10 w-10 items-center justify-center rounded-full border border-line bg-white md:flex">
                                 <span class="text-lg">!</span>
                                 @if ((int) $summary['pending_bookings'] > 0)
@@ -210,10 +210,10 @@
                         <article class="rounded-3xl border border-line bg-panel shadow-card">
                             <div class="flex items-start justify-between border-b border-line px-5 py-4">
                                 <div>
-                                    <h2 class="font-display text-lg font-bold">Booking & Revenue Trend</h2>
+                                    <h2 class="font-display text-lg font-bold">Tren Booking & Pendapatan</h2>
                                     <p class="text-xs text-slateSoft">{{ $filters['date_from'] }} sampai {{ $filters['date_to'] }}</p>
                                 </div>
-                                <span class="rounded-full bg-brandSoft px-3 py-1 text-xs font-bold text-brand">Last {{ $trends->count() }} days</span>
+                                <span class="rounded-full bg-brandSoft px-3 py-1 text-xs font-bold text-brand">{{ $trends->count() }} hari terakhir</span>
                             </div>
                             <div class="h-[320px] p-5">
                                 <canvas id="bookingRevenueChart"></canvas>
@@ -222,7 +222,7 @@
 
                         <article id="schedule" class="rounded-3xl border border-line bg-panel shadow-card">
                             <div class="border-b border-line px-5 py-4">
-                                <h2 class="font-display text-lg font-bold">Peak Hours</h2>
+                                <h2 class="font-display text-lg font-bold">Jam Ramai</h2>
                                 <p class="text-xs text-slateSoft">Jam paling ramai berdasarkan booking.</p>
                             </div>
                             <div class="space-y-4 p-5">
@@ -243,7 +243,7 @@
                     <section class="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
                         <article class="rounded-3xl border border-line bg-panel shadow-card">
                             <div class="border-b border-line px-5 py-4">
-                                <h2 class="font-display text-lg font-bold">Popular Courts</h2>
+                                <h2 class="font-display text-lg font-bold">Lapangan Populer</h2>
                                 <p class="text-xs text-slateSoft">Ranking lapangan berdasarkan booking.</p>
                             </div>
                             <div class="space-y-4 p-5">
@@ -257,7 +257,7 @@
                                             <div class="h-full rounded-full bg-brand" style="width: {{ min(100, ((int) $field['total_bookings'] / $maxFieldBookings) * 100) }}%"></div>
                                         </div>
                                         <div class="mt-2 flex items-center justify-between text-xs text-slateSoft">
-                                            <span>{{ $field['is_active'] ? 'Active' : 'Nonactive' }}</span>
+                                            <span>{{ $field['is_active'] ? 'Aktif' : 'Nonaktif' }}</span>
                                             <span>{{ $rupiah((float) $field['total_revenue']) }}</span>
                                         </div>
                                     </div>
@@ -269,7 +269,7 @@
 
                         <article class="rounded-3xl border border-line bg-panel shadow-card">
                             <div class="border-b border-line px-5 py-4">
-                                <h2 class="font-display text-lg font-bold">Map & Location Overview</h2>
+                                <h2 class="font-display text-lg font-bold">Peta & Lokasi</h2>
                                 <p class="text-xs text-slateSoft">Marker lapangan owner berbasis OpenStreetMap.</p>
                             </div>
                             <div class="p-5">
@@ -282,10 +282,10 @@
                         <article class="rounded-3xl border border-line bg-panel shadow-card">
                             <div class="flex items-center justify-between border-b border-line px-5 py-4">
                                 <div>
-                                    <h2 class="font-display text-lg font-bold">Recent Bookings</h2>
+                                    <h2 class="font-display text-lg font-bold">Booking Terbaru</h2>
                                     <p class="text-xs text-slateSoft">Booking terbaru untuk lapangan kamu.</p>
                                 </div>
-                                <a href="{{ route('owner.bookings.index') }}" class="text-sm font-bold text-brand">View all</a>
+                                <a href="{{ route('owner.bookings.index') }}" class="text-sm font-bold text-brand">Lihat semua</a>
                             </div>
                             <div class="overflow-x-auto">
                                 <table class="min-w-full divide-y divide-line text-left text-sm">
@@ -293,9 +293,9 @@
                                         <tr>
                                             <th class="px-5 py-4">Booking</th>
                                             <th class="px-5 py-4">Customer</th>
-                                            <th class="px-5 py-4">Field</th>
+                                            <th class="px-5 py-4">Lapangan</th>
                                             <th class="px-5 py-4">Status</th>
-                                            <th class="px-5 py-4 text-right">Amount</th>
+                                            <th class="px-5 py-4 text-right">Nominal</th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-line">
@@ -438,7 +438,7 @@
                                             return `Revenue: ${currencyFormatter.format(context.raw)}`;
                                         }
 
-                                        return `Bookings: ${context.raw}`;
+                                        return `Booking: ${context.raw}`;
                                     },
                                 },
                             },
