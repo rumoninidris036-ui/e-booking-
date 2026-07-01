@@ -13,6 +13,7 @@ use App\Services\Booking\BookingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class BookingManagementController extends Controller
@@ -38,6 +39,16 @@ class BookingManagementController extends Controller
                 'payments' => fn ($query) => $query->latest('id'),
             ])
             ->whereHas('field', fn ($query) => $query->where('owner_id', $owner->id))
+            ->where(function ($query): void {
+                $query->where('status', '!=', Booking::STATUS_PENDING)
+                    ->orWhere(function ($query): void {
+                        $query->where('status', Booking::STATUS_PENDING)
+                            ->where(function ($query): void {
+                                $query->whereNull('expires_at')
+                                    ->orWhere('expires_at', '>', now());
+                            });
+                    });
+            })
             ->when(
                 $filters['status'] !== 'all',
                 fn ($query) => $query->where('status', $filters['status']),
@@ -143,6 +154,26 @@ class BookingManagementController extends Controller
     {
         $bookingQuery = Booking::query()
             ->whereHas('field', fn ($query) => $query->where('owner_id', $ownerId));
+        $visibleBookingQuery = (clone $bookingQuery)
+            ->where(function ($query): void {
+                $query->where('status', '!=', Booking::STATUS_PENDING)
+                    ->orWhere(function ($query): void {
+                        $query->where('status', Booking::STATUS_PENDING)
+                            ->where(function ($query): void {
+                                $query->whereNull('expires_at')
+                                    ->orWhere('expires_at', '>', now());
+                            });
+                    });
+            });
+        $pendingBookingQuery = (clone $bookingQuery)
+            ->where('status', Booking::STATUS_PENDING);
+
+        if (Schema::hasColumn((new Booking())->getTable(), 'expires_at')) {
+            $pendingBookingQuery->where(function ($query): void {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            });
+        }
 
         $totalRevenue = Payment::query()
             ->join('bookings', 'bookings.id', '=', 'payments.booking_id')
@@ -152,8 +183,8 @@ class BookingManagementController extends Controller
             ->sum('payments.amount');
 
         return [
-            'total_bookings' => (clone $bookingQuery)->count(),
-            'pending_bookings' => (clone $bookingQuery)->where('status', Booking::STATUS_PENDING)->count(),
+            'total_bookings' => $visibleBookingQuery->count(),
+            'pending_bookings' => $pendingBookingQuery->count(),
             'paid_bookings' => (clone $bookingQuery)->where('status', Booking::STATUS_PAID)->count(),
             'finished_bookings' => (clone $bookingQuery)->where('status', Booking::STATUS_FINISHED)->count(),
             'cancelled_bookings' => (clone $bookingQuery)->where('status', Booking::STATUS_CANCELLED)->count(),
