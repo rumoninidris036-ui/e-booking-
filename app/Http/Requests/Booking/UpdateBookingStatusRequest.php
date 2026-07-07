@@ -21,7 +21,11 @@ class UpdateBookingStatusRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['required', 'string', Rule::in(Booking::statuses())],
+            'status' => ['required', 'string', Rule::in([
+                Booking::STATUS_PAID,
+                Booking::STATUS_FINISHED,
+                Booking::STATUS_CANCELLED,
+            ])],
             'cancellation_reason' => ['nullable', 'string', 'max:1000'],
         ];
     }

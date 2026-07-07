@@ -82,6 +82,7 @@
 
             $bookingBadge = fn (?string $status): string => match ($status) {
                 \App\Models\Booking::STATUS_PAID => 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+                \App\Models\Booking::STATUS_EXPIRED => 'bg-rose-50 text-rose-700 ring-rose-200',
                 \App\Models\Booking::STATUS_CANCELLED => 'bg-rose-50 text-rose-700 ring-rose-200',
                 \App\Models\Booking::STATUS_FINISHED => 'bg-blue-50 text-blue-700 ring-blue-200',
                 default => 'bg-amber-50 text-amber-700 ring-amber-200',

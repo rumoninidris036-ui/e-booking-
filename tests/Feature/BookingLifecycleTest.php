@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use App\Models\BadmintonField;
 use App\Models\Booking;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -59,7 +60,34 @@ class BookingLifecycleTest extends TestCase
         $booking = Booking::query()->firstOrFail();
 
         $this->assertNotNull($booking->expires_at);
-        $this->assertSame(10, $booking->created_at->diffInMinutes($booking->expires_at));
+        $this->assertEquals(10, $booking->created_at->diffInMinutes($booking->expires_at));
+    }
+
+    public function test_booking_creation_rejects_past_start_time_for_today(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-07-07 12:00:00'));
+
+        try {
+            $user = User::factory()->create();
+            $field = BadmintonField::query()->create([
+                'name' => 'Arena Past Time',
+                'slug' => 'arena-past-time',
+                'price_per_hour' => 80000,
+                'is_active' => true,
+            ]);
+
+            $response = $this->actingAs($user)->postJson(route('public.fields.bookings.store', [
+                'slug' => $field->slug,
+            ]), [
+                'booking_date' => '2026-07-07',
+                'start_time' => '10:00',
+            ]);
+
+            $response->assertUnprocessable()
+                ->assertJsonValidationErrors(['start_time']);
+        } finally {
+            CarbonImmutable::setTestNow();
+        }
     }
 
     public function test_user_can_view_booking_history_and_detail(): void
@@ -136,7 +164,7 @@ class BookingLifecycleTest extends TestCase
             ->assertJsonPath('data.cancellation_reason', 'Ada keperluan mendadak');
     }
 
-    public function test_artisan_command_auto_cancels_expired_pending_bookings(): void
+    public function test_artisan_command_auto_expires_overdue_pending_bookings(): void
     {
         $field = BadmintonField::query()->create([
             'name' => 'Arena Expired',
@@ -160,9 +188,9 @@ class BookingLifecycleTest extends TestCase
 
         $booking->refresh();
 
-        $this->assertSame(Booking::STATUS_CANCELLED, $booking->status);
-        $this->assertSame('Auto-cancelled after 10 minutes without payment.', $booking->cancellation_reason);
-        $this->assertNotNull($booking->cancelled_at);
+        $this->assertSame(Booking::STATUS_EXPIRED, $booking->status);
+        $this->assertSame('Auto-expired after 10 minutes without payment.', $booking->cancellation_reason);
+        $this->assertNull($booking->cancelled_at);
     }
 
     public function test_owner_can_view_and_update_booking_status(): void

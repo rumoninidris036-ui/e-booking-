@@ -296,21 +296,6 @@
                 };
 
                 function renderActionArea() {
-                    if (state.bookingExpired || state.bookingStatus === 'cancelled') {
-                        paymentActionArea.innerHTML = `
-                            <div class="mt-8 rounded-2xl border border-danger/30 bg-danger/10 px-4 py-4 text-sm leading-6 text-danger">
-                                Booking ini sudah kedaluwarsa. Silakan buat booking baru untuk lanjut bayar.
-                            </div>
-                            <a
-                                href="${state.bookingUrl}"
-                                class="mt-4 block w-full rounded-2xl border border-white/10 px-6 py-4 text-center text-sm font-bold uppercase tracking-[0.18em] text-white transition-colors hover:bg-white/5"
-                            >
-                                Kembali ke Booking
-                            </a>
-                        `;
-                        return;
-                    }
-
                     if (state.paymentStatus === 'success') {
                         paymentActionArea.innerHTML = `
                             <div class="mt-8 rounded-2xl border border-accent/30 bg-accent/10 px-4 py-5 text-sm leading-6 text-white">
@@ -321,6 +306,21 @@
                                 class="mt-4 block w-full rounded-2xl bg-accent px-6 py-4 text-center text-sm font-bold uppercase tracking-[0.18em] text-black transition-transform hover:-translate-y-0.5"
                             >
                                 Unduh Invoice PDF
+                            </a>
+                        `;
+                        return;
+                    }
+
+                    if (state.bookingExpired || state.bookingStatus === 'expired') {
+                        paymentActionArea.innerHTML = `
+                            <div class="mt-8 rounded-2xl border border-danger/30 bg-danger/10 px-4 py-4 text-sm leading-6 text-danger">
+                                Booking ini sudah kedaluwarsa. Silakan buat booking baru untuk lanjut bayar.
+                            </div>
+                            <a
+                                href="${state.bookingUrl}"
+                                class="mt-4 block w-full rounded-2xl border border-white/10 px-6 py-4 text-center text-sm font-bold uppercase tracking-[0.18em] text-white transition-colors hover:bg-white/5"
+                            >
+                                Kembali ke Booking
                             </a>
                         `;
                         return;

@@ -14,4 +14,4 @@ Artisan::command('bookings:expire-pending', function (): int {
     $this->comment(sprintf('Expired %d pending booking(s).', $expiredCount));
 
     return self::SUCCESS;
-})->purpose('Auto-cancel pending bookings that exceeded the payment window.');
+})->purpose('Auto-expire pending bookings that exceeded the payment window.');
