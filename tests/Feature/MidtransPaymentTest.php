@@ -92,7 +92,7 @@ class MidtransPaymentTest extends TestCase
 
         $booking->refresh();
 
-        $this->assertSame(Booking::STATUS_CANCELLED, $booking->status);
+        $this->assertSame(Booking::STATUS_EXPIRED, $booking->status);
     }
 
     public function test_web_booking_flow_redirects_to_internal_payment_page(): void

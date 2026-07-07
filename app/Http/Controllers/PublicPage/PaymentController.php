@@ -30,8 +30,10 @@ class PaymentController extends Controller
     {
         $this->authorizePaymentAccess($request, $booking);
 
-        if ($booking->isPendingPaymentExpired()) {
-            $booking = app(\App\Services\Booking\BookingService::class)->expirePendingBooking($booking);
+        if ($booking->status === Booking::STATUS_EXPIRED || $booking->isPendingPaymentExpired()) {
+            if ($booking->status === Booking::STATUS_PENDING) {
+                $booking = app(\App\Services\Booking\BookingService::class)->expirePendingBooking($booking);
+            }
 
             throw ValidationException::withMessages([
                 'booking' => ['This booking has expired because payment was not completed within 10 minutes. Please book the slot again.'],
@@ -69,6 +71,8 @@ class PaymentController extends Controller
 
         if ($payment->booking->status === Booking::STATUS_PENDING && $payment->booking->isPendingPaymentExpired()) {
             $payment->booking = app(\App\Services\Booking\BookingService::class)->expirePendingBooking($payment->booking);
+            $bookingExpired = true;
+        } elseif ($payment->booking->status === Booking::STATUS_EXPIRED) {
             $bookingExpired = true;
         }
 

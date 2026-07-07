@@ -21,6 +21,8 @@ class Booking extends Model
 
     public const STATUS_PAID = 'paid';
 
+    public const STATUS_EXPIRED = 'expired';
+
     public const STATUS_CANCELLED = 'cancelled';
 
     public const STATUS_FINISHED = 'finished';
@@ -79,8 +81,9 @@ class Booking extends Model
         return [
             self::STATUS_PENDING,
             self::STATUS_PAID,
-            self::STATUS_CANCELLED,
             self::STATUS_FINISHED,
+            self::STATUS_EXPIRED,
+            self::STATUS_CANCELLED,
         ];
     }
 

@@ -28,7 +28,10 @@ class PaymentService
     {
         $latestBooking = $booking->fresh();
 
-        if ($latestBooking !== null && $latestBooking->isPendingPaymentExpired()) {
+        if ($latestBooking !== null && (
+            $latestBooking->status === Booking::STATUS_EXPIRED
+            || $latestBooking->isPendingPaymentExpired()
+        )) {
             $this->bookingService->expirePendingBooking($latestBooking);
 
             throw ValidationException::withMessages([
@@ -41,6 +44,20 @@ class PaymentService
                 ->with(['field', 'user'])
                 ->lockForUpdate()
                 ->findOrFail($booking->id);
+
+            if ($lockedBooking->status === Booking::STATUS_PENDING && $lockedBooking->isPendingPaymentExpired()) {
+                $this->bookingService->expirePendingBooking($lockedBooking);
+
+                throw ValidationException::withMessages([
+                    'booking' => ['This booking has expired because payment was not completed within 10 minutes. Please book the slot again.'],
+                ]);
+            }
+
+            if ($lockedBooking->status === Booking::STATUS_EXPIRED) {
+                throw ValidationException::withMessages([
+                    'booking' => ['This booking has expired because payment was not completed within 10 minutes. Please book the slot again.'],
+                ]);
+            }
 
             if ($lockedBooking->status !== Booking::STATUS_PENDING) {
                 throw ValidationException::withMessages([

@@ -153,4 +153,40 @@ class OwnerBookingManagementTest extends TestCase
         $booking->refresh();
         $this->assertSame(Booking::STATUS_PAID, $booking->status);
     }
+
+    public function test_owner_cannot_force_expired_status_through_request(): void
+    {
+        Role::findOrCreate('owner', 'web');
+
+        $owner = User::factory()->create();
+        $owner->assignRole('owner');
+
+        $field = BadmintonField::query()->create([
+            'owner_id' => $owner->id,
+            'name' => 'Court Status Validation',
+            'slug' => 'court-status-validation',
+            'price_per_hour' => 95000,
+            'is_active' => true,
+        ]);
+
+        $booking = Booking::query()->create([
+            'booking_code' => 'BK-OWNER-VALIDATION',
+            'badminton_field_id' => $field->id,
+            'booking_date' => now()->addDay()->format('Y-m-d'),
+            'start_time' => '14:00:00',
+            'end_time' => '15:00:00',
+            'status' => Booking::STATUS_PENDING,
+            'price_per_hour' => 95000,
+        ]);
+
+        $this->actingAs($owner)
+            ->patchJson(route('owner.bookings.update-status', $booking), [
+                'status' => Booking::STATUS_EXPIRED,
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['status']);
+
+        $booking->refresh();
+        $this->assertSame(Booking::STATUS_PENDING, $booking->status);
+    }
 }

@@ -17,7 +17,7 @@ use Illuminate\Validation\ValidationException;
 
 class BookingService
 {
-    public const EXPIRED_PENDING_BOOKING_REASON = 'Auto-cancelled after 10 minutes without payment.';
+    public const EXPIRED_PENDING_BOOKING_REASON = 'Auto-expired after 10 minutes without payment.';
 
     public function __construct(
         private readonly FieldScheduleService $fieldScheduleService,
@@ -37,6 +37,12 @@ class BookingService
             ? $slotStart->addMinutes($this->fieldScheduleService->slotDurationMinutesFor($field))
             : CarbonImmutable::createFromFormat('H:i', $endTime);
 
+        if ($slotEnd->lte($slotStart)) {
+            throw ValidationException::withMessages([
+                'end_time' => ['End time must be greater than start time.'],
+            ]);
+        }
+
         if (! $this->fieldScheduleService->isBookableSlot($field, $slotStart->format('H:i'), $slotEnd->format('H:i'))) {
             throw ValidationException::withMessages([
                 'start_time' => ['Selected time slot is outside the allowed schedule.'],
@@ -49,12 +55,28 @@ class BookingService
             ]);
         }
 
+        $requestedStartDateTime = CarbonImmutable::createFromFormat(
+            'Y-m-d H:i',
+            $scheduleDate->format('Y-m-d').' '.$slotStart->format('H:i'),
+        );
+
+        if ($requestedStartDateTime->isPast()) {
+            throw ValidationException::withMessages([
+                'start_time' => ['Booking time must be in the future.'],
+            ]);
+        }
+
         try {
             return DB::transaction(function () use ($field, $user, $customer, $scheduleDate, $slotStart, $slotEnd): Booking {
-                $this->expireOverdueBookingsForFieldOnDate($field->id, $scheduleDate->toDateString());
+                $lockedField = BadmintonField::query()
+                    ->whereKey($field->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                $this->expireOverdueBookingsForFieldOnDate($lockedField->id, $scheduleDate->toDateString());
 
                 $conflictExists = Booking::query()
-                    ->where('badminton_field_id', $field->id)
+                    ->where('badminton_field_id', $lockedField->id)
                     ->whereDate('booking_date', $scheduleDate->toDateString())
                     ->blocksSchedule()
                     ->where('start_time', '<', $slotEnd->format('H:i:s'))
@@ -70,7 +92,7 @@ class BookingService
 
                 $bookingAttributes = [
                     'booking_code' => $this->generateBookingCode($scheduleDate->year),
-                    'badminton_field_id' => $field->id,
+                    'badminton_field_id' => $lockedField->id,
                     'user_id' => $user?->id,
                     'customer_name' => $customer['customer_name'] ?? $user?->name,
                     'customer_contact' => $customer['customer_contact'] ?? null,
@@ -80,7 +102,7 @@ class BookingService
                     'start_time' => $slotStart->format('H:i:s'),
                     'end_time' => $slotEnd->format('H:i:s'),
                     'status' => Booking::STATUS_PENDING,
-                    'price_per_hour' => $field->price_per_hour,
+                    'price_per_hour' => $lockedField->price_per_hour,
                 ];
 
                 if (Schema::hasColumn((new Booking())->getTable(), 'expires_at')) {
@@ -154,7 +176,7 @@ class BookingService
             return $booking->fresh(['field:id,name,slug', 'user:id,name,email']);
         }
 
-        return $this->markBookingAsCancelled($booking, self::EXPIRED_PENDING_BOOKING_REASON);
+        return $this->markBookingAsExpired($booking);
     }
 
     public function expireOverduePendingBookings(): int
@@ -172,7 +194,7 @@ class BookingService
                 ->get();
 
             foreach ($expiredBookings as $booking) {
-                $this->markBookingAsCancelled($booking, self::EXPIRED_PENDING_BOOKING_REASON);
+                $this->markBookingAsExpired($booking);
             }
 
             return $expiredBookings->count();
@@ -195,7 +217,7 @@ class BookingService
             ->get();
 
         foreach ($expiredBookings as $booking) {
-            $this->markBookingAsCancelled($booking, self::EXPIRED_PENDING_BOOKING_REASON);
+            $this->markBookingAsExpired($booking);
         }
     }
 
@@ -240,6 +262,23 @@ class BookingService
             'status' => Booking::STATUS_CANCELLED,
             'cancellation_reason' => $reason,
             'cancelled_at' => now(),
+        ])->save();
+
+        $booking->payments()
+            ->where('status', Payment::STATUS_PENDING)
+            ->update([
+                'status' => Payment::STATUS_FAILED,
+                'failed_at' => now(),
+            ]);
+
+        return $booking->fresh(['field:id,name,slug', 'user:id,name,email']);
+    }
+
+    private function markBookingAsExpired(Booking $booking): Booking
+    {
+        $booking->forceFill([
+            'status' => Booking::STATUS_EXPIRED,
+            'cancellation_reason' => self::EXPIRED_PENDING_BOOKING_REASON,
         ])->save();
 
         $booking->payments()
