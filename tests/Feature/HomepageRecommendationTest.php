@@ -52,7 +52,7 @@ class HomepageRecommendationTest extends TestCase
 
         $this->get(url('/'))
             ->assertOk()
-            ->assertSee('Recommended Courts')
+            ->assertSee('Lapangan Rekomendasi')
             ->assertSee('Home Court')
             ->assertDontSee('Hidden Court');
     }

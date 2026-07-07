@@ -49,4 +49,8 @@ return [
         'timeout' => env('FLOWKIRIM_TIMEOUT', 15),
     ],
 
+    'recommendations' => [
+        'algorithm' => env('RECOMMENDATION_ALGORITHM', 'tfidf'),
+    ],
+
 ];

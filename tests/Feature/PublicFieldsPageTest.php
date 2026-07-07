@@ -35,7 +35,7 @@ class PublicFieldsPageTest extends TestCase
 
         $this->get(route('public.fields.index'))
             ->assertOk()
-            ->assertSee('Explore Courts')
+            ->assertSee('Lapangan Tersedia')
             ->assertSee('Court Public Page')
             ->assertSee(route('public.fields.show', ['slug' => 'court-public-page']))
             ->assertSee(route('public.fields.booking', ['slug' => 'court-public-page']))
