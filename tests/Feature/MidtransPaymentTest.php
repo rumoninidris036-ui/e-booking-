@@ -134,7 +134,7 @@ class MidtransPaymentTest extends TestCase
         $this->actingAs($user)
             ->get(route('payments.show', $payment))
             ->assertOk()
-            ->assertSee('Continue To Pay')
+            ->assertSee('Lanjut Bayar')
             ->assertSee('BK-2026-0001');
     }
 
@@ -190,7 +190,7 @@ class MidtransPaymentTest extends TestCase
         ]))
             ->assertOk()
             ->assertSee('Guest Customer')
-            ->assertSee('Continue To Pay');
+            ->assertSee('Lanjut Bayar');
     }
 
     public function test_payment_page_syncs_success_status_from_midtrans(): void
@@ -239,9 +239,9 @@ class MidtransPaymentTest extends TestCase
         $this->actingAs($user)
             ->get(route('payments.show', $payment))
             ->assertOk()
-            ->assertSee('Payment Confirmed')
-            ->assertSee('Payment sudah sukses')
-            ->assertSee('status halaman ini sudah sinkron');
+            ->assertSee('Pembayaran Dikonfirmasi')
+            ->assertSee('Pembayaran sudah sukses')
+            ->assertSee('Status sudah sinkron');
 
         $this->assertDatabaseHas('payments', [
             'id' => $payment->id,
@@ -268,9 +268,9 @@ class MidtransPaymentTest extends TestCase
         ]);
 
         Http::fake([
-            'api.flowkirim.test/api/whatsapp/messages/media' => Http::response([
+            'api.flowkirim.test/api/whatsapp/messages/text' => Http::response([
                 'success' => true,
-                'messageId' => 'wa-doc-123',
+                'messageId' => 'wa-text-123',
             ]),
         ]);
 
@@ -325,20 +325,19 @@ class MidtransPaymentTest extends TestCase
         $payment->refresh();
 
         $this->assertNotNull($payment->whatsapp_notified_at);
-        $this->assertSame(['success' => true, 'messageId' => 'wa-doc-123'], $payment->whatsapp_notification_response);
+        $this->assertSame(['success' => true, 'messageId' => 'wa-text-123'], $payment->whatsapp_notification_response);
 
         Http::assertSent(function (Request $request) use ($payment): bool {
-            return $request->url() === 'https://api.flowkirim.test/api/whatsapp/messages/media'
+            return $request->url() === 'https://api.flowkirim.test/api/whatsapp/messages/text'
                 && $request['session_id'] === 'session-123'
-                && $request['to'] === '6281234567890'
-                && $request['type'] === 'document'
-                && str_contains((string) $request['media_url'], route('payments.invoice.download', [
+                && $request['to'] === '6281234567890@s.whatsapp.net'
+                && str_contains((string) $request['message'], route('payments.invoice.download', [
                     'payment' => $payment,
                     'access_token' => 'guest-token-123',
                 ]))
-                && str_contains((string) $request['caption'], 'Kode booking: BK-2026-0001')
-                && str_contains((string) $request['caption'], 'PDF booking/invoice terlampir')
-                && str_contains((string) $request['caption'], URL::signedRoute('public.rating.create', [
+                && str_contains((string) $request['message'], 'Kode booking: BK-2026-0001')
+                && str_contains((string) $request['message'], 'Setelah selesai bermain, beri rating lapangan di sini:')
+                && str_contains((string) $request['message'], URL::signedRoute('public.rating.create', [
                     'booking' => $payment->booking_id,
                 ]));
         });
@@ -456,8 +455,8 @@ class MidtransPaymentTest extends TestCase
         $this->actingAs($user)
             ->get(route('payments.show', $payment))
             ->assertOk()
-            ->assertSee('Payment Needs Retry')
-            ->assertSee('Continue To Pay');
+            ->assertSee('Coba Bayar Lagi')
+            ->assertSee('Lanjut Bayar');
 
         $this->assertDatabaseHas('payments', [
             'id' => $payment->id,
@@ -505,7 +504,7 @@ class MidtransPaymentTest extends TestCase
                 'callback_state' => 'finish',
             ]))
             ->assertOk()
-            ->assertSee('Status Tersinkron')
+            ->assertSee('Status Terkini')
             ->assertSee('success');
 
         $this->assertDatabaseHas('payments', [
@@ -577,7 +576,7 @@ class MidtransPaymentTest extends TestCase
         $this->actingAs($user)
             ->get(route('payments.return', ['payment' => $payment, ...$payload]))
             ->assertOk()
-            ->assertSee('Status Tersinkron')
+            ->assertSee('Status Terkini')
             ->assertSee('success');
 
         $this->assertDatabaseHas('payments', [

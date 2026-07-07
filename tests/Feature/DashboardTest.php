@@ -181,7 +181,7 @@ class DashboardTest extends TestCase
         $response = $this->actingAs($admin)->get(route('admin.users.index'));
 
         $response->assertOk()
-            ->assertSee('Users Owner')
+            ->assertSee('Pengguna Owner')
             ->assertSee('Owner Baru')
             ->assertSee('owner-baru@example.test');
     }

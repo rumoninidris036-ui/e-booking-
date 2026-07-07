@@ -62,7 +62,8 @@ class OwnerScheduleManagementTest extends TestCase
             ->assertSee('Court Schedule Owner')
             ->assertSee('BK-OWNER-SCHEDULE')
             ->assertSee('Schedule Customer')
-            ->assertSee('Available');
+            ->assertSee('Tersedia')
+            ->assertSee('bisa dibooking');
     }
 
     public function test_owner_field_schedule_json_endpoint_still_returns_slots(): void
