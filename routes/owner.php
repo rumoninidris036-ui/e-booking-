@@ -19,6 +19,7 @@ Route::middleware(['auth', 'role:owner'])
         Route::get('/fields/{badmintonField}/schedule', [FieldScheduleController::class, 'show'])->name('fields.schedule');
         Route::get('/fields/{badmintonField}', [BadmintonFieldController::class, 'show'])->name('fields.show');
         Route::put('/fields/{badmintonField}', [BadmintonFieldController::class, 'update'])->name('fields.update');
+        Route::delete('/fields/{badmintonField}/gallery-images/{galleryImage}', [BadmintonFieldController::class, 'destroyGalleryImage'])->name('fields.gallery-images.destroy');
         Route::delete('/fields/{badmintonField}', [BadmintonFieldController::class, 'destroy'])->name('fields.destroy');
         Route::get('/bookings', [BookingManagementController::class, 'index'])->name('bookings.index');
         Route::get('/bookings/{booking}', [BookingManagementController::class, 'show'])->name('bookings.show');

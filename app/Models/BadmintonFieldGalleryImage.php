@@ -14,12 +14,17 @@ class BadmintonFieldGalleryImage extends Model
     use HasFactory;
 
     /**
+     * @mixin \Eloquent
+     * @property-read string $url
+     */
+    /**
      * @var list<string>
      */
     protected $fillable = [
         'badminton_field_id',
         'path',
         'sort_order',
+        'caption',
     ];
 
     protected function casts(): array

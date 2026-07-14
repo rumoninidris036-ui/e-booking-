@@ -10,6 +10,8 @@ use App\Models\Facility;
 use App\Models\Payment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -125,7 +127,7 @@ class OwnerFieldManagementTest extends TestCase
 
         $field = BadmintonField::query()->where('slug', 'court-pin-baru')->firstOrFail();
 
-        $response->assertRedirect(route('owner.fields.index'));
+        $response->assertRedirect(route('owner.fields.show', $field));
         $this->assertSame($owner->id, $field->owner_id);
         $this->assertSame('-3.7012345', (string) $field->latitude);
         $this->assertSame('128.1901234', (string) $field->longitude);
@@ -154,9 +156,8 @@ class OwnerFieldManagementTest extends TestCase
             'is_active' => '1',
         ]);
 
-        $response->assertRedirect(route('owner.fields.index'));
-
         $field = BadmintonField::query()->where('slug', 'court-remainder-slot')->firstOrFail();
+        $response->assertRedirect(route('owner.fields.show', $field));
         $this->assertSame('08:30', substr((string) $field->open_time, 0, 5));
         $this->assertSame('23:45', substr((string) $field->close_time, 0, 5));
         $this->assertSame(30, $field->slot_duration_minutes);
@@ -217,7 +218,7 @@ class OwnerFieldManagementTest extends TestCase
             'is_active' => '1',
         ]);
 
-        $response->assertRedirect(route('owner.fields.index', ['focus' => $field->id]));
+        $response->assertRedirect(route('owner.fields.show', $field));
 
         $field->refresh();
         $this->assertSame('-3.7123456', (string) $field->latitude);
@@ -226,5 +227,32 @@ class OwnerFieldManagementTest extends TestCase
         $this->assertSame('22:00', substr((string) $field->close_time, 0, 5));
         $this->assertSame(60, $field->slot_duration_minutes);
         $this->assertSame('Alamat baru', $field->address);
+    }
+
+    public function test_owner_can_upload_single_gallery_image_when_creating_field(): void
+    {
+        Storage::fake('public');
+        Role::findOrCreate('owner', 'web');
+
+        $owner = User::factory()->create();
+        $owner->assignRole('owner');
+
+        $response = $this->actingAs($owner)->post(route('owner.fields.store'), [
+            'name' => 'Court Gallery Single',
+            'price_per_hour' => '150000',
+            'open_time' => '08:00',
+            'close_time' => '22:00',
+            'slot_duration_minutes' => '60',
+            'is_active' => '1',
+            'gallery_caption' => 'Foto utama',
+            'gallery_image' => UploadedFile::fake()->image('gallery.jpg'),
+        ]);
+
+        $field = BadmintonField::query()->where('slug', 'court-gallery-single')->firstOrFail();
+
+        $response->assertRedirect(route('owner.fields.show', $field));
+        $this->assertCount(1, $field->galleryImages);
+        $this->assertTrue(Storage::disk('public')->exists($field->galleryImages->first()->path));
+        $this->assertSame('Foto utama', $field->galleryImages->first()->caption);
     }
 }
