@@ -66,10 +66,47 @@
                     <div class="grid gap-6 lg:grid-cols-[1fr_1.1fr]">
                 <section class="space-y-6 rounded-3xl border border-line bg-panel p-6 shadow-card">
                     <div class="overflow-hidden rounded-2xl bg-slate-100">
-                        @if ($field->cover_image_url)
-                            <img src="{{ $field->cover_image_url }}" alt="{{ $field->name }}" class="h-72 w-full object-cover">
+                        @if ($field->galleryImages->isNotEmpty())
+                            @php
+                                $heroGalleryImage = $field->galleryImages->first();
+                                $previewGalleryImages = $field->galleryImages->take(3);
+                            @endphp
+
+                            <div class="grid gap-3 p-3 md:grid-cols-[2fr_1fr]">
+                                <a href="{{ $heroGalleryImage->url }}" target="_blank" rel="noreferrer" class="group relative block overflow-hidden rounded-2xl bg-slate-200 md:h-80">
+                                    <img src="{{ $heroGalleryImage->url }}" alt="{{ $field->name }} gallery 1" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent"></div>
+                                    @if ($heroGalleryImage->caption)
+                                        <div class="absolute bottom-4 left-4 rounded-full bg-black/60 px-3 py-1 text-xs font-semibold text-white">
+                                            {{ $heroGalleryImage->caption }}
+                                        </div>
+                                    @endif
+                                </a>
+
+                                <div class="grid gap-3 sm:grid-cols-2 md:grid-cols-1">
+                                    @foreach ($previewGalleryImages->skip(1) as $galleryImage)
+                                        <a href="{{ $galleryImage->url }}" target="_blank" rel="noreferrer" class="group relative block overflow-hidden rounded-2xl bg-slate-200 md:h-[154px]">
+                                            <img src="{{ $galleryImage->url }}" alt="{{ $field->name }} gallery {{ $loop->iteration + 1 }}" class="h-full w-full object-cover transition duration-500 group-hover:scale-105">
+                                            <div class="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent"></div>
+                                            @if ($galleryImage->caption)
+                                                <div class="absolute bottom-3 left-3 rounded-full bg-black/60 px-3 py-1 text-[11px] font-semibold text-white">
+                                                    {{ $galleryImage->caption }}
+                                                </div>
+                                            @endif
+                                        </a>
+                                    @endforeach
+
+                                    @for ($i = $previewGalleryImages->count(); $i < 3; $i++)
+                                        <div class="flex min-h-28 items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400 md:h-[154px]">
+                                            Foto kosong
+                                        </div>
+                                    @endfor
+                                </div>
+                            </div>
                         @else
-                            <div class="flex h-72 items-center justify-center text-3xl font-extrabold text-slate-400">{{ strtoupper(substr($field->name, 0, 2)) }}</div>
+                            <div class="flex h-72 items-center justify-center text-3xl font-extrabold text-slate-400">
+                                {{ strtoupper(substr($field->name, 0, 2)) }}
+                            </div>
                         @endif
                     </div>
 
