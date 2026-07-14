@@ -46,8 +46,8 @@ class UpdateBadmintonFieldRequest extends FormRequest
             'facility_ids' => ['sometimes', 'array'],
             'facility_ids.*' => ['integer', 'exists:facilities,id'],
             'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-            'gallery_images' => ['sometimes', 'array', 'max:6'],
-            'gallery_images.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'gallery_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'gallery_caption' => ['nullable', 'string', 'max:255'],
         ];
     }
 

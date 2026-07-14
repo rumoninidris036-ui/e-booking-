@@ -6,11 +6,13 @@ namespace App\Http\Controllers\Owner;
 
 use App\Actions\Field\CreateBadmintonFieldAction;
 use App\Actions\Field\DeleteBadmintonFieldAction;
+use App\Actions\Field\DeleteBadmintonFieldGalleryImageAction;
 use App\Actions\Field\UpdateBadmintonFieldAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Owner\StoreBadmintonFieldRequest;
 use App\Http\Requests\Owner\UpdateBadmintonFieldRequest;
 use App\Models\BadmintonField;
+use App\Models\BadmintonFieldGalleryImage;
 use App\Models\Booking;
 use App\Models\Facility;
 use App\Models\Payment;
@@ -35,8 +37,8 @@ class BadmintonFieldController extends Controller
             ->with(['facilities', 'owner:id,name,email', 'galleryImages'])
             ->withCount([
                 'bookings',
-                'bookings as pending_bookings_count' => fn ($query) => $query->where('status', Booking::STATUS_PENDING),
-                'bookings as paid_bookings_count' => fn ($query) => $query->where('status', Booking::STATUS_PAID),
+                'bookings as pending_bookings_count' => fn($query) => $query->where('status', Booking::STATUS_PENDING),
+                'bookings as paid_bookings_count' => fn($query) => $query->where('status', Booking::STATUS_PAID),
             ])
             ->select('badminton_fields.*')
             ->selectSub(
@@ -50,22 +52,22 @@ class BadmintonFieldController extends Controller
             ->when($filters['search'] !== '', function ($query) use ($filters): void {
                 $query->where(function ($query) use ($filters): void {
                     $query
-                        ->where('name', 'like', '%'.$filters['search'].'%')
-                        ->orWhere('address', 'like', '%'.$filters['search'].'%');
+                        ->where('name', 'like', '%' . $filters['search'] . '%')
+                        ->orWhere('address', 'like', '%' . $filters['search'] . '%');
                 });
             })
-            ->when($filters['status'] === 'active', fn ($query) => $query->where('is_active', true))
-            ->when($filters['status'] === 'inactive', fn ($query) => $query->where('is_active', false))
-            ->when($filters['status'] === 'mapped', fn ($query) => $query->whereNotNull('latitude')->whereNotNull('longitude'))
-            ->when($filters['status'] === 'unmapped', fn ($query) => $query->where(function ($query): void {
+            ->when($filters['status'] === 'active', fn($query) => $query->where('is_active', true))
+            ->when($filters['status'] === 'inactive', fn($query) => $query->where('is_active', false))
+            ->when($filters['status'] === 'mapped', fn($query) => $query->whereNotNull('latitude')->whereNotNull('longitude'))
+            ->when($filters['status'] === 'unmapped', fn($query) => $query->where(function ($query): void {
                 $query->whereNull('latitude')->orWhereNull('longitude');
             }))
             ->when(
                 $filters['sort'] === 'name',
-                fn ($query) => $query->orderBy('name'),
-                fn ($query) => $query
-                    ->when($filters['sort'] === 'bookings', fn ($query) => $query->orderByDesc('bookings_count'))
-                    ->when($filters['sort'] === 'revenue', fn ($query) => $query->orderByDesc('successful_revenue'))
+                fn($query) => $query->orderBy('name'),
+                fn($query) => $query
+                    ->when($filters['sort'] === 'bookings', fn($query) => $query->orderByDesc('bookings_count'))
+                    ->when($filters['sort'] === 'revenue', fn($query) => $query->orderByDesc('successful_revenue'))
                     ->latest(),
             )
             ->paginate(10)
@@ -94,7 +96,7 @@ class BadmintonFieldController extends Controller
                     'provider' => 'OpenStreetMap',
                     'library' => 'Leaflet.js',
                     'markers' => collect($fields->items())
-                        ->map(fn (BadmintonField $field): ?array => $field->map_marker)
+                        ->map(fn(BadmintonField $field): ?array => $field->map_marker)
                         ->filter()
                         ->values(),
                 ],
@@ -110,7 +112,7 @@ class BadmintonFieldController extends Controller
         $fieldQuery = BadmintonField::query()->where('owner_id', $ownerId);
 
         $totalBookings = Booking::query()
-            ->whereHas('field', fn ($query) => $query->where('owner_id', $ownerId))
+            ->whereHas('field', fn($query) => $query->where('owner_id', $ownerId))
             ->count();
 
         $totalRevenue = Payment::query()
@@ -138,12 +140,12 @@ class BadmintonFieldController extends Controller
             owner: $request->user(),
             attributes: $request->validated(),
             coverImage: $request->file('cover_image'),
-            galleryImages: $request->file('gallery_images', []),
+            galleryImage: $request->file('gallery_image'),
         );
 
         if (! $request->expectsJson()) {
             return redirect()
-                ->route('owner.fields.index')
+                ->route('owner.fields.show', $field)
                 ->with('status', sprintf('Lapangan %s berhasil ditambahkan.', $field->name));
         }
 
@@ -153,21 +155,28 @@ class BadmintonFieldController extends Controller
         ], 201);
     }
 
-    public function show(Request $request, BadmintonField $badmintonField): JsonResponse|RedirectResponse
+    public function show(Request $request, BadmintonField $badmintonField): JsonResponse|RedirectResponse|View
     {
         $this->authorize('view', $badmintonField);
+        $field = $badmintonField->loadCount(['bookings'])
+            ->load(['facilities', 'owner', 'galleryImages']);
 
         if (! $request->expectsJson()) {
-            return redirect()->route('owner.fields.index', ['focus' => $badmintonField->id]);
+            return view('owner.fields.show', [
+                'field' => $field,
+                'facilities' => Facility::query()->orderBy('name')->get(['id', 'name']),
+                'defaultLatitude' => -3.6954,
+                'defaultLongitude' => 128.1814,
+            ]);
         }
 
         return response()->json([
-            'data' => $badmintonField->load(['facilities', 'owner', 'galleryImages']),
+            'data' => $field,
             'meta' => [
                 'map' => [
                     'provider' => 'OpenStreetMap',
                     'library' => 'Leaflet.js',
-                    'marker' => $badmintonField->map_marker,
+                    'marker' => $field->map_marker,
                 ],
             ],
         ]);
@@ -184,18 +193,40 @@ class BadmintonFieldController extends Controller
             badmintonField: $badmintonField,
             attributes: $request->validated(),
             coverImage: $request->file('cover_image'),
-            galleryImages: $request->file('gallery_images', []),
+            galleryImage: $request->file('gallery_image'),
         );
 
         if (! $request->expectsJson()) {
             return redirect()
-                ->route('owner.fields.index', ['focus' => $field->id])
+                ->route('owner.fields.show', $field)
                 ->with('status', sprintf('Lapangan %s berhasil diperbarui.', $field->name));
         }
 
         return response()->json([
             'message' => 'Badminton field updated successfully.',
             'data' => $field,
+        ]);
+    }
+
+    public function destroyGalleryImage(
+        BadmintonField $badmintonField,
+        BadmintonFieldGalleryImage $galleryImage,
+        DeleteBadmintonFieldGalleryImageAction $deleteBadmintonFieldGalleryImageAction,
+    ): JsonResponse|RedirectResponse {
+        $this->authorize('update', $badmintonField);
+
+        abort_unless($galleryImage->badminton_field_id === $badmintonField->id, 404);
+
+        $deleteBadmintonFieldGalleryImageAction->handle($galleryImage);
+
+        if (! request()->expectsJson()) {
+            return redirect()
+                ->route('owner.fields.show', $badmintonField)
+                ->with('status', 'Foto galeri berhasil dihapus.');
+        }
+
+        return response()->json([
+            'message' => 'Gallery image deleted successfully.',
         ]);
     }
 

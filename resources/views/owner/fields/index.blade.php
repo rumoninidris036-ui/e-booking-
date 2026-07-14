@@ -52,6 +52,7 @@
             $isAdminFieldManagement = $isAdminFieldManagement ?? false;
             $fieldIndexRoute = $isAdminFieldManagement ? route('admin.fields.index') : route('owner.fields.index');
             $fieldUpdateRouteName = $isAdminFieldManagement ? 'admin.fields.update' : 'owner.fields.update';
+            $fieldGalleryImageDestroyRouteName = $isAdminFieldManagement ? null : 'owner.fields.gallery-images.destroy';
             $pageTitle = $isAdminFieldManagement ? 'Semua Lapangan' : 'Lapangan Saya';
             $workspaceLabel = $isAdminFieldManagement ? 'Kelola Lapangan' : 'Kelola Venue';
             $defaultLatitude = -3.6954;
@@ -94,6 +95,7 @@
                 ['label' => 'Sudah Dipin', 'value' => number_format((int) $summary['mapped_fields']), 'hint' => 'koordinat OSM', 'tone' => 'text-sky-700 bg-sky-50', 'icon' => 'OS'],
                 ['label' => 'Revenue', 'value' => $compactRupiah((float) $summary['total_revenue']), 'hint' => number_format((int) $summary['total_bookings']).' booking', 'tone' => 'text-lime-700 bg-lime-50', 'icon' => 'RV'],
             ];
+            $tableColumnCount = $isAdminFieldManagement ? 7 : 6;
         @endphp
 
         <div class="min-h-screen lg:grid lg:grid-cols-[232px_1fr]">
@@ -148,7 +150,7 @@
                     </section>
 
                     @unless ($isAdminFieldManagement)
-                    <section id="create-field" class="rounded-3xl border border-line bg-panel shadow-card">
+                    <section id="create-field" class="overflow-hidden rounded-3xl border border-line bg-panel shadow-card">
                         <div class="border-b border-line px-5 py-5">
                             <p class="text-xs font-bold uppercase tracking-[0.22em] text-brand">Create Venue</p>
                             <h2 class="mt-1 font-display text-2xl font-bold">Tambah Lapangan Baru</h2>
@@ -177,6 +179,10 @@
                                     <div>
                                         <label for="price_per_hour" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Harga per Jam</label>
                                         <input id="price_per_hour" name="price_per_hour" type="number" min="0" value="{{ old('price_per_hour') }}" required class="w-full rounded-2xl border-line bg-slate-50 px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20" placeholder="100000">
+                                    </div>
+                                    <div>
+                                        <label for="gallery_caption" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Keterangan Galeri</label>
+                                        <input id="gallery_caption" name="gallery_caption" type="text" value="{{ old('gallery_caption') }}" class="w-full rounded-2xl border-line bg-slate-50 px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20" placeholder="Contoh: Kondisi malam hari">
                                     </div>
                                     <div>
                                         <label for="cover_image" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Cover Image</label>
@@ -278,202 +284,336 @@
                             </form>
                         </div>
 
-                        <div class="divide-y divide-line">
-                            @forelse ($fields as $field)
-                                @php
-                                    $fieldLatitude = old("fields.{$field->id}.latitude", $field->latitude ?? $defaultLatitude);
-                                    $fieldLongitude = old("fields.{$field->id}.longitude", $field->longitude ?? $defaultLongitude);
-                                    $fieldOpenTime = old('open_time', substr((string) ($field->open_time ?? \App\Services\Booking\FieldScheduleService::DEFAULT_OPEN_TIME), 0, 5));
-                                    $fieldCloseTime = old('close_time', substr((string) ($field->close_time ?? \App\Services\Booking\FieldScheduleService::DEFAULT_CLOSE_TIME), 0, 5));
-                                    $fieldSlotDuration = old('slot_duration_minutes', $field->slot_duration_minutes ?? \App\Services\Booking\FieldScheduleService::DEFAULT_SLOT_DURATION_MINUTES);
-                                    $selectedFacilityIds = collect(old("fields.{$field->id}.facility_ids", $field->facilities->pluck('id')->all()))->map(fn ($id) => (int) $id);
-                                @endphp
+                        <div class="overflow-x-auto">
+                            <table class="w-full min-w-[980px] text-sm">
+                                <thead>
+                                    <tr class="border-b border-line bg-slate-50 text-left text-[11px] font-bold uppercase tracking-[0.14em] text-slateSoft">
+                                        <th class="px-5 py-3">Lapangan</th>
+                                        @if ($isAdminFieldManagement)
+                                            <th class="px-4 py-3">Owner</th>
+                                        @endif
+                                        <th class="px-4 py-3">Harga &amp; Jadwal</th>
+                                        <th class="px-4 py-3">Status</th>
+                                        <th class="px-4 py-3">Booking</th>
+                                        <th class="px-4 py-3">Revenue</th>
+                                        <th class="px-4 py-3 text-right">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-line">
+                                    @forelse ($fields as $field)
+                                        @php
+                                            $fieldLatitude = old("fields.{$field->id}.latitude", $field->latitude ?? $defaultLatitude);
+                                            $fieldLongitude = old("fields.{$field->id}.longitude", $field->longitude ?? $defaultLongitude);
+                                            $fieldOpenTime = old('open_time', substr((string) ($field->open_time ?? \App\Services\Booking\FieldScheduleService::DEFAULT_OPEN_TIME), 0, 5));
+                                            $fieldCloseTime = old('close_time', substr((string) ($field->close_time ?? \App\Services\Booking\FieldScheduleService::DEFAULT_CLOSE_TIME), 0, 5));
+                                            $fieldSlotDuration = old('slot_duration_minutes', $field->slot_duration_minutes ?? \App\Services\Booking\FieldScheduleService::DEFAULT_SLOT_DURATION_MINUTES);
+                                            $selectedFacilityIds = collect(old("fields.{$field->id}.facility_ids", $field->facilities->pluck('id')->all()))->map(fn ($id) => (int) $id);
+                                        @endphp
 
-                                <article id="field-{{ $field->id }}" class="p-5 {{ (string) request('focus') === (string) $field->id ? 'bg-brandSoft/40' : '' }}">
-                                    <form method="POST" action="{{ route($fieldUpdateRouteName, $field) }}" enctype="multipart/form-data" class="grid gap-6 xl:grid-cols-[260px_1fr_0.9fr]">
-                                        @csrf
-                                        @method('PUT')
-
-                                        <div class="space-y-4">
-                                            <div class="aspect-[4/3] overflow-hidden rounded-3xl border border-line bg-slate-100">
-                                                @if ($field->cover_image_url)
-                                                    <img src="{{ $field->cover_image_url }}" alt="{{ $field->name }}" class="h-full w-full object-cover">
-                                                @else
-                                                    <div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-brandSoft to-slate-100 font-display text-3xl font-bold text-brand">
-                                                        {{ strtoupper(substr($field->name, 0, 2)) }}
+                                        {{-- Ringkasan baris (data table) --}}
+                                        <tr id="field-{{ $field->id }}" class="align-top transition {{ (string) request('focus') === (string) $field->id ? 'bg-brandSoft/40' : 'hover:bg-slate-50/60' }}">
+                                            <td class="px-5 py-4">
+                                                <div class="flex items-start gap-3">
+                                                    <div class="h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-line bg-slate-100">
+                                                        @if ($field->cover_image_url)
+                                                            <img src="{{ $field->cover_image_url }}" alt="{{ $field->name }}" class="h-full w-full object-cover">
+                                                        @else
+                                                            <div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-brandSoft to-slate-100 font-display text-sm font-bold text-brand">
+                                                                {{ strtoupper(substr($field->name, 0, 2)) }}
+                                                            </div>
+                                                        @endif
                                                     </div>
-                                                @endif
-                                            </div>
-
-                                            <div class="rounded-2xl border border-line bg-slate-50 p-4">
-                                                <div class="flex items-center justify-between gap-3">
-                                                    <span class="text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Status</span>
-                                                    <span class="rounded-full px-3 py-1 text-xs font-bold {{ $field->is_active ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' }}">
-                                                        {{ $field->is_active ? 'Aktif' : 'Nonaktif' }}
-                                                    </span>
+                                                    <div class="min-w-0">
+                                                        <p class="truncate font-display text-base font-bold">{{ $field->name }}</p>
+                                                        <p class="mt-1 truncate text-xs font-semibold text-slateSoft">{{ $field->address ?: 'Alamat belum diisi' }}</p>
+                                                        <span class="mt-2 inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-bold {{ $field->latitude !== null && $field->longitude !== null ? 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' }}">
+                                                            {{ $field->latitude !== null && $field->longitude !== null ? 'Sudah dipin' : 'Belum dipin' }}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <div class="mt-3 text-sm font-bold">{{ $rupiah((float) $field->price_per_hour) }} / jam</div>
-                                                <div class="mt-2 text-xs font-semibold text-slateSoft">{{ $fieldOpenTime }}-{{ $fieldCloseTime }} · {{ $fieldSlotDuration }} menit/slot</div>
-                                            </div>
-
+                                            </td>
                                             @if ($isAdminFieldManagement)
-                                                <div class="rounded-2xl border border-brand/20 bg-brandSoft p-4">
-                                                    <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-brand">Pemilik Lapangan</p>
-                                                    <p class="mt-2 text-sm font-bold">{{ $field->owner?->name ?? 'Tanpa owner' }}</p>
+                                                <td class="px-4 py-4">
+                                                    <p class="text-sm font-bold">{{ $field->owner?->name ?? 'Tanpa owner' }}</p>
                                                     <p class="mt-1 truncate text-xs font-semibold text-slateSoft">{{ $field->owner?->email ?? '-' }}</p>
-                                                </div>
+                                                </td>
                                             @endif
-
-                                            <div class="grid grid-cols-2 gap-3">
-                                                <div class="rounded-2xl border border-line bg-white p-3">
-                                                    <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-slateSoft">Booking</p>
-                                                    <p class="mt-2 font-display text-xl font-bold">{{ number_format((int) $field->bookings_count) }}</p>
+                                            <td class="px-4 py-4 whitespace-nowrap">
+                                                <p class="text-sm font-bold">{{ $rupiah((float) $field->price_per_hour) }}/jam</p>
+                                                <p class="mt-1 text-xs font-semibold text-slateSoft">{{ $fieldOpenTime }}-{{ $fieldCloseTime }} · {{ $fieldSlotDuration }} menit</p>
+                                            </td>
+                                            <td class="px-4 py-4">
+                                                <span class="inline-flex rounded-full px-3 py-1 text-xs font-bold {{ $field->is_active ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' }}">
+                                                    {{ $field->is_active ? 'Aktif' : 'Nonaktif' }}
+                                                </span>
+                                            </td>
+                                            <td class="px-4 py-4 whitespace-nowrap">
+                                                <p class="text-sm font-bold">{{ number_format((int) $field->bookings_count) }}</p>
+                                                <p class="mt-1 text-xs font-semibold text-slateSoft">{{ number_format((int) $field->pending_bookings_count) }} pending · {{ number_format((int) $field->paid_bookings_count) }} paid</p>
+                                            </td>
+                                            <td class="px-4 py-4 whitespace-nowrap">
+                                                <p class="text-sm font-bold">{{ $compactRupiah((float) $field->successful_revenue) }}</p>
+                                            </td>
+                                            <td class="px-4 py-4 text-right">
+                                                <div class="flex justify-end gap-2">
+                                                    <button type="button" data-toggle-detail="field-detail-{{ $field->id }}" class="rounded-xl border border-line px-3 py-2 text-xs font-bold text-ink transition hover:border-brand hover:text-brand">
+                                                        Detail
+                                                    </button>
+                                                    @unless ($isAdminFieldManagement)
+                                                        <button type="submit" form="delete-field-{{ $field->id }}" onclick="return confirm('Hapus lapangan ini?')" class="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-bold text-rose-700 transition hover:bg-rose-100">
+                                                            Hapus
+                                                        </button>
+                                                    @endunless
                                                 </div>
-                                                <div class="rounded-2xl border border-line bg-white p-3">
-                                                    <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-slateSoft">Revenue</p>
-                                                    <p class="mt-2 font-display text-xl font-bold">{{ $compactRupiah((float) $field->successful_revenue) }}</p>
-                                                </div>
-                                                <div class="rounded-2xl border border-line bg-white p-3">
-                                                    <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-slateSoft">Pending</p>
-                                                    <p class="mt-2 font-display text-xl font-bold">{{ number_format((int) $field->pending_bookings_count) }}</p>
-                                                </div>
-                                                <div class="rounded-2xl border border-line bg-white p-3">
-                                                    <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-slateSoft">Paid</p>
-                                                    <p class="mt-2 font-display text-xl font-bold">{{ number_format((int) $field->paid_bookings_count) }}</p>
-                                                </div>
-                                            </div>
+                                            </td>
+                                        </tr>
 
-                                            <div class="rounded-2xl border border-line bg-slate-50 p-4 text-sm">
-                                                <div class="flex items-center justify-between gap-3">
-                                                    <span class="font-bold text-slateSoft">Koordinat</span>
-                                                    <span class="rounded-full px-3 py-1 text-xs font-bold {{ $field->latitude !== null && $field->longitude !== null ? 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' }}">
-                                                        {{ $field->latitude !== null && $field->longitude !== null ? 'Sudah dipin' : 'Belum dipin' }}
-                                                    </span>
-                                                </div>
-                                                @if ($field->latitude !== null && $field->longitude !== null)
-                                                    <p class="mt-2 text-xs font-semibold text-slateSoft">{{ $field->latitude }}, {{ $field->longitude }}</p>
-                                                @endif
-                                            </div>
+                                        {{-- Baris detail (form edit lengkap, tersembunyi sampai tombol Detail diklik) --}}
+                                        <tr id="field-detail-{{ $field->id }}" data-detail-row class="hidden">
+                                            <td colspan="{{ $tableColumnCount }}" class="bg-shell/60 px-4 py-5 md:px-5">
+                                                <div class="rounded-3xl border border-line bg-panel p-4 shadow-card md:p-5">
 
-                                            @unless ($isAdminFieldManagement)
-                                                <button type="submit" form="delete-field-{{ $field->id }}" onclick="return confirm('Hapus lapangan ini?')" class="w-full rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700 transition hover:bg-rose-100">
-                                                    Hapus Lapangan
-                                                </button>
-                                            @endunless
-                                        </div>
+                                                {{-- GRID FORM DIBUAT JADI 2 KOLOM UTAMA --}}
+                                                <form method="POST" action="{{ route($fieldUpdateRouteName, $field) }}" enctype="multipart/form-data" class="grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
+                                                    @csrf
+                                                    @method('PUT')
 
-                                        <div class="space-y-4">
-                                            <div>
-                                                <label for="field-{{ $field->id }}-name" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Nama Lapangan</label>
-                                                <input id="field-{{ $field->id }}-name" name="name" type="text" value="{{ old("fields.{$field->id}.name", $field->name) }}" required class="w-full rounded-2xl border-line bg-slate-50 px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">
-                                            </div>
+                                                    <!-- KOLOM KIRI: Cover dan Statistik (Lebar Tetap 280px) -->
+                                                    <div class="space-y-4">
+                                                        <div class="aspect-[4/3] overflow-hidden rounded-3xl border border-line bg-slate-100 shadow-sm">
+                                                            @if ($field->cover_image_url)
+                                                                <img src="{{ $field->cover_image_url }}" alt="{{ $field->name }}" class="h-full w-full object-cover">
+                                                            @else
+                                                                <div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-brandSoft to-slate-100 font-display text-3xl font-bold text-brand">
+                                                                    {{ strtoupper(substr($field->name, 0, 2)) }}
+                                                                </div>
+                                                            @endif
+                                                        </div>
 
-                                            <div>
-                                                <label for="field-{{ $field->id }}-address" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Alamat</label>
-                                                <input id="field-{{ $field->id }}-address" name="address" type="text" value="{{ old("fields.{$field->id}.address", $field->address) }}" class="w-full rounded-2xl border-line bg-slate-50 px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">
-                                            </div>
+                                                        @if ($isAdminFieldManagement)
+                                                            <div class="rounded-2xl border border-brand/20 bg-brandSoft p-4 shadow-sm">
+                                                                <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-brand">Pemilik Lapangan</p>
+                                                                <p class="mt-2 text-sm font-bold">{{ $field->owner?->name ?? 'Tanpa owner' }}</p>
+                                                                <p class="mt-1 truncate text-xs font-semibold text-slateSoft">{{ $field->owner?->email ?? '-' }}</p>
+                                                            </div>
+                                                        @endif
 
-                                            <div>
-                                                <label for="field-{{ $field->id }}-description" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Deskripsi</label>
-                                                <textarea id="field-{{ $field->id }}-description" name="description" rows="4" class="w-full rounded-2xl border-line bg-slate-50 px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">{{ old("fields.{$field->id}.description", $field->description) }}</textarea>
-                                            </div>
+                                                        <div class="grid grid-cols-2 gap-3">
+                                                            <div class="rounded-2xl border border-line bg-white p-3">
+                                                                <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-slateSoft">Booking</p>
+                                                                <p class="mt-2 font-display text-xl font-bold">{{ number_format((int) $field->bookings_count) }}</p>
+                                                            </div>
+                                                            <div class="rounded-2xl border border-line bg-white p-3">
+                                                                <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-slateSoft">Revenue</p>
+                                                                <p class="mt-2 font-display text-xl font-bold">{{ $compactRupiah((float) $field->successful_revenue) }}</p>
+                                                            </div>
+                                                            <div class="rounded-2xl border border-line bg-white p-3">
+                                                                <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-slateSoft">Pending</p>
+                                                                <p class="mt-2 font-display text-xl font-bold">{{ number_format((int) $field->pending_bookings_count) }}</p>
+                                                            </div>
+                                                            <div class="rounded-2xl border border-line bg-white p-3">
+                                                                <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-slateSoft">Paid</p>
+                                                                <p class="mt-2 font-display text-xl font-bold">{{ number_format((int) $field->paid_bookings_count) }}</p>
+                                                            </div>
+                                                        </div>
 
-                                            <div class="grid gap-4 sm:grid-cols-2">
-                                                <div>
-                                                    <label for="field-{{ $field->id }}-price" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Harga per Jam</label>
-                                                    <input id="field-{{ $field->id }}-price" name="price_per_hour" type="number" min="0" value="{{ old("fields.{$field->id}.price_per_hour", $field->price_per_hour) }}" required class="w-full rounded-2xl border-line bg-slate-50 px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">
-                                                </div>
-                                                <div>
-                                                    <label for="field-{{ $field->id }}-cover" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Ganti Cover</label>
-                                                    <input id="field-{{ $field->id }}-cover" name="cover_image" type="file" accept="image/*" class="w-full rounded-2xl border border-line bg-slate-50 px-4 py-2 text-sm file:mr-3 file:rounded-xl file:border-0 file:bg-brand file:px-3 file:py-2 file:text-sm file:font-bold file:text-white">
-                                                </div>
-                                            </div>
-
-                                            <div class="rounded-2xl border border-line bg-slate-50 p-4">
-                                                <p class="text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Pengaturan Jadwal</p>
-                                                <div class="mt-4 grid gap-4 sm:grid-cols-3">
-                                                    <div>
-                                                        <label for="field-{{ $field->id }}-open-time" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Jam Buka</label>
-                                                        <input id="field-{{ $field->id }}-open-time" name="open_time" type="text" inputmode="numeric" pattern="^([01][0-9]|2[0-3]):[0-5][0-9]$" value="{{ $fieldOpenTime }}" required class="w-full rounded-2xl border-line bg-white px-4 py-3 text-sm focus:border-brand focus:ring-brand/20" placeholder="08:00">
+                                                        <div class="rounded-2xl border border-line bg-slate-50 p-4 text-sm">
+                                                            <div class="flex items-center justify-between gap-3">
+                                                                <span class="font-bold text-slateSoft">Koordinat</span>
+                                                                <span class="rounded-full px-3 py-1 text-xs font-bold {{ $field->latitude !== null && $field->longitude !== null ? 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' }}">
+                                                                    {{ $field->latitude !== null && $field->longitude !== null ? 'Sudah dipin' : 'Belum dipin' }}
+                                                                </span>
+                                                            </div>
+                                                            @if ($field->latitude !== null && $field->longitude !== null)
+                                                                <p class="mt-2 text-xs font-semibold text-slateSoft">{{ $field->latitude }}, {{ $field->longitude }}</p>
+                                                            @endif
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <label for="field-{{ $field->id }}-close-time" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Jam Tutup</label>
-                                                        <input id="field-{{ $field->id }}-close-time" name="close_time" type="text" inputmode="numeric" pattern="^([01][0-9]|2[0-3]):[0-5][0-9]$" value="{{ $fieldCloseTime }}" required class="w-full rounded-2xl border-line bg-white px-4 py-3 text-sm focus:border-brand focus:ring-brand/20" placeholder="22:00">
+
+                                                    <!-- KOLOM KANAN LEBAR: Berisi Galeri (Top) dan Info+Map (Bottom) -->
+                                                    <div class="space-y-6">
+
+                                                        {{-- BAGIAN GALERI: SEKARANG FULL WIDTH DI AREA KANAN --}}
+                                                        @unless ($isAdminFieldManagement)
+                                                            <div class="space-y-4">
+                                                                <div class="rounded-2xl border border-line bg-slate-50 p-4">
+                                                                    <label for="field-{{ $field->id }}-gallery" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Gallery Image</label>
+                                                                    <input id="field-{{ $field->id }}-gallery" name="gallery_image" type="file" accept="image/*" class="w-full rounded-2xl border border-line bg-white px-4 py-2 text-sm file:mr-3 file:rounded-xl file:border-0 file:bg-brand file:px-3 file:py-2 file:text-sm file:font-bold file:text-white">
+                                                                    <p class="mt-2 text-xs font-semibold text-slateSoft">Upload 1 foto saja. File lama tetap ada.</p>
+                                                                    <input name="gallery_caption" type="text" value="{{ old('gallery_caption') }}" class="mt-3 w-full rounded-2xl border-line bg-white px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20" placeholder="Keterangan untuk foto baru">
+                                                                </div>
+
+                                                                @if ($field->galleryImages->isNotEmpty())
+                                                                    <div class="rounded-2xl border border-line bg-panel p-4 shadow-sm">
+                                                                        <div class="flex items-center justify-between gap-3">
+                                                                            <p class="text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Foto Aktif</p>
+                                                                            <span class="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slateSoft">{{ $field->galleryImages->count() }} foto</span>
+                                                                        </div>
+                                                                        {{-- Kolom foto dibikin lebih banyak biar muat di area yang lega --}}
+                                                                        <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+                                                                            @foreach ($field->galleryImages as $galleryImage)
+                                                                                <div class="group overflow-hidden rounded-2xl border border-line bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                                                                                    <div class="relative h-32 w-full overflow-hidden bg-slate-100">
+                                                                                        <img src="{{ $galleryImage->url }}" alt="{{ $field->name }} gallery {{ $loop->iteration }}" class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
+                                                                                        <div class="absolute left-3 top-3 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white backdrop-blur">
+                                                                                            Foto {{ $loop->iteration }}
+                                                                                        </div>
+                                                                                        <form method="POST" action="{{ route($fieldGalleryImageDestroyRouteName, [$field, $galleryImage]) }}" onsubmit="return confirm('Hapus foto ini?')" class="absolute right-3 top-3">
+                                                                                            @csrf
+                                                                                            @method('DELETE')
+                                                                                            <button type="submit" class="rounded-full bg-white/90 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-rose-700 shadow-sm ring-1 ring-rose-200 transition hover:bg-rose-50">Hapus</button>
+                                                                                        </form>
+                                                                                    </div>
+                                                                                    @if ($galleryImage->caption)
+                                                                                        <div class="px-3 py-3">
+                                                                                            <p class="text-xs leading-5 text-slateSoft">{{ $galleryImage->caption }}</p>
+                                                                                        </div>
+                                                                                    @endif
+                                                                                </div>
+                                                                            @endforeach
+                                                                        </div>
+                                                                    </div>
+                                                                @endif
+                                                            </div>
+                                                        @endunless
+
+                                                        {{-- AREA BAWAH GALERI: DIPECAH JADI 2 KOLOM (INFO vs SETTING) --}}
+                                                        <div class="grid gap-6 lg:grid-cols-2 items-start">
+
+                                                            {{-- SUB-KOLOM KIRI: INFO DASAR LAPANGAN --}}
+                                                            <div class="space-y-4">
+                                                                <div class="rounded-2xl border border-line bg-slate-50 p-4">
+                                                                    <div class="space-y-4">
+                                                                        <div>
+                                                                            <label for="field-{{ $field->id }}-name" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Nama Lapangan</label>
+                                                                            <input id="field-{{ $field->id }}-name" name="name" type="text" value="{{ old("fields.{$field->id}.name", $field->name) }}" required class="w-full rounded-2xl border-line bg-white px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">
+                                                                        </div>
+                                                                        <div>
+                                                                            <label for="field-{{ $field->id }}-address" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Alamat</label>
+                                                                            <input id="field-{{ $field->id }}-address" name="address" type="text" value="{{ old("fields.{$field->id}.address", $field->address) }}" class="w-full rounded-2xl border-line bg-white px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">
+                                                                        </div>
+                                                                        <div>
+                                                                            <label for="field-{{ $field->id }}-description" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Deskripsi</label>
+                                                                            <textarea id="field-{{ $field->id }}-description" name="description" rows="4" class="w-full rounded-2xl border-line bg-white px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">{{ old("fields.{$field->id}.description", $field->description) }}</textarea>
+                                                                        </div>
+                                                                        <div class="grid gap-4 sm:grid-cols-2">
+                                                                            <div>
+                                                                                <label for="field-{{ $field->id }}-price" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Harga per Jam</label>
+                                                                                <input id="field-{{ $field->id }}-price" name="price_per_hour" type="number" min="0" value="{{ old("fields.{$field->id}.price_per_hour", $field->price_per_hour) }}" required class="w-full rounded-2xl border-line bg-white px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">
+                                                                            </div>
+                                                                            <div>
+                                                                                <label for="field-{{ $field->id }}-cover" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Ganti Cover</label>
+                                                                                <input id="field-{{ $field->id }}-cover" name="cover_image" type="file" accept="image/*" class="w-full rounded-2xl border border-line bg-white px-4 py-2 text-sm file:mr-3 file:rounded-xl file:border-0 file:bg-brand file:px-3 file:py-2 file:text-sm file:font-bold file:text-white">
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                {{-- FASILITAS --}}
+                                                                <div class="rounded-2xl border border-line bg-slate-50 p-4">
+                                                                    <p class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Fasilitas</p>
+                                                                    <div class="grid gap-2 sm:grid-cols-2">
+                                                                        @foreach ($facilities as $facility)
+                                                                            <label class="flex items-center gap-3 rounded-2xl border border-line bg-white px-4 py-3 text-sm font-semibold">
+                                                                                <input type="checkbox" name="facility_ids[]" value="{{ $facility->id }}" @checked($selectedFacilityIds->contains($facility->id)) class="rounded border-line text-brand focus:ring-brand">
+                                                                                {{ $facility->name }}
+                                                                            </label>
+                                                                        @endforeach
+                                                                    </div>
+                                                                </div>
+
+                                                                {{-- CHECKBOX STATUS & HAPUS COVER --}}
+                                                                <div class="grid gap-3 sm:grid-cols-2">
+                                                                    <label class="flex items-center gap-3 rounded-2xl border border-line bg-white px-4 py-3 text-sm font-bold">
+                                                                        <input type="hidden" name="is_active" value="0">
+                                                                        <input type="checkbox" name="is_active" value="1" @checked((bool) old("fields.{$field->id}.is_active", $field->is_active)) class="rounded border-line text-brand focus:ring-brand">
+                                                                        Lapangan aktif
+                                                                    </label>
+                                                                    <label class="flex items-center gap-3 rounded-2xl border border-line bg-white px-4 py-3 text-sm font-bold">
+                                                                        <input type="checkbox" name="remove_cover_image" value="1" class="rounded border-line text-rose-600 focus:ring-rose-600">
+                                                                        Hapus cover
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+
+                                                            {{-- SUB-KOLOM KANAN: MAP & PENGATURAN LAINNYA --}}
+                                                            <div class="space-y-4">
+                                                                {{-- MAP KOORDINAT --}}
+                                                                <div
+                                                                    id="field-map-{{ $field->id }}"
+                                                                    data-field-map
+                                                                    data-lat-input="field-{{ $field->id }}-latitude"
+                                                                    data-lng-input="field-{{ $field->id }}-longitude"
+                                                                    data-lat="{{ $fieldLatitude }}"
+                                                                    data-lng="{{ $fieldLongitude }}"
+                                                                    class="h-[340px] overflow-hidden rounded-3xl border border-line"
+                                                                ></div>
+
+                                                                <div class="grid gap-4 sm:grid-cols-2">
+                                                                    <div>
+                                                                        <label for="field-{{ $field->id }}-latitude" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Latitude</label>
+                                                                        <input id="field-{{ $field->id }}-latitude" name="latitude" type="text" value="{{ $fieldLatitude }}" class="w-full rounded-2xl border-line bg-white px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">
+                                                                    </div>
+                                                                    <div>
+                                                                        <label for="field-{{ $field->id }}-longitude" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Longitude</label>
+                                                                        <input id="field-{{ $field->id }}-longitude" name="longitude" type="text" value="{{ $fieldLongitude }}" class="w-full rounded-2xl border-line bg-white px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">
+                                                                    </div>
+                                                                </div>
+
+                                                                {{-- PENGATURAN JADWAL --}}
+                                                                <div class="rounded-2xl border border-line bg-slate-50 p-4">
+                                                                    <p class="text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Pengaturan Jadwal</p>
+                                                                    <div class="mt-4 grid gap-4 sm:grid-cols-3">
+                                                                        <div>
+                                                                            <label for="field-{{ $field->id }}-open-time" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Jam Buka</label>
+                                                                            <input id="field-{{ $field->id }}-open-time" name="open_time" type="text" inputmode="numeric" pattern="^([01][0-9]|2[0-3]):[0-5][0-9]$" value="{{ $fieldOpenTime }}" required class="w-full rounded-2xl border-line bg-white px-4 py-3 text-sm focus:border-brand focus:ring-brand/20" placeholder="08:00">
+                                                                        </div>
+                                                                        <div>
+                                                                            <label for="field-{{ $field->id }}-close-time" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Jam Tutup</label>
+                                                                            <input id="field-{{ $field->id }}-close-time" name="close_time" type="text" inputmode="numeric" pattern="^([01][0-9]|2[0-3]):[0-5][0-9]$" value="{{ $fieldCloseTime }}" required class="w-full rounded-2xl border-line bg-white px-4 py-3 text-sm focus:border-brand focus:ring-brand/20" placeholder="22:00">
+                                                                        </div>
+                                                                        <div>
+                                                                            <label for="field-{{ $field->id }}-slot-duration" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Durasi Slot</label>
+                                                                            <input id="field-{{ $field->id }}-slot-duration" name="slot_duration_minutes" type="number" min="30" max="240" step="15" value="{{ $fieldSlotDuration }}" required class="w-full rounded-2xl border-line bg-white px-4 py-3 text-sm focus:border-brand focus:ring-brand/20">
+                                                                        </div>
+                                                                    </div>
+                                                                    <p class="mt-3 text-xs font-semibold text-slateSoft">Gunakan format 24 jam, contoh 08:00, 13:30, 22:00.</p>
+                                                                </div>
+
+                                                                {{-- TOMBOL AKSI --}}
+                                                                <button type="submit" class="w-full rounded-2xl bg-ink px-5 py-4 text-sm font-extrabold uppercase tracking-[0.18em] text-white transition hover:bg-slate-700">
+                                                                    Simpan Perubahan
+                                                                </button>
+
+                                                                @unless ($isAdminFieldManagement)
+                                                                    <button type="submit" form="delete-field-{{ $field->id }}" onclick="return confirm('Hapus lapangan ini?')" class="w-full rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700 transition hover:bg-rose-100">
+                                                                        Hapus Lapangan
+                                                                    </button>
+                                                                @endunless
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <label for="field-{{ $field->id }}-slot-duration" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Durasi Slot</label>
-                                                        <input id="field-{{ $field->id }}-slot-duration" name="slot_duration_minutes" type="number" min="30" max="240" step="15" value="{{ $fieldSlotDuration }}" required class="w-full rounded-2xl border-line bg-white px-4 py-3 text-sm focus:border-brand focus:ring-brand/20">
-                                                    </div>
+                                                </form>
+
+                                                @unless ($isAdminFieldManagement)
+                                                    <form id="delete-field-{{ $field->id }}" method="POST" action="{{ route('owner.fields.destroy', $field) }}">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                    </form>
+                                                @endunless
                                                 </div>
-                                                <p class="mt-3 text-xs font-semibold text-slateSoft">Gunakan format 24 jam, contoh 08:00, 13:30, 22:00.</p>
-                                            </div>
-
-                                            <div>
-                                                <p class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Fasilitas</p>
-                                                <div class="grid gap-2 sm:grid-cols-2">
-                                                    @foreach ($facilities as $facility)
-                                                        <label class="flex items-center gap-3 rounded-2xl border border-line bg-slate-50 px-4 py-3 text-sm font-semibold">
-                                                            <input type="checkbox" name="facility_ids[]" value="{{ $facility->id }}" @checked($selectedFacilityIds->contains($facility->id)) class="rounded border-line text-brand focus:ring-brand">
-                                                            {{ $facility->name }}
-                                                        </label>
-                                                    @endforeach
-                                                </div>
-                                            </div>
-
-                                            <div class="grid gap-3 sm:grid-cols-2">
-                                                <label class="flex items-center gap-3 rounded-2xl border border-line bg-slate-50 px-4 py-3 text-sm font-bold">
-                                                    <input type="hidden" name="is_active" value="0">
-                                                    <input type="checkbox" name="is_active" value="1" @checked((bool) old("fields.{$field->id}.is_active", $field->is_active)) class="rounded border-line text-brand focus:ring-brand">
-                                                    Lapangan aktif
-                                                </label>
-                                                <label class="flex items-center gap-3 rounded-2xl border border-line bg-slate-50 px-4 py-3 text-sm font-bold">
-                                                    <input type="checkbox" name="remove_cover_image" value="1" class="rounded border-line text-rose-600 focus:ring-rose-600">
-                                                    Hapus cover
-                                                </label>
-                                            </div>
-                                        </div>
-
-                                        <div class="space-y-4">
-                                            <div
-                                                id="field-map-{{ $field->id }}"
-                                                data-field-map
-                                                data-lat-input="field-{{ $field->id }}-latitude"
-                                                data-lng-input="field-{{ $field->id }}-longitude"
-                                                data-lat="{{ $fieldLatitude }}"
-                                                data-lng="{{ $fieldLongitude }}"
-                                                class="h-[340px] overflow-hidden rounded-3xl border border-line"
-                                            ></div>
-
-                                            <div class="grid gap-4 sm:grid-cols-2">
-                                                <div>
-                                                    <label for="field-{{ $field->id }}-latitude" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Latitude</label>
-                                                    <input id="field-{{ $field->id }}-latitude" name="latitude" type="text" value="{{ $fieldLatitude }}" class="w-full rounded-2xl border-line bg-slate-50 px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">
-                                                </div>
-                                                <div>
-                                                    <label for="field-{{ $field->id }}-longitude" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Longitude</label>
-                                                    <input id="field-{{ $field->id }}-longitude" name="longitude" type="text" value="{{ $fieldLongitude }}" class="w-full rounded-2xl border-line bg-slate-50 px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">
-                                                </div>
-                                            </div>
-
-                                            <button type="submit" class="w-full rounded-2xl bg-ink px-5 py-4 text-sm font-extrabold uppercase tracking-[0.18em] text-white transition hover:bg-slate-700">
-                                                Simpan Perubahan
-                                            </button>
-                                        </div>
-                                    </form>
-
-                                    @unless ($isAdminFieldManagement)
-                                        <form id="delete-field-{{ $field->id }}" method="POST" action="{{ route('owner.fields.destroy', $field) }}">
-                                            @csrf
-                                            @method('DELETE')
-                                        </form>
-                                    @endunless
-                                </article>
-                            @empty
-                                <div class="px-5 py-12 text-center">
-                                    <h3 class="font-display text-2xl font-bold">Belum ada lapangan</h3>
-                                    <p class="mt-2 text-sm text-slateSoft">{{ $isAdminFieldManagement ? 'Belum ada lapangan dari owner mana pun.' : 'Tambahkan lapangan pertama dan pin lokasinya di OSM.' }}</p>
-                                </div>
-                            @endforelse
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="{{ $tableColumnCount }}" class="px-5 py-12 text-center">
+                                                <h3 class="font-display text-2xl font-bold">Belum ada lapangan</h3>
+                                                <p class="mt-2 text-sm text-slateSoft">{{ $isAdminFieldManagement ? 'Belum ada lapangan dari owner mana pun.' : 'Tambahkan lapangan pertama dan pin lokasinya di OSM.' }}</p>
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
                         </div>
 
                         @if ($fields->hasPages())
@@ -488,6 +628,7 @@
 
         <script>
             const defaultCenter = [{{ $defaultLatitude }}, {{ $defaultLongitude }}];
+            const fieldMaps = {};
 
             function toCoordinate(value, fallback) {
                 const parsed = Number.parseFloat(value);
@@ -538,10 +679,38 @@
                     });
                 });
 
+                fieldMaps[element.id] = map;
+
                 window.setTimeout(() => map.invalidateSize(), 150);
             }
 
             document.querySelectorAll('[data-field-map]').forEach(initializeFieldMap);
+
+            // Toggle baris detail pada data table (tanpa request/route baru, murni tampilan)
+            document.querySelectorAll('[data-toggle-detail]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const target = document.getElementById(button.dataset.toggleDetail);
+
+                    if (! target) {
+                        return;
+                    }
+
+                    const willOpen = target.classList.contains('hidden');
+                    target.classList.toggle('hidden');
+                    button.textContent = willOpen ? 'Tutup' : 'Detail';
+
+                    if (willOpen) {
+                        // Peta yang dibuat saat tersembunyi perlu di-refresh ukurannya setelah terlihat
+                        target.querySelectorAll('[data-field-map]').forEach((mapEl) => {
+                            const map = fieldMaps[mapEl.id];
+
+                            if (map) {
+                                window.setTimeout(() => map.invalidateSize(), 50);
+                            }
+                        });
+                    }
+                });
+            });
 
             document.querySelectorAll('input[name="open_time"], input[name="close_time"]').forEach((input) => {
                 input.addEventListener('change', () => {

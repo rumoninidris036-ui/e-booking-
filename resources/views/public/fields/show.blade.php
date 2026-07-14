@@ -118,6 +118,7 @@
             $coverImage = $field->cover_image_url ?: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1400&q=80';
             $sideImageOne = 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?auto=format&fit=crop&w=900&q=80';
             $sideImageTwo = 'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=900&q=80';
+            $galleryImages = $field->galleryImages;
             $facilityIcons = [
                 'toilet' => 'wc',
                 'mushola' => 'mosque',
@@ -182,6 +183,49 @@
                         </div>
                     </div>
                 </div>
+            </section>
+
+            <section id="gallery" class="mx-auto max-w-7xl px-gutter py-20 md:px-margin-desktop">
+                <div class="mb-12 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                    <div>
+                        <h2 class="border-l-8 border-secondary-container pl-6 font-headline-lg text-headline-lg uppercase italic text-secondary">Galeri</h2>
+                        <p class="mt-4 max-w-2xl text-on-surface-variant">
+                            Foto lapangan ini. Kalau belum ada foto tambahan, cover image dipakai sebagai tampilan utama.
+                        </p>
+                    </div>
+                    <a href="#booking-preview" class="inline-flex items-center gap-2 self-start rounded-xl border border-primary px-5 py-3 font-label-bold text-label-bold uppercase text-primary transition-all hover:bg-primary/10">
+                        Lihat Booking
+                        <span class="material-symbols-outlined">arrow_forward</span>
+                    </a>
+                </div>
+
+                @if ($galleryImages->isNotEmpty())
+                    <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+                        @foreach ($galleryImages as $galleryImage)
+                            <a href="{{ $galleryImage->url }}" target="_blank" rel="noreferrer" class="group relative overflow-hidden rounded-2xl border border-white/10 bg-surface-container">
+                                <img class="h-56 w-full object-cover transition-transform duration-500 group-hover:scale-105" src="{{ $galleryImage->url }}" alt="{{ $field->name }} gallery {{ $loop->iteration }}">
+                                <div class="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent opacity-80"></div>
+                                <div class="absolute bottom-3 left-3 rounded-full bg-background/70 px-3 py-1 text-[12px] font-bold uppercase tracking-[0.16em] text-secondary">
+                                    Foto {{ $loop->iteration }}
+                                </div>
+                                @if ($galleryImage->caption)
+                                    <div class="absolute bottom-3 right-3 max-w-[65%] rounded-full bg-background/70 px-3 py-1 text-[12px] font-medium text-secondary">
+                                        {{ $galleryImage->caption }}
+                                    </div>
+                                @endif
+                            </a>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="grid gap-4 md:grid-cols-3">
+                        <div class="overflow-hidden rounded-2xl border border-white/10 bg-surface-container md:col-span-2">
+                            <img class="h-full w-full object-cover" src="{{ $coverImage }}" alt="{{ $field->name }} cover image">
+                        </div>
+                        <div class="flex items-center justify-center rounded-2xl border border-dashed border-outline-variant bg-surface-container-low p-8 text-center text-on-surface-variant">
+                            Galeri belum diisi. Cover image ditampilkan dulu.
+                        </div>
+                    </div>
+                @endif
             </section>
 
             <section id="facilities" class="mx-auto max-w-7xl px-gutter py-20 md:px-margin-desktop">
@@ -330,6 +374,7 @@
                 </div>
                 <div class="flex flex-wrap justify-center gap-6">
                     <a class="font-body-md text-body-md text-on-surface-variant opacity-80 transition-colors hover:text-secondary-container hover:opacity-100" href="{{ url('/') }}">Beranda</a>
+                    <a class="font-body-md text-body-md text-on-surface-variant opacity-80 transition-colors hover:text-secondary-container hover:opacity-100" href="#gallery">Galeri</a>
                     <a class="font-body-md text-body-md text-on-surface-variant opacity-80 transition-colors hover:text-secondary-container hover:opacity-100" href="#facilities">Fasilitas</a>
                     <a class="font-body-md text-body-md text-on-surface-variant opacity-80 transition-colors hover:text-secondary-container hover:opacity-100" href="#location">Lokasi</a>
                     <a class="font-body-md text-body-md text-on-surface-variant opacity-80 transition-colors hover:text-secondary-container hover:opacity-100" href="{{ $primaryCta }}">Buka Booking</a>

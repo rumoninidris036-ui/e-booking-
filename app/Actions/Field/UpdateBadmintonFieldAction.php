@@ -14,11 +14,11 @@ use Illuminate\Support\Str;
 class UpdateBadmintonFieldAction
 {
     /**
-     * @param  array{name: string, description?: string|null, address?: string|null, latitude?: numeric-string|int|float|null, longitude?: numeric-string|int|float|null, price_per_hour: numeric-string|int|float, open_time: string, close_time: string, slot_duration_minutes: int, is_active?: bool, facility_ids?: array<int, int>, remove_cover_image?: bool}  $attributes
+     * @param  array{name: string, description?: string|null, address?: string|null, latitude?: numeric-string|int|float|null, longitude?: numeric-string|int|float|null, price_per_hour: numeric-string|int|float, open_time: string, close_time: string, slot_duration_minutes: int, is_active?: bool, facility_ids?: array<int, int>, remove_cover_image?: bool, gallery_caption?: string|null}  $attributes
      */
-    public function handle(BadmintonField $badmintonField, array $attributes, ?UploadedFile $coverImage = null, array $galleryImages = []): BadmintonField
+    public function handle(BadmintonField $badmintonField, array $attributes, ?UploadedFile $coverImage = null, ?UploadedFile $galleryImage = null): BadmintonField
     {
-        return DB::transaction(function () use ($badmintonField, $attributes, $coverImage, $galleryImages): BadmintonField {
+        return DB::transaction(function () use ($badmintonField, $attributes, $coverImage, $galleryImage): BadmintonField {
             $oldCoverImage = $badmintonField->cover_image;
             $newCoverImage = $oldCoverImage;
 
@@ -49,15 +49,12 @@ class UpdateBadmintonFieldAction
 
             $badmintonField->facilities()->sync($attributes['facility_ids'] ?? []);
 
-            foreach ($galleryImages as $index => $galleryImage) {
-                if (! $galleryImage instanceof UploadedFile) {
-                    continue;
-                }
-
+            if ($galleryImage instanceof UploadedFile) {
                 BadmintonFieldGalleryImage::query()->create([
                     'badminton_field_id' => $badmintonField->id,
                     'path' => $galleryImage->store('badminton-fields/galleries', 'public'),
-                    'sort_order' => (int) $badmintonField->galleryImages()->count() + $index,
+                    'sort_order' => (int) $badmintonField->galleryImages()->count(),
+                    'caption' => $attributes['gallery_caption'] ?? null,
                 ]);
             }
 
