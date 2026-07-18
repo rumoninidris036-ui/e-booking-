@@ -8,3 +8,4 @@ storage/framework/cache
 storage/framework/sessions
 storage/framework/testing
 storage/framework/views
+.env
