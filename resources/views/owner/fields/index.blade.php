@@ -157,7 +157,7 @@
                             <p class="mt-2 text-sm text-slateSoft">Klik atau drag marker pada map untuk menyimpan koordinat lapangan berbasis OpenStreetMap.</p>
                         </div>
 
-                        <form method="POST" action="{{ route('owner.fields.store') }}" enctype="multipart/form-data" class="grid gap-6 p-5 xl:grid-cols-[0.95fr_1.05fr]">
+                        <form method="POST" action="{{ route('owner.fields.store') }}" enctype="multipart/form-data" data-image-compress-form class="grid gap-6 p-5 xl:grid-cols-[0.95fr_1.05fr]">
                             @csrf
                             <div class="space-y-4">
                                 <div>
@@ -627,6 +627,85 @@
         </div>
 
         <script>
+            const imageCompressOptions = {
+                maxWidth: 1600,
+                maxHeight: 1600,
+                quality: 0.82,
+            };
+
+            function isCompressibleImage(file) {
+                return file instanceof File && file.type.startsWith('image/') && file.type !== 'image/svg+xml';
+            }
+
+            function compressImageFile(file, { maxWidth, maxHeight, quality }) {
+                return new Promise((resolve) => {
+                    const image = new Image();
+                    const objectUrl = URL.createObjectURL(file);
+
+                    image.onload = () => {
+                        URL.revokeObjectURL(objectUrl);
+
+                        const scale = Math.min(1, maxWidth / image.width, maxHeight / image.height);
+                        const width = Math.max(1, Math.round(image.width * scale));
+                        const height = Math.max(1, Math.round(image.height * scale));
+                        const canvas = document.createElement('canvas');
+
+                        canvas.width = width;
+                        canvas.height = height;
+
+                        const context = canvas.getContext('2d');
+
+                        if (!context) {
+                            resolve(file);
+                            return;
+                        }
+
+                        context.drawImage(image, 0, 0, width, height);
+
+                        canvas.toBlob((blob) => {
+                            if (!blob || blob.size >= file.size) {
+                                resolve(file);
+                                return;
+                            }
+
+                            resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), {
+                                type: 'image/jpeg',
+                                lastModified: Date.now(),
+                            }));
+                        }, 'image/jpeg', quality);
+                    };
+
+                    image.onerror = () => {
+                        URL.revokeObjectURL(objectUrl);
+                        resolve(file);
+                    };
+
+                    image.src = objectUrl;
+                });
+            }
+
+            async function compressFormImages(form) {
+                const fileInputs = [...form.querySelectorAll('input[type="file"]')];
+
+                await Promise.all(fileInputs.map(async (input) => {
+                    const file = input.files?.[0];
+
+                    if (!isCompressibleImage(file)) {
+                        return;
+                    }
+
+                    const compressedFile = await compressImageFile(file, imageCompressOptions);
+
+                    if (compressedFile === file) {
+                        return;
+                    }
+
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(compressedFile);
+                    input.files = dataTransfer.files;
+                }));
+            }
+
             const defaultCenter = [{{ $defaultLatitude }}, {{ $defaultLongitude }}];
             const fieldMaps = {};
 
