@@ -36,9 +36,9 @@ class BookingManagementController extends Controller
             ->with([
                 'field:id,name,slug,owner_id',
                 'user:id,name,email',
-                'payments' => fn ($query) => $query->latest('id'),
+                'payments' => fn($query) => $query->latest('id'),
             ])
-            ->whereHas('field', fn ($query) => $query->where('owner_id', $owner->id))
+            ->whereHas('field', fn($query) => $query->where('owner_id', $owner->id))
             ->where(function ($query): void {
                 $query->where('status', '!=', Booking::STATUS_PENDING)
                     ->orWhere(function ($query): void {
@@ -51,26 +51,26 @@ class BookingManagementController extends Controller
             })
             ->when(
                 $filters['status'] !== 'all',
-                fn ($query) => $query->where('status', $filters['status']),
+                fn($query) => $query->where('status', $filters['status']),
             )
             ->when(
                 $filters['field_id'] !== null,
-                fn ($query) => $query->where('badminton_field_id', $filters['field_id']),
+                fn($query) => $query->where('badminton_field_id', $filters['field_id']),
             )
             ->when(
                 $filters['date'] !== '',
-                fn ($query) => $query->whereDate('booking_date', $filters['date']),
+                fn($query) => $query->whereDate('booking_date', $filters['date']),
             )
             ->when(
                 $filters['search'] !== '',
                 function ($query) use ($filters): void {
                     $query->where(function ($query) use ($filters): void {
                         $query
-                            ->where('booking_code', 'like', '%'.$filters['search'].'%')
-                            ->orWhere('customer_name', 'like', '%'.$filters['search'].'%')
-                            ->orWhere('customer_contact', 'like', '%'.$filters['search'].'%')
-                            ->orWhere('customer_email', 'like', '%'.$filters['search'].'%')
-                            ->orWhereHas('user', fn ($query) => $query->where('name', 'like', '%'.$filters['search'].'%')->orWhere('email', 'like', '%'.$filters['search'].'%'));
+                            ->where('booking_code', 'like', '%' . $filters['search'] . '%')
+                            ->orWhere('customer_name', 'like', '%' . $filters['search'] . '%')
+                            ->orWhere('customer_contact', 'like', '%' . $filters['search'] . '%')
+                            ->orWhere('customer_email', 'like', '%' . $filters['search'] . '%')
+                            ->orWhereHas('user', fn($query) => $query->where('name', 'like', '%' . $filters['search'] . '%')->orWhere('email', 'like', '%' . $filters['search'] . '%'));
                     });
                 },
             )
@@ -79,7 +79,7 @@ class BookingManagementController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        $summary = $this->summaryForOwner((int) $owner->id);
+        $summary = $this->summaryForOwner((int) $owner->id, $filters);
         $fields = BadmintonField::query()
             ->where('owner_id', $owner->id)
             ->orderBy('name')
@@ -150,23 +150,17 @@ class BookingManagementController extends Controller
     /**
      * @return array<string, int|float>
      */
-    private function summaryForOwner(int $ownerId): array
+    private function summaryForOwner(int $ownerId, array $filters): array
     {
+        unset($filters['status']);
+
         $bookingQuery = Booking::query()
-            ->whereHas('field', fn ($query) => $query->where('owner_id', $ownerId));
-        $visibleBookingQuery = (clone $bookingQuery)
-            ->where(function ($query): void {
-                $query->where('status', '!=', Booking::STATUS_PENDING)
-                    ->orWhere(function ($query): void {
-                        $query->where('status', Booking::STATUS_PENDING)
-                            ->where(function ($query): void {
-                                $query->whereNull('expires_at')
-                                    ->orWhere('expires_at', '>', now());
-                            });
-                    });
-            });
-        $pendingBookingQuery = (clone $bookingQuery)
-            ->where('status', Booking::STATUS_PENDING);
+            ->whereHas('field', fn($query) => $query->where('owner_id', $ownerId));
+
+        $bookingQuery = $this->applyBookingFilters($bookingQuery, $filters);
+
+        $visibleBookingQuery = $this->applyVisibilityScope(clone $bookingQuery);
+        $pendingBookingQuery = (clone $bookingQuery)->where('status', Booking::STATUS_PENDING);
 
         if (Schema::hasColumn((new Booking())->getTable(), 'expires_at')) {
             $pendingBookingQuery->where(function ($query): void {
@@ -176,10 +170,8 @@ class BookingManagementController extends Controller
         }
 
         $totalRevenue = Payment::query()
-            ->join('bookings', 'bookings.id', '=', 'payments.booking_id')
-            ->join('badminton_fields', 'badminton_fields.id', '=', 'bookings.badminton_field_id')
-            ->where('badminton_fields.owner_id', $ownerId)
             ->where('payments.status', Payment::STATUS_SUCCESS)
+            ->whereIn('payments.booking_id', (clone $visibleBookingQuery)->select('bookings.id'))
             ->sum('payments.amount');
 
         return [
@@ -190,5 +182,52 @@ class BookingManagementController extends Controller
             'cancelled_bookings' => (clone $bookingQuery)->where('status', Booking::STATUS_CANCELLED)->count(),
             'total_revenue' => (float) $totalRevenue,
         ];
+    }
+
+    /**
+     * @param  array<string, string|int|null>  $filters
+     */
+    private function applyBookingFilters(\Illuminate\Database\Eloquent\Builder $query, array $filters): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query
+            ->when(
+                ($filters['status'] ?? 'all') !== 'all',
+                fn($query) => $query->where('status', $filters['status']),
+            )
+            ->when(
+                ($filters['field_id'] ?? null) !== null,
+                fn($query) => $query->where('badminton_field_id', $filters['field_id']),
+            )
+            ->when(
+                ($filters['date'] ?? '') !== '',
+                fn($query) => $query->whereDate('booking_date', $filters['date']),
+            )
+            ->when(
+                ($filters['search'] ?? '') !== '',
+                function ($query) use ($filters): void {
+                    $query->where(function ($query) use ($filters): void {
+                        $query
+                            ->where('booking_code', 'like', '%' . $filters['search'] . '%')
+                            ->orWhere('customer_name', 'like', '%' . $filters['search'] . '%')
+                            ->orWhere('customer_contact', 'like', '%' . $filters['search'] . '%')
+                            ->orWhere('customer_email', 'like', '%' . $filters['search'] . '%')
+                            ->orWhereHas('user', fn($query) => $query->where('name', 'like', '%' . $filters['search'] . '%')->orWhere('email', 'like', '%' . $filters['search'] . '%'));
+                    });
+                },
+            );
+    }
+
+    private function applyVisibilityScope(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->where(function ($query): void {
+            $query->where('bookings.status', '!=', Booking::STATUS_PENDING)
+                ->orWhere(function ($query): void {
+                    $query->where('bookings.status', Booking::STATUS_PENDING)
+                        ->where(function ($query): void {
+                            $query->whereNull('bookings.expires_at')
+                                ->orWhere('bookings.expires_at', '>', now());
+                        });
+                });
+        });
     }
 }
