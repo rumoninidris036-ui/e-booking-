@@ -119,6 +119,72 @@ class OwnerBookingManagementTest extends TestCase
             ->assertJsonPath('meta.summary.total_revenue', 90000);
     }
 
+    public function test_owner_booking_summary_revenue_follows_filters(): void
+    {
+        Role::findOrCreate('owner', 'web');
+
+        $owner = User::factory()->create();
+        $owner->assignRole('owner');
+
+        $field = BadmintonField::query()->create([
+            'owner_id' => $owner->id,
+            'name' => 'Court Revenue Filter',
+            'slug' => 'court-revenue-filter',
+            'price_per_hour' => 90000,
+            'is_active' => true,
+        ]);
+
+        $dateA = now()->addDay()->format('Y-m-d');
+        $dateB = now()->addDays(2)->format('Y-m-d');
+
+        $bookingA = Booking::query()->create([
+            'booking_code' => 'BK-OWNER-REV-A',
+            'badminton_field_id' => $field->id,
+            'customer_name' => 'Revenue A',
+            'booking_date' => $dateA,
+            'start_time' => '10:00:00',
+            'end_time' => '11:00:00',
+            'status' => Booking::STATUS_PAID,
+            'price_per_hour' => 90000,
+        ]);
+
+        $bookingB = Booking::query()->create([
+            'booking_code' => 'BK-OWNER-REV-B',
+            'badminton_field_id' => $field->id,
+            'customer_name' => 'Revenue B',
+            'booking_date' => $dateB,
+            'start_time' => '12:00:00',
+            'end_time' => '13:00:00',
+            'status' => Booking::STATUS_PAID,
+            'price_per_hour' => 90000,
+        ]);
+
+        Payment::query()->create([
+            'booking_id' => $bookingA->id,
+            'provider' => 'midtrans',
+            'order_id' => $bookingA->booking_code,
+            'amount' => 90000,
+            'currency' => 'IDR',
+            'status' => Payment::STATUS_SUCCESS,
+        ]);
+
+        Payment::query()->create([
+            'booking_id' => $bookingB->id,
+            'provider' => 'midtrans',
+            'order_id' => $bookingB->booking_code,
+            'amount' => 180000,
+            'currency' => 'IDR',
+            'status' => Payment::STATUS_SUCCESS,
+        ]);
+
+        $this->actingAs($owner)
+            ->getJson(route('owner.bookings.index', ['date' => $dateA]))
+            ->assertOk()
+            ->assertJsonPath('meta.summary.total_bookings', 1)
+            ->assertJsonPath('meta.summary.paid_bookings', 1)
+            ->assertJsonPath('meta.summary.total_revenue', 90000);
+    }
+
     public function test_owner_can_update_booking_status_from_web_page(): void
     {
         Role::findOrCreate('owner', 'web');
