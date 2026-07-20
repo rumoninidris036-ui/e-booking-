@@ -99,8 +99,8 @@ class BadmintonField extends Model
     public function getGalleryImageUrlsAttribute(): array
     {
         return $this->relationLoaded('galleryImages')
-            ? $this->galleryImages->map(fn (BadmintonFieldGalleryImage $image): string => $image->url)->all()
-            : $this->galleryImages()->get()->map(fn (BadmintonFieldGalleryImage $image): string => $image->url)->all();
+            ? $this->galleryImages->map(fn(BadmintonFieldGalleryImage $image): string => $image->url)->all()
+            : $this->galleryImages()->get()->map(fn(BadmintonFieldGalleryImage $image): string => $image->url)->all();
     }
 
     /**
