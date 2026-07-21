@@ -114,17 +114,17 @@
     </head>
     <body class="overflow-x-hidden bg-background font-body-md text-on-background">
         @php
-            $primaryCta = route('public.fields.booking', ['slug' => $field->slug]);
-            $coverImage = $field->cover_image_url ?: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1400&q=80';
-            $galleryImages = $field->galleryImages;
-            $facilityIcons = [
-                'toilet' => 'wc',
-                'mushola' => 'mosque',
-                'kantin' => 'local_cafe',
-                'parkiran' => 'local_parking',
-                'wifi' => 'wifi',
-                'shower' => 'shower',
-            ];
+$primaryCta = route('public.fields.booking', ['slug' => $field->slug]);
+$coverImage = $field->cover_image_url ?: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1400&q=80';
+$galleryImages = $field->galleryImages;
+$facilityIcons = [
+    'toilet' => 'wc',
+    'mushola' => 'mosque',
+    'kantin' => 'local_cafe',
+    'parkiran' => 'local_parking',
+    'wifi' => 'wifi',
+    'shower' => 'shower',
+];
         @endphp
 
         <x-public-navbar />
@@ -176,7 +176,7 @@
                     <div>
                         <h2 class="border-l-8 border-secondary-container pl-6 font-headline-lg text-headline-lg uppercase italic text-secondary">Galeri</h2>
                         <p class="mt-4 max-w-2xl text-on-surface-variant">
-                            Cover tetap di atas. Gambar tambahan tampil di galeri ini.
+                            Lihat beberapa foto dari lapangan ini.
                         </p>
                     </div>
                     <a href="#booking-preview" class="inline-flex items-center gap-2 self-start rounded-xl border border-primary px-5 py-3 font-label-bold text-label-bold uppercase text-primary transition-all hover:bg-primary/10">
@@ -237,7 +237,7 @@
                                 {{ $field->address ?: 'Alamat belum diisi.' }}
                             </p>
                             <p class="mb-8 text-on-surface-variant">
-                                Dikelola oleh {{ $field->owner?->name ?? 'pemilik lapangan' }}. Peta ditampilkan lewat {{ $mapMeta['provider'] }} dan {{ $mapMeta['library'] }}.
+                                Dikelola oleh {{ $field->owner?->name ?? 'pemilik lapangan' }}.
                             </p>
                             <a id="cta" href="{{ $primaryCta }}" class="inline-flex items-center gap-2 rounded-xl bg-secondary-container px-10 py-4 font-label-bold text-label-bold uppercase text-on-secondary transition-transform hover:scale-105">
                                 Lanjut Booking
@@ -262,12 +262,11 @@
                             <p class="mb-2 font-label-bold text-label-bold uppercase tracking-widest text-secondary-container">Langkah Selanjutnya</p>
                             <h3 class="font-headline-md text-headline-md text-secondary">Lanjut pilih tanggal dan slot booking</h3>
                             <p class="mt-3 max-w-2xl text-on-surface-variant">
-                                Kalau sudah cocok, kamu bisa lanjut ke halaman booking untuk pilih tanggal dan jam.
-                                Login baru diperlukan saat booking benar-benar dikonfirmasi.
+                            Kalo udah sreg, langsung aja ke halaman booking buat nentuin tanggal sama jamnya.
                             </p>
                         </div>
                         <a href="{{ $primaryCta }}" class="inline-flex items-center gap-2 rounded-xl border border-primary px-6 py-4 font-label-bold text-label-bold uppercase text-primary transition-all hover:bg-primary/10">
-                            Buka Booking
+                            Booking Sekarang
                             <span class="material-symbols-outlined">arrow_forward</span>
                         </a>
                     </div>
@@ -275,8 +274,8 @@
             </section>
 
             @php
-                $ratingAverage = (float) ($field->ratings_avg_score ?? 0);
-                $ratingCount = $field->ratings?->count() ?? 0;
+$ratingAverage = (float) ($field->ratings_avg_score ?? 0);
+$ratingCount = $field->ratings?->count() ?? 0;
             @endphp
 
             <section id="ratings" class="mx-auto max-w-7xl px-gutter pb-24 md:px-margin-desktop">
