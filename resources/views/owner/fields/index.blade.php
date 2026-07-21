@@ -324,7 +324,9 @@
                                                         @endif
                                                     </div>
                                                     <div class="min-w-0">
-                                                        <p class="truncate font-display text-base font-bold">{{ $field->name }}</p>
+                                                        <a href="{{ route('owner.fields.show', $field) }}" class="truncate font-display text-base font-bold text-ink transition hover:text-brand hover:underline">
+                                                            {{ $field->name }}
+                                                        </a>
                                                         <p class="mt-1 truncate text-xs font-semibold text-slateSoft">{{ $field->address ?: 'Alamat belum diisi' }}</p>
                                                         <span class="mt-2 inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-bold {{ $field->latitude !== null && $field->longitude !== null ? 'bg-sky-50 text-sky-700 ring-1 ring-sky-200' : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' }}">
                                                             {{ $field->latitude !== null && $field->longitude !== null ? 'Sudah dipin' : 'Belum dipin' }}
@@ -451,26 +453,29 @@
                                                                         </div>
                                                                         {{-- Kolom foto dibikin lebih banyak biar muat di area yang lega --}}
                                                                         <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
-                                                                            @foreach ($field->galleryImages as $galleryImage)
-                                                                                <div class="group overflow-hidden rounded-2xl border border-line bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-                                                                                    <div class="relative h-32 w-full overflow-hidden bg-slate-100">
-                                                                                        <img src="{{ $galleryImage->url }}" alt="{{ $field->name }} gallery {{ $loop->iteration }}" class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
-                                                                                        <div class="absolute left-3 top-3 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white backdrop-blur">
-                                                                                            Foto {{ $loop->iteration }}
-                                                                                        </div>
-                                                                                        <form method="POST" action="{{ route($fieldGalleryImageDestroyRouteName, [$field, $galleryImage]) }}" onsubmit="return confirm('Hapus foto ini?')" class="absolute right-3 top-3">
-                                                                                            @csrf
-                                                                                            @method('DELETE')
-                                                                                            <button type="submit" class="rounded-full bg-white/90 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-rose-700 shadow-sm ring-1 ring-rose-200 transition hover:bg-rose-50">Hapus</button>
-                                                                                        </form>
-                                                                                    </div>
-                                                                                    @if ($galleryImage->caption)
-                                                                                        <div class="px-3 py-3">
-                                                                                            <p class="text-xs leading-5 text-slateSoft">{{ $galleryImage->caption }}</p>
-                                                                                        </div>
-                                                                                    @endif
-                                                                                </div>
-                                                                            @endforeach
+                                                                                 @foreach ($field->galleryImages as $galleryImage)
+                                                                                     <div class="group overflow-hidden rounded-2xl border border-line bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                                                                                         <div class="relative h-32 w-full overflow-hidden bg-slate-100">
+                                                                                             <img src="{{ $galleryImage->url }}" alt="{{ $field->name }} gallery {{ $loop->iteration }}" class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
+                                                                                             <div class="absolute left-3 top-3 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white backdrop-blur">
+                                                                                                 Foto {{ $loop->iteration }}
+                                                                                             </div>
+                                                                                             <button
+                                                                                                 type="submit"
+                                                                                                 form="field-{{ $field->id }}-gallery-image-{{ $galleryImage->id }}-destroy"
+                                                                                                 onclick="return confirm('Hapus foto ini?')"
+                                                                                                 class="absolute right-3 top-3 z-10 rounded-full bg-rose-600 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white shadow-sm transition hover:bg-rose-700"
+                                                                                             >
+                                                                                                 Hapus
+                                                                                             </button>
+                                                                                         </div>
+                                                                                         @if ($galleryImage->caption)
+                                                                                             <div class="px-3 py-3">
+                                                                                                 <p class="text-xs leading-5 text-slateSoft">{{ $galleryImage->caption }}</p>
+                                                                                             </div>
+                                                                                         @endif
+                                                                                     </div>
+                                                                                 @endforeach
                                                                         </div>
                                                                     </div>
                                                                 @endif
@@ -594,6 +599,17 @@
                                                         </div>
                                                     </div>
                                                 </form>
+
+                                                @unless ($isAdminFieldManagement)
+                                                    <div class="hidden">
+                                                        @foreach ($field->galleryImages as $galleryImage)
+                                                            <form id="field-{{ $field->id }}-gallery-image-{{ $galleryImage->id }}-destroy" method="POST" action="{{ route($fieldGalleryImageDestroyRouteName, [$field, $galleryImage]) }}">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                            </form>
+                                                        @endforeach
+                                                    </div>
+                                                @endunless
 
                                                 @unless ($isAdminFieldManagement)
                                                     <form id="delete-field-{{ $field->id }}" method="POST" action="{{ route('owner.fields.destroy', $field) }}">

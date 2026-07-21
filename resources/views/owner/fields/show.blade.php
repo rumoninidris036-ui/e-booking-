@@ -133,24 +133,23 @@
                         <p class="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Alamat</p>
                         <p class="mt-2 text-sm">{{ $field->address ?: 'Alamat belum diisi.' }}</p>
                     </div>
-
                     @if ($field->galleryImages->isNotEmpty())
                         <div>
                             <p class="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Galeri</p>
                             <div class="grid grid-cols-2 gap-3">
                                 @foreach ($field->galleryImages as $galleryImage)
                                     <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-                                        <img src="{{ $galleryImage->url }}" alt="{{ $field->name }} gallery {{ $loop->iteration }}" class="h-28 w-full object-cover">
+                                        <div class="relative">
+                                            <img src="{{ $galleryImage->url }}" alt="{{ $field->name }} gallery {{ $loop->iteration }}" class="h-28 w-full object-cover">
+                                            <form method="POST" action="{{ route('owner.fields.gallery-images.destroy', [$field, $galleryImage]) }}" onsubmit="return confirm('Hapus foto ini?')" class="absolute right-3 top-3">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="rounded-full bg-white/90 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-rose-700 shadow-sm ring-1 ring-rose-200 transition hover:bg-rose-50">Hapus</button>
+                                            </form>
+                                        </div>
                                         @if ($galleryImage->caption)
                                             <div class="px-3 py-2 text-xs text-slate-600">{{ $galleryImage->caption }}</div>
                                         @endif
-                                        <div class="px-3 pb-3 pt-2">
-                                            <form method="POST" action="{{ route('owner.fields.gallery-images.destroy', [$field, $galleryImage]) }}" onsubmit="return confirm('Hapus foto ini?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-xs font-bold uppercase tracking-[0.16em] text-rose-600">Hapus</button>
-                                            </form>
-                                        </div>
                                     </div>
                                 @endforeach
                             </div>
