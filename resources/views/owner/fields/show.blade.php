@@ -13,10 +13,37 @@
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            ink: '#0f172a',
+                            slateSoft: '#64748b',
+                            panel: '#ffffff',
+                            shell: '#f4f7fb',
+                            line: '#dbe3ef',
+                            brand: '#0f7ae5',
+                            brandSoft: '#e7f2ff',
+                            nav: '#141b24',
+                            limePop: '#b7f500',
+                        },
+                        fontFamily: {
+                            body: ['Manrope', 'sans-serif'],
+                            display: ['Space Grotesk', 'sans-serif'],
+                        },
+                        boxShadow: {
+                            card: '0 2px 0 rgba(15, 23, 42, 0.08), 0 12px 30px rgba(15, 23, 42, 0.06)',
+                        },
+                    },
+                },
+            };
+        </script>
+
         <style>
             body { font-family: Manrope, sans-serif; }
             .leaflet-container { background: #eef4fb; }
-        </style>
+        </script>
     </head>
     <body class="min-h-screen bg-shell font-body text-ink">
         @php
@@ -64,7 +91,7 @@
                     @endif
 
                     <div class="grid gap-6 lg:grid-cols-[1fr_1.1fr]">
-                <section class="space-y-6 rounded-3xl border border-line bg-panel p-6 shadow-card">
+                        <section class="space-y-6 rounded-3xl border border-line bg-panel p-6 shadow-card">
                     <div class="overflow-hidden rounded-2xl bg-slate-100">
                         @if ($field->galleryImages->isNotEmpty())
                             @php
@@ -111,25 +138,25 @@
                     </div>
 
                     <div class="grid gap-3 sm:grid-cols-2">
-                        <div class="rounded-2xl bg-slate-50 p-4">
+                        <div class="rounded-2xl border border-line bg-slate-50 p-4">
                             <p class="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Status</p>
                             <p class="mt-2 font-bold">{{ $field->is_active ? 'Aktif' : 'Nonaktif' }}</p>
                         </div>
-                        <div class="rounded-2xl bg-slate-50 p-4">
+                        <div class="rounded-2xl border border-line bg-slate-50 p-4">
                             <p class="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Harga / jam</p>
                             <p class="mt-2 font-bold">Rp{{ number_format((float) $field->price_per_hour, 0, ',', '.') }}</p>
                         </div>
-                        <div class="rounded-2xl bg-slate-50 p-4">
+                        <div class="rounded-2xl border border-line bg-slate-50 p-4">
                             <p class="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Booking</p>
                             <p class="mt-2 font-bold">{{ number_format((int) $field->bookings_count ?? 0) }}</p>
                         </div>
-                        <div class="rounded-2xl bg-slate-50 p-4">
+                        <div class="rounded-2xl border border-line bg-slate-50 p-4">
                             <p class="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Fasilitas</p>
                             <p class="mt-2 font-bold">{{ $field->facilities->count() }}</p>
                         </div>
                     </div>
 
-                    <div class="rounded-2xl bg-slate-50 p-4">
+                    <div class="rounded-2xl border border-line bg-slate-50 p-4">
                         <p class="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Alamat</p>
                         <p class="mt-2 text-sm">{{ $field->address ?: 'Alamat belum diisi.' }}</p>
                     </div>
@@ -165,56 +192,56 @@
                         <div class="grid gap-4 sm:grid-cols-2">
                             <div>
                                 <label class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Nama Lapangan</label>
-                                <input name="name" value="{{ old('name', $field->name) }}" required class="w-full rounded-2xl border border-slate-300 px-4 py-3">
+                                <input name="name" value="{{ old('name', $field->name) }}" required class="w-full rounded-2xl border-line bg-slate-50 px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">
                             </div>
                             <div>
                                 <label class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Harga per Jam</label>
-                                <input name="price_per_hour" type="number" min="0" value="{{ old('price_per_hour', $field->price_per_hour) }}" required class="w-full rounded-2xl border border-slate-300 px-4 py-3">
+                                <input name="price_per_hour" type="number" min="0" value="{{ old('price_per_hour', $field->price_per_hour) }}" required class="w-full rounded-2xl border-line bg-slate-50 px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">
                             </div>
                         </div>
 
                         <div>
                             <label class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Alamat</label>
-                            <input name="address" value="{{ old('address', $field->address) }}" class="w-full rounded-2xl border border-slate-300 px-4 py-3">
+                            <input name="address" value="{{ old('address', $field->address) }}" class="w-full rounded-2xl border-line bg-slate-50 px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">
                         </div>
 
                         <div>
                             <label class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Deskripsi</label>
-                            <textarea name="description" rows="4" class="w-full rounded-2xl border border-slate-300 px-4 py-3">{{ old('description', $field->description) }}</textarea>
+                            <textarea name="description" rows="4" class="w-full rounded-2xl border-line bg-slate-50 px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">{{ old('description', $field->description) }}</textarea>
                         </div>
 
                         <div class="grid gap-4 sm:grid-cols-3">
                             <div>
                                 <label class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Jam Buka</label>
-                                <input name="open_time" value="{{ $fieldOpenTime }}" class="w-full rounded-2xl border border-slate-300 px-4 py-3">
+                                <input name="open_time" value="{{ $fieldOpenTime }}" class="w-full rounded-2xl border-line bg-slate-50 px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">
                             </div>
                             <div>
                                 <label class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Jam Tutup</label>
-                                <input name="close_time" value="{{ $fieldCloseTime }}" class="w-full rounded-2xl border border-slate-300 px-4 py-3">
+                                <input name="close_time" value="{{ $fieldCloseTime }}" class="w-full rounded-2xl border-line bg-slate-50 px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">
                             </div>
                             <div>
                                 <label class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Durasi Slot</label>
-                                <input name="slot_duration_minutes" type="number" min="30" max="240" step="15" value="{{ $fieldSlotDuration }}" class="w-full rounded-2xl border border-slate-300 px-4 py-3">
+                                <input name="slot_duration_minutes" type="number" min="30" max="240" step="15" value="{{ $fieldSlotDuration }}" class="w-full rounded-2xl border-line bg-slate-50 px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">
                             </div>
                         </div>
 
                         <div>
                             <label class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Cover Baru</label>
-                            <input name="cover_image" type="file" accept="image/*" class="w-full rounded-2xl border border-slate-300 px-4 py-3">
+                            <input name="cover_image" type="file" accept="image/*" class="w-full rounded-2xl border border-line bg-slate-50 px-4 py-2 text-sm file:mr-3 file:rounded-xl file:border-0 file:bg-brand file:px-3 file:py-2 file:text-sm file:font-bold file:text-white">
                         </div>
 
                         <div>
                             <label class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Gallery Baru</label>
-                            <input name="gallery_image" type="file" accept="image/*" class="w-full rounded-2xl border border-slate-300 px-4 py-3">
-                            <input name="gallery_caption" value="{{ old('gallery_caption') }}" placeholder="Caption foto baru" class="mt-3 w-full rounded-2xl border border-slate-300 px-4 py-3">
+                            <input name="gallery_image" type="file" accept="image/*" class="w-full rounded-2xl border border-line bg-slate-50 px-4 py-2 text-sm file:mr-3 file:rounded-xl file:border-0 file:bg-brand file:px-3 file:py-2 file:text-sm file:font-bold file:text-white">
+                            <input name="gallery_caption" value="{{ old('gallery_caption') }}" placeholder="Caption foto baru" class="mt-3 w-full rounded-2xl border-line bg-slate-50 px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">
                         </div>
 
                         <div>
                             <p class="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Fasilitas</p>
                             <div class="grid gap-2 sm:grid-cols-2">
                                 @foreach ($facilities as $facility)
-                                    <label class="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm">
-                                        <input type="checkbox" name="facility_ids[]" value="{{ $facility->id }}" @checked($selectedFacilityIds->contains($facility->id))>
+                                    <label class="flex items-center gap-3 rounded-2xl border border-line bg-slate-50 px-4 py-3 text-sm font-semibold">
+                                        <input type="checkbox" name="facility_ids[]" value="{{ $facility->id }}" @checked($selectedFacilityIds->contains($facility->id)) class="rounded border-line text-brand focus:ring-brand">
                                         {{ $facility->name }}
                                     </label>
                                 @endforeach
@@ -222,13 +249,13 @@
                         </div>
 
                         <div class="grid gap-3 sm:grid-cols-2">
-                            <label class="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold">
+                            <label class="flex items-center gap-3 rounded-2xl border border-line bg-slate-50 px-4 py-3 text-sm font-bold">
                                 <input type="hidden" name="is_active" value="0">
-                                <input type="checkbox" name="is_active" value="1" @checked(old('is_active', (string) (int) $field->is_active) === '1')>
+                                <input type="checkbox" name="is_active" value="1" @checked(old('is_active', (string) (int) $field->is_active) === '1') class="rounded border-line text-brand focus:ring-brand">
                                 Aktifkan lapangan
                             </label>
-                            <label class="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold">
-                                <input type="checkbox" name="remove_cover_image" value="1">
+                            <label class="flex items-center gap-3 rounded-2xl border border-line bg-slate-50 px-4 py-3 text-sm font-bold">
+                                <input type="checkbox" name="remove_cover_image" value="1" class="rounded border-line text-brand focus:ring-brand">
                                 Hapus cover lama
                             </label>
                         </div>
@@ -236,23 +263,23 @@
                         <div class="grid gap-4 sm:grid-cols-2">
                             <div>
                                 <label class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Latitude</label>
-                                <input id="latitude" name="latitude" value="{{ $fieldLatitude }}" class="w-full rounded-2xl border border-slate-300 px-4 py-3">
+                                <input id="latitude" name="latitude" value="{{ $fieldLatitude }}" class="w-full rounded-2xl border-line bg-slate-50 px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">
                             </div>
                             <div>
                                 <label class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Longitude</label>
-                                <input id="longitude" name="longitude" value="{{ $fieldLongitude }}" class="w-full rounded-2xl border border-slate-300 px-4 py-3">
+                                <input id="longitude" name="longitude" value="{{ $fieldLongitude }}" class="w-full rounded-2xl border-line bg-slate-50 px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">
                             </div>
                         </div>
 
-                        <div id="field-map" data-field-map data-lat-input="latitude" data-lng-input="longitude" data-lat="{{ $fieldLatitude }}" data-lng="{{ $fieldLongitude }}" class="h-[360px] overflow-hidden rounded-3xl border border-slate-200"></div>
+                        <div id="field-map" data-field-map data-lat-input="latitude" data-lng-input="longitude" data-lat="{{ $fieldLatitude }}" data-lng="{{ $fieldLongitude }}" class="h-[360px] overflow-hidden rounded-3xl border border-line"></div>
 
-                        <button type="submit" class="w-full rounded-2xl bg-slate-900 px-5 py-4 text-sm font-extrabold uppercase tracking-[0.18em] text-white">Simpan Perubahan</button>
+                        <button type="submit" class="w-full rounded-2xl bg-brand px-5 py-4 text-sm font-extrabold uppercase tracking-[0.18em] text-white shadow-lg shadow-brand/20 transition hover:bg-blue-600">Simpan Perubahan</button>
                     </form>
 
                     <form id="delete-field" method="POST" action="{{ route('owner.fields.destroy', $field) }}" class="mt-4">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" onclick="return confirm('Hapus lapangan ini?')" class="w-full rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm font-extrabold uppercase tracking-[0.18em] text-rose-700">Hapus Lapangan</button>
+                        <button type="submit" onclick="return confirm('Hapus lapangan ini?')" class="w-full rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm font-extrabold uppercase tracking-[0.18em] text-rose-700 transition hover:bg-rose-100">Hapus Lapangan</button>
                     </form>
                 </section>
             </div>
