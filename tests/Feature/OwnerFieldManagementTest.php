@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Models\BadmintonField;
+use App\Models\BadmintonFieldGalleryImage;
 use App\Models\Booking;
 use App\Models\Facility;
 use App\Models\Payment;
@@ -254,5 +255,64 @@ class OwnerFieldManagementTest extends TestCase
         $this->assertCount(1, $field->galleryImages);
         $this->assertTrue(Storage::disk('public')->exists($field->galleryImages->first()->path));
         $this->assertSame('Foto utama', $field->galleryImages->first()->caption);
+    }
+
+    public function test_owner_can_delete_gallery_image_from_field_show_page(): void
+    {
+        Storage::fake('public');
+        Role::findOrCreate('owner', 'web');
+
+        $owner = User::factory()->create();
+        $owner->assignRole('owner');
+
+        $field = BadmintonField::query()->create([
+            'owner_id' => $owner->id,
+            'name' => 'Court Delete Gallery',
+            'slug' => 'court-delete-gallery',
+            'price_per_hour' => 100000,
+            'is_active' => true,
+        ]);
+
+        $galleryImage = BadmintonFieldGalleryImage::query()->create([
+            'badminton_field_id' => $field->id,
+            'path' => 'gallery/court-delete-gallery/test.jpg',
+            'caption' => 'Hapus saya',
+        ]);
+
+        Storage::disk('public')->put($galleryImage->path, 'fake image');
+
+        $response = $this->actingAs($owner)->delete(route('owner.fields.gallery-images.destroy', [$field, $galleryImage]));
+
+        $response->assertRedirect(route('owner.fields.show', $field));
+        $this->assertDatabaseMissing('badminton_field_gallery_images', ['id' => $galleryImage->id]);
+        $this->assertFalse(Storage::disk('public')->exists($galleryImage->path));
+    }
+
+    public function test_owner_field_detail_card_renders_gallery_delete_button(): void
+    {
+        Role::findOrCreate('owner', 'web');
+
+        $owner = User::factory()->create();
+        $owner->assignRole('owner');
+
+        $field = BadmintonField::query()->create([
+            'owner_id' => $owner->id,
+            'name' => 'Court Gallery Button',
+            'slug' => 'court-gallery-button',
+            'price_per_hour' => 100000,
+            'is_active' => true,
+        ]);
+
+        $galleryImage = BadmintonFieldGalleryImage::query()->create([
+            'badminton_field_id' => $field->id,
+            'path' => 'gallery/court-gallery-button/test.jpg',
+            'caption' => 'Foto hapus',
+        ]);
+
+        $this->actingAs($owner)
+            ->get(route('owner.fields.index'))
+            ->assertOk()
+            ->assertSee('Hapus')
+            ->assertSee('field-' . $field->id . '-gallery-image-' . $galleryImage->id . '-destroy');
     }
 }
