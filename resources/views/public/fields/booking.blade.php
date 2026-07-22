@@ -173,7 +173,7 @@
                 ])->all(),
                 'pricePerHour' => (float) $field->price_per_hour,
                 'slotDurationMinutes' => (int) ($field->slot_duration_minutes ?? \App\Services\Booking\FieldScheduleService::DEFAULT_SLOT_DURATION_MINUTES),
-                'scheduleUrl' => route('public.fields.schedule', ['slug' => $field->slug]),
+                'scheduleUrl' => route('public.fields.schedule', ['slug' => $field->slug], false),
             ];
         @endphp
 
