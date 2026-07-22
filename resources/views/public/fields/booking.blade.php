@@ -623,7 +623,11 @@
                 window.history.replaceState({}, '', url);
             }
 
+            let scheduleRequestId = 0;
+
             async function loadSchedule(date) {
+                const requestId = ++scheduleRequestId;
+
                 scheduleState.selectedDate = date;
                 scheduleState.selectedSlot = null;
 
@@ -633,12 +637,16 @@
                 syncUrl();
 
                 try {
-                    const response = await fetch(`${scheduleState.scheduleUrl}?date=${date}`, {
+                    const response = await fetch(`${scheduleState.scheduleUrl}?date=${encodeURIComponent(date)}`, {
                         headers: {
                             Accept: 'application/json',
                             'X-Requested-With': 'XMLHttpRequest',
                         },
                     });
+
+                    if (requestId !== scheduleRequestId) {
+                        return;
+                    }
 
                     if (! response.ok) {
                         throw new Error('Gagal memuat jadwal.');
@@ -650,6 +658,10 @@
                     setFeedback('');
                     renderSlots();
                 } catch (error) {
+                    if (requestId !== scheduleRequestId) {
+                        return;
+                    }
+
                     scheduleState.slots = [];
                     renderSlots();
                     setFeedback('Jadwal belum bisa dimuat. Coba pilih tanggal lagi sebentar.', 'error');
