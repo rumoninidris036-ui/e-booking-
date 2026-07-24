@@ -172,7 +172,7 @@
                         <span class="relative bg-surface-container px-4 font-label-bold text-label-bold uppercase text-outline">Atau lanjut dengan</span>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
+                    {{-- <div class="grid grid-cols-2 gap-4">
                         <button type="button" data-dev-toast="Google login sedang dikembangkan." class="flex items-center justify-center gap-2 rounded-lg border border-outline-variant bg-surface-container-low py-3 font-label-bold text-label-bold transition-colors hover:bg-surface-container-high">
                             <img alt="Google" class="h-5 w-5" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBQsyiWnKhq5D783i_mqwMVUg-RPqI2YmIVCleXFun6c8cNAMPLZYkwvJiuJsRzDR7Xrb2kz-UvoU_gdmAwPNv_jWnEnG3pV3USHXdjU5wBrza0j3oj6PbWT7sD5NEg68eBdj8T7_agQm3OTmVvPfcOecYiUM0tIumoC_UAcq1qJQVS0dEL9B3HWnQXr68KN3lCaMW--fo2N_SpZTxVtcK5bvCXqChHHRVNd7E58o5QPkDJk3ejiYbe4-N08F48tYHhEuBZiC8W0Sig">
                             Google
@@ -181,7 +181,7 @@
                             <img alt="Apple" class="h-5 w-5 invert" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBy4JeZJwdO7yJUwOacH0aySqduQJ5fqC6R54TwWZDb5cr8v9enKpuemF7oB5E5wTa9mS3LWUgd1czgO6Ta7c2FRn5X52TEYwlDoL6A7up3b01fmNbN1deGD9PyYgJuScKAwpXPwLag8Vr6yd3FNCH5KRQbtJGHExEcM-zfG1rctNFozz_cprlIbommDGomt7twUVS8K1b9xDda4LFLdqZBa_5ZCKO4SvJ2sW6gDNoXm9EBO3HwraixMkYbeyEXbQpRq2Cph9uPiPNo">
                             Apple
                         </button>
-                    </div>
+                    </div> --}}
 
                     <div class="mt-10 text-center">
                         <p class="text-on-surface-variant">
