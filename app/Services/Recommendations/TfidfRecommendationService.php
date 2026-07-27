@@ -6,6 +6,7 @@ namespace App\Services\Recommendations;
 
 use App\Models\BadmintonField;
 use App\Models\Booking;
+use App\Models\Facility;
 use App\Models\User;
 use App\Services\Booking\FieldScheduleService;
 use Carbon\CarbonImmutable;
@@ -51,6 +52,27 @@ class TfidfRecommendationService
             })->values();
         }
 
+        if ($criteria->location !== null) {
+            $locationTokens = $this->documentBuilderService->tokenize($criteria->location);
+
+            if ($locationTokens !== []) {
+                $fields = $fields->filter(function (BadmintonField $field) use ($locationTokens): bool {
+                    $addressTokens = $this->documentBuilderService->tokenize((string) $field->address);
+
+                    return $addressTokens !== [] && array_intersect($locationTokens, $addressTokens) !== [];
+                })->values();
+            }
+        }
+
+        $requestedFacilitySlugs = $this->extractRequestedFacilitySlugs($criteria);
+        if ($requestedFacilitySlugs !== []) {
+            $fields = $fields->filter(function (BadmintonField $field) use ($requestedFacilitySlugs): bool {
+                $fieldFacilitySlugs = $field->facilities->pluck('slug')->all();
+
+                return $fieldFacilitySlugs !== [] && array_intersect($requestedFacilitySlugs, $fieldFacilitySlugs) !== [];
+            })->values();
+        }
+
         if ($fields->isEmpty()) {
             return collect();
         }
@@ -76,18 +98,24 @@ class TfidfRecommendationService
             return collect();
         }
 
-        $recommendations = $fieldDocuments->map(function (array $document) use ($idf, $profile, $vocabulary): array {
+        $recommendations = collect();
+        foreach ($fieldDocuments as $document) {
             $fieldVector = $this->tfidfService->tfIdf($document['tokens'], $idf);
             $fieldVector = $this->tfidfService->alignVector($fieldVector, $vocabulary);
             $similarity = $this->cosineSimilarityService->similarity($userVector, $fieldVector);
 
-            return [
+            if ($similarity <= 0.0) {
+                continue;
+            }
+
+            $recommendations->push([
                 'field' => $document['field'],
                 'score' => round($similarity * 100, 4),
                 'reasons' => $this->buildReasons($document, $profile, $queryReasons, $userVector, $fieldVector),
-            ];
-        })
-            ->filter(fn (array $recommendation): bool => $recommendation['score'] > 0.0)
+            ]);
+        }
+
+        $recommendations = $recommendations
             ->sortByDesc('score')
             ->values()
             ->take($criteria->limit);
@@ -138,7 +166,7 @@ class TfidfRecommendationService
         $reasons = [];
 
         if ($topTerms !== []) {
-            $reasons[] = 'Cocok dengan preferensi: '.implode(', ', $topTerms);
+            $reasons[] = 'Cocok dengan preferensi: ' . implode(', ', $topTerms);
         }
 
         if ($profile['source'] === 'history') {
@@ -151,12 +179,12 @@ class TfidfRecommendationService
         if ($facilityNames !== []) {
             $overlap = array_values(array_intersect($profile['tokens'], $facilityNames));
             if ($overlap !== []) {
-                $reasons[] = 'Fasilitas yang sesuai: '.implode(', ', array_slice($overlap, 0, 2));
+                $reasons[] = 'Fasilitas yang sesuai: ' . implode(', ', array_slice($overlap, 0, 2));
             }
         }
 
         if ($field->address !== null && $field->address !== '') {
-            $reasons[] = 'Lokasi: '.$field->address;
+            $reasons[] = 'Lokasi: ' . $field->address;
         }
 
         $reasons = array_merge($reasons, $queryReasons);
@@ -169,7 +197,9 @@ class TfidfRecommendationService
      */
     private function buildQueryTokens(FieldRecommendationCriteria $criteria, array $profileTokens): array
     {
-        $tokens = $profileTokens;
+        $tokens = $criteria->hasSearchQuery()
+            ? $this->documentBuilderService->tokenize($criteria->searchQuery)
+            : $profileTokens;
 
         foreach ($criteria->facilitySlugs as $facilitySlug) {
             $tokens = array_merge($tokens, $this->documentBuilderService->tokenize($facilitySlug));
@@ -180,8 +210,8 @@ class TfidfRecommendationService
         }
 
         if ($criteria->hasLocation()) {
-            $tokens[] = 'geo_lat_'.str_replace('.', '_', number_format((float) $criteria->latitude, 2, '.', ''));
-            $tokens[] = 'geo_lng_'.str_replace('.', '_', number_format((float) $criteria->longitude, 2, '.', ''));
+            $tokens[] = 'geo_lat_' . str_replace('.', '_', number_format((float) $criteria->latitude, 2, '.', ''));
+            $tokens[] = 'geo_lng_' . str_replace('.', '_', number_format((float) $criteria->longitude, 2, '.', ''));
         }
 
         if ($criteria->hasScheduleWindow()) {
@@ -189,7 +219,7 @@ class TfidfRecommendationService
             $end = CarbonImmutable::createFromFormat('H:i', $criteria->endTime);
 
             if ($start !== false && $end !== false) {
-                $tokens[] = 'slot_'.$start->diffInMinutes($end).'_min';
+                $tokens[] = 'slot_' . $start->diffInMinutes($end) . '_min';
             }
         }
 
@@ -202,6 +232,14 @@ class TfidfRecommendationService
     private function buildQueryReasons(FieldRecommendationCriteria $criteria, array $profileReasons): array
     {
         $reasons = $profileReasons;
+
+        if ($criteria->hasSearchQuery()) {
+            $reasons[] = 'Pencarian cocok dengan kata kunci';
+        }
+
+        if ($criteria->location !== null) {
+            $reasons[] = 'Lokasi cocok dengan area yang dicari';
+        }
 
         if ($criteria->hasFacilityPreference()) {
             $reasons[] = 'Fasilitas dipertimbangkan dari permintaan pencarian';
@@ -220,5 +258,22 @@ class TfidfRecommendationService
         }
 
         return array_values(array_unique(array_filter($reasons)));
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function extractRequestedFacilitySlugs(FieldRecommendationCriteria $criteria): array
+    {
+        if (! $criteria->hasSearchQuery()) {
+            return [];
+        }
+
+        $queryTokens = $this->documentBuilderService->tokenize($criteria->searchQuery);
+
+        return array_values(array_intersect(
+            $queryTokens,
+            Facility::query()->pluck('slug')->all(),
+        ));
     }
 }
