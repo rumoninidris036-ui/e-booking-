@@ -14,6 +14,8 @@ class FieldRecommendationCriteria
      */
     public function __construct(
         public readonly int $limit = 3,
+        public readonly ?string $searchQuery = null,
+        public readonly ?string $location = null,
         public readonly ?string $date = null,
         public readonly ?string $startTime = null,
         public readonly ?string $endTime = null,
@@ -33,6 +35,8 @@ class FieldRecommendationCriteria
 
         return new self(
             limit: max(1, min(12, $limit)),
+            searchQuery: self::normalizeSearchQuery($payload['search_query'] ?? $payload['q'] ?? null),
+            location: self::normalizeSearchQuery($payload['location'] ?? null),
             date: self::normalizeDate($payload['date'] ?? null),
             startTime: self::normalizeTime($payload['start_time'] ?? null),
             endTime: self::normalizeTime($payload['end_time'] ?? null),
@@ -59,15 +63,20 @@ class FieldRecommendationCriteria
         return $this->facilitySlugs !== [];
     }
 
+    public function hasSearchQuery(): bool
+    {
+        return $this->searchQuery !== null && $this->searchQuery !== '';
+    }
+
     /**
      * @return list<string>
      */
     private static function normalizeStringList(mixed $value): array
     {
         return array_values(array_filter(array_map(
-            static fn (mixed $item): string => trim((string) $item),
+            static fn(mixed $item): string => trim((string) $item),
             Arr::wrap($value),
-        ), static fn (string $item): bool => $item !== ''));
+        ), static fn(string $item): bool => $item !== ''));
     }
 
     /**
@@ -76,9 +85,9 @@ class FieldRecommendationCriteria
     private static function normalizeIntegerList(mixed $value): array
     {
         return array_values(array_filter(array_map(
-            static fn (mixed $item): int => (int) $item,
+            static fn(mixed $item): int => (int) $item,
             Arr::wrap($value),
-        ), static fn (int $item): bool => $item > 0));
+        ), static fn(int $item): bool => $item > 0));
     }
 
     private static function normalizeDate(mixed $value): ?string
@@ -86,6 +95,13 @@ class FieldRecommendationCriteria
         $date = trim((string) $value);
 
         return $date !== '' ? substr($date, 0, 10) : null;
+    }
+
+    private static function normalizeSearchQuery(mixed $value): ?string
+    {
+        $query = trim((string) $value);
+
+        return $query !== '' ? $query : null;
     }
 
     private static function normalizeTime(mixed $value): ?string
