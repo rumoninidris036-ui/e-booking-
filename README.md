@@ -62,7 +62,7 @@ SmashCourt adalah aplikasi web untuk pencarian, pemesanan, pembayaran, dan penge
 
 ### Backend
 
-- PHP 8.2+
+- PHP 8.0+
 - Laravel 12
 - Laravel Breeze untuk autentikasi dasar
 - Laravel Eloquent ORM
