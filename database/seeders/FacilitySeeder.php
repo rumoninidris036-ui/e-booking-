@@ -18,6 +18,9 @@ class FacilitySeeder extends Seeder
             'Kantin',
             'Parkiran',
             'WiFi',
+            'Shower',
+            'Loker',
+            'Tribun',
         ];
 
         foreach ($facilities as $facilityName) {

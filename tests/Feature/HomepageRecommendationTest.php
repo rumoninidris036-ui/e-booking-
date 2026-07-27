@@ -56,4 +56,154 @@ class HomepageRecommendationTest extends TestCase
             ->assertSee('Home Court')
             ->assertDontSee('Hidden Court');
     }
+
+    public function test_homepage_search_uses_tfidf_query(): void
+    {
+        $tribun = Facility::query()->create([
+            'name' => 'Tribun',
+            'slug' => 'tribun',
+            'description' => 'Area tribun',
+        ]);
+
+        $searchHit = BadmintonField::query()->create([
+            'name' => 'Tribun Court',
+            'slug' => 'tribun-court',
+            'address' => 'Jl. Utama 1',
+            'latitude' => -2.5897000,
+            'longitude' => 140.6690000,
+            'price_per_hour' => 100000,
+            'is_active' => true,
+        ]);
+        $searchHit->facilities()->attach($tribun->id);
+
+        BadmintonField::query()->create([
+            'name' => 'Plain Court',
+            'slug' => 'plain-court',
+            'address' => 'Jl. Jauh 9',
+            'latitude' => -2.6900000,
+            'longitude' => 140.8200000,
+            'price_per_hour' => 130000,
+            'is_active' => true,
+        ]);
+
+        $this->get('/?q=ada+tribun')
+            ->assertOk()
+            ->assertSee('Tribun Court')
+            ->assertDontSee('Plain Court');
+    }
+
+    public function test_homepage_search_uses_combined_keyword_and_location_query(): void
+    {
+        $wifi = Facility::query()->create([
+            'name' => 'WiFi',
+            'slug' => 'wifi',
+            'description' => 'Free internet',
+        ]);
+
+        $sentaniWifi = BadmintonField::query()->create([
+            'name' => 'Sentani WiFi Court',
+            'slug' => 'sentani-wifi-court',
+            'address' => 'Jl. Raya Sentani No. 1, Sentani, Jayapura',
+            'price_per_hour' => 120000,
+            'is_active' => true,
+        ]);
+        $sentaniWifi->facilities()->attach($wifi->id);
+
+        $jayapuraNoWifi = BadmintonField::query()->create([
+            'name' => 'Jayapura Court',
+            'slug' => 'jayapura-court',
+            'address' => 'Jl. Kota Baru No. 9, Jayapura',
+            'price_per_hour' => 120000,
+            'is_active' => true,
+        ]);
+
+        $this->get('/?q=sentani+wifi&time=morning')
+            ->assertOk()
+            ->assertSee('Sentani WiFi Court')
+            ->assertDontSee('Jayapura Court');
+    }
+
+    public function test_homepage_search_filters_by_morning_time_window(): void
+    {
+        BadmintonField::query()->create([
+            'name' => 'Morning Exact Court',
+            'slug' => 'morning-court',
+            'address' => 'Jl. Pagi 1',
+            'open_time' => '06:00:00',
+            'close_time' => '11:00:00',
+            'price_per_hour' => 100000,
+            'is_active' => true,
+        ]);
+
+        BadmintonField::query()->create([
+            'name' => 'Morning Wrong Close Court',
+            'slug' => 'night-court',
+            'address' => 'Jl. Malam 1',
+            'open_time' => '17:00:00',
+            'close_time' => '23:00:00',
+            'price_per_hour' => 100000,
+            'is_active' => true,
+        ]);
+
+        $this->get('/?q=court&time=morning')
+            ->assertOk()
+            ->assertSee('Morning Exact Court')
+            ->assertDontSee('Morning Wrong Close Court');
+    }
+
+    public function test_homepage_search_filters_by_afternoon_time_window(): void
+    {
+        BadmintonField::query()->create([
+            'name' => 'Day Court',
+            'slug' => 'day-court',
+            'address' => 'Jl. Siang 1',
+            'open_time' => '06:00:00',
+            'close_time' => '23:00:00',
+            'price_per_hour' => 100000,
+            'is_active' => true,
+        ]);
+
+        BadmintonField::query()->create([
+            'name' => 'Early Court',
+            'slug' => 'early-court',
+            'address' => 'Jl. Pagi 2',
+            'open_time' => '06:00:00',
+            'close_time' => '11:30:00',
+            'price_per_hour' => 100000,
+            'is_active' => true,
+        ]);
+
+        $this->get('/?q=court&time=afternoon')
+            ->assertOk()
+            ->assertSee('Day Court')
+            ->assertDontSee('Early Court');
+    }
+
+    public function test_homepage_search_filters_by_evening_time_window(): void
+    {
+        BadmintonField::query()->create([
+            'name' => 'Evening Court',
+            'slug' => 'evening-court',
+            'address' => 'Jl. Sore 1',
+            'open_time' => '06:00:00',
+            'close_time' => '23:00:00',
+            'price_per_hour' => 100000,
+            'is_active' => true,
+        ]);
+
+        BadmintonField::query()->create([
+            'name' => 'Late Afternoon Court',
+            'slug' => 'late-afternoon-court',
+            'address' => 'Jl. Sore 2',
+            'open_time' => '06:00:00',
+            'close_time' => '16:30:00',
+            'price_per_hour' => 100000,
+            'is_active' => true,
+        ]);
+
+        $this->get('/?q=court&time=evening')
+            ->assertOk()
+            ->assertSee('Evening Court')
+            ->assertDontSee('Late Afternoon Court');
+    }
 }
