@@ -211,7 +211,7 @@
                         <label class="ml-1 font-label-bold text-label-bold uppercase text-on-surface-variant">Cari lapangan</label>
                         <div class="relative">
                             <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
-                            <input name="q" value="{{ request('q') }}" autocomplete="off" class="w-full rounded-lg border border-outline-variant bg-surface-container-low py-3 pl-10 text-on-surface transition-all focus:border-primary-container focus:ring-1 focus:ring-primary-container" placeholder="Contoh: sentani wifi, tribun, dekat jayapura" type="text">
+                            <input name="q" value="{{ request('q') }}" autocomplete="off" class="w-full rounded-lg border border-outline-variant bg-surface-container-low py-3 pl-10 text-on-surface transition-all focus:border-primary-container focus:ring-1 focus:ring-primary-container" placeholder="Contoh: ada wifi, toilet, dekat stain" type="text">
                         </div>
                     </div>
 
