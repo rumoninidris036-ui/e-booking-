@@ -293,14 +293,14 @@ $ratingCount = $field->ratings?->count() ?? 0;
                         <div class="rounded-2xl border border-secondary-container/20 bg-secondary-container/10 px-5 py-4 text-secondary">
                             <div class="flex items-center gap-3">
                                 <span class="font-headline-lg text-headline-lg">{{ number_format($ratingAverage, 1) }}</span>
-                                <div class="flex items-center gap-1 text-secondary-container">
+                                <div class="flex items-center gap-1" aria-label="Rating rata-rata {{ number_format($ratingAverage, 1) }} dari 5">
                                     @for ($i = 1; $i <= 5; $i++)
                                         @if ($i <= floor($ratingAverage))
-                                            <span class="material-symbols-outlined !text-xl">star</span>
+                                            <span class="material-symbols-outlined !text-xl text-secondary-container" style="font-variation-settings: 'FILL' 1;">star</span>
                                         @elseif ($i === (int) floor($ratingAverage) + 1 && ($ratingAverage - floor($ratingAverage)) >= 0.5)
-                                            <span class="material-symbols-outlined !text-xl">star_half</span>
+                                            <span class="material-symbols-outlined !text-xl text-secondary-container" style="font-variation-settings: 'FILL' 1;">star_half</span>
                                         @else
-                                            <span class="material-symbols-outlined !text-xl">star_outline</span>
+                                            <span class="material-symbols-outlined !text-xl text-outline">star</span>
                                         @endif
                                     @endfor
                                 </div>
@@ -324,10 +324,20 @@ $ratingCount = $field->ratings?->count() ?? 0;
                                         </p>
                                     </div>
 
-                                    <div class="flex items-center gap-1 text-secondary-container">
+                                    @php
+                                        $ratingScore = max(1, min(5, (int) $rating->score));
+                                    @endphp
+                                    <div class="flex items-center gap-1" aria-label="Rating {{ $ratingScore }} dari 5">
                                         @for ($i = 1; $i <= 5; $i++)
-                                            <span class="material-symbols-outlined !text-lg">
-                                                {{ $i <= (int) $rating->score ? 'star' : 'star_outline' }}
+                                            <span
+                                                @class([
+                                                    'material-symbols-outlined !text-lg',
+                                                    'text-secondary-container' => $i <= $ratingScore,
+                                                    'text-outline' => $i > $ratingScore,
+                                                ])
+                                                @if ($i <= $ratingScore) style="font-variation-settings: 'FILL' 1;" @endif
+                                            >
+                                                star
                                             </span>
                                         @endfor
                                     </div>

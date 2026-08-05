@@ -145,8 +145,16 @@
     <body class="overflow-x-hidden bg-surface font-body-md text-on-surface">
         @php
             $fallbackImage = 'https://lh3.googleusercontent.com/aida-public/AB6AXuB59syCrEtoscrLtnVVbKFlVvYLgoQiQKa20vyksDs2Eq_taI-K_yu4U1RCbSt4osetGfsidCQzQ8GdqVYnQld6BAUziQKOZlTa0egECgMHdPUNRxGzg0vzY83Pk2t-b5uU76rsMj4_KzJ4XhaJCMRir6D7Gl3dKAd_U-OBM70re_uqNRz2R8_ZnNHFoaz_Pnb8OYxRGrJDt-jhH70Vx1zn_kQxXIPQRDfP0k6p5dX1gvO_Z_Ko_l1JAOXd_KBEzS8kf9xgIIklZ2bY';
-            $recommendedCourts = collect($recommendedCourts ?? [])->map(function (array $recommendation) use ($fallbackImage): array {
+            $hasTimeFilter = in_array(request('time'), ['morning', 'afternoon', 'evening'], true);
+            $recommendedCourts = collect($recommendedCourts ?? [])->map(function (array $recommendation) use ($fallbackImage, $hasTimeFilter): array {
                 $field = $recommendation['field'];
+                $reasons = collect($recommendation['reasons'] ?? []);
+                $recommendationLabels = array_values(array_filter([
+                    (float) ($field->ratings_avg_score ?? 0) >= 4.5 ? 'Rating tinggi' : null,
+                    $reasons->contains(static fn (string $reason): bool => str_contains($reason, 'Diprioritaskan dari lapangan populer')) ? 'Lapangan populer' : null,
+                    $reasons->contains(static fn (string $reason): bool => str_contains($reason, 'Disesuaikan dari histori booking dan rating')) ? 'Sesuai preferensi Anda' : null,
+                    $hasTimeFilter ? 'Sesuai waktu pilihan' : null,
+                ]));
 
                 return [
                     'name' => $field->name,
@@ -158,7 +166,7 @@
                     'badge' => 'Pilihan',
                     'badge_class' => 'bg-secondary-container/90 text-on-secondary',
                     'image' => $field->cover_image_url ?: $fallbackImage,
-                    'reasons' => $recommendation['reasons'] ?? [],
+                    'recommendation_labels' => $recommendationLabels,
                     'facilities_count' => $field->facilities->count(),
                 ];
             })->values();
@@ -333,11 +341,11 @@
                                 <span class="material-symbols-outlined !text-lg">star</span>
                                 <span class="font-label-bold text-label-bold">{{ number_format($court['rating_average'], 1) }}</span>
                             </div>
-                            @if (! empty($court['reasons']))
+                            @if (! empty($court['recommendation_labels']))
                                 <div class="mb-5 flex flex-wrap gap-2">
-                                    @foreach (array_slice($court['reasons'], 0, 2) as $reason)
+                                    @foreach (array_slice($court['recommendation_labels'], 0, 2) as $label)
                                         <span class="rounded-full border border-white/10 bg-surface-container-low px-3 py-1 text-[12px] text-on-surface-variant">
-                                            {{ $reason }}
+                                            {{ $label }}
                                         </span>
                                     @endforeach
                                 </div>
