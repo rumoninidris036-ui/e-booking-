@@ -69,6 +69,7 @@ class DashboardTest extends TestCase
             'amount' => 80000,
             'currency' => 'IDR',
             'status' => Payment::STATUS_SUCCESS,
+            'paid_at' => now()->subDay(),
         ]);
 
         Payment::query()->create([

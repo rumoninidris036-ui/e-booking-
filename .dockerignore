@@ -9,3 +9,4 @@ storage/framework/sessions
 storage/framework/testing
 storage/framework/views
 .env
+public/storage

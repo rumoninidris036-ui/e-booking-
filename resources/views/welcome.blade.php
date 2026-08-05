@@ -382,14 +382,38 @@
                     </p>
                 </div>
 
-                <div class="flex flex-wrap justify-center gap-x-8 gap-y-4">
+                {{-- <div class="flex flex-wrap justify-center gap-x-8 gap-y-4">
                     <a class="font-body-md text-body-md text-on-surface-variant transition-colors hover:text-secondary-container" href="#benefits">Kebijakan Privasi</a>
                     <a class="font-body-md text-body-md text-on-surface-variant transition-colors hover:text-secondary-container" href="#arenas">Syarat Layanan</a>
                     <a class="font-body-md text-body-md text-on-surface-variant transition-colors hover:text-secondary-container" href="#cta">Partner with Us</a>
                     <a class="font-body-md text-body-md text-on-surface-variant transition-colors hover:text-secondary-container" href="{{ $secondaryCta }}">Hubungi Bantuan</a>
                     <a class="font-body-md text-body-md text-on-surface-variant transition-colors hover:text-secondary-container" href="{{ route('public.fields.index') }}">Lihat Lapangan</a>
-                </div>
+                </div> --}}
             </div>
         </footer>
+        <script>
+    let lastScroll = 0;
+    const navbar = document.getElementById('navbar');
+
+    window.addEventListener('scroll', function () {
+        const currentScroll = window.pageYOffset;
+
+        // Selalu tampil saat berada di paling atas
+        if (currentScroll <= 20) {
+            navbar.classList.remove('-translate-y-full');
+        }
+        // Scroll ke bawah -> sembunyikan
+        else if (currentScroll > lastScroll) {
+            navbar.classList.add('-translate-y-full');
+        }
+        // Scroll ke atas -> tampilkan
+        else {
+            navbar.classList.remove('-translate-y-full');
+        }
+
+        lastScroll = currentScroll;
+    });
+</script>
+
     </body>
 </html>

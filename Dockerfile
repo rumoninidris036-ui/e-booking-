@@ -56,8 +56,16 @@ RUN composer install \
 
 COPY --from=frontend /app/public/build ./public/build
 
+COPY docker/php-fpm/zz-ebooking.conf /usr/local/etc/php-fpm.d/zz-ebooking.conf
+COPY docker/php-fpm/entrypoint.sh /usr/local/bin/ebooking-entrypoint
+
+RUN ln -s ../storage/app/public public/storage \
+    && chmod +x /usr/local/bin/ebooking-entrypoint
+
 RUN chown -R www-data:www-data storage bootstrap/cache
 
 USER www-data
+
+ENTRYPOINT ["/usr/local/bin/ebooking-entrypoint"]
 
 CMD ["php-fpm"]

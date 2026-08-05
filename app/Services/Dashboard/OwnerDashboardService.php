@@ -110,7 +110,10 @@ class OwnerDashboardService
             ->join('badminton_fields', 'badminton_fields.id', '=', 'bookings.badminton_field_id')
             ->where('badminton_fields.owner_id', $ownerId)
             ->when($filters['field_id'] !== null, fn ($query) => $query->where('bookings.badminton_field_id', $filters['field_id']))
-            ->whereBetween('bookings.booking_date', [$filters['date_from'], $filters['date_to']]);
+            ->whereBetween('payments.paid_at', [
+                CarbonImmutable::parse($filters['date_from'])->startOfDay(),
+                CarbonImmutable::parse($filters['date_to'])->endOfDay(),
+            ]);
     }
 
     /**
@@ -204,14 +207,20 @@ class OwnerDashboardService
      */
     private function fieldStatistics(int $ownerId, array $filters): array
     {
+        $revenueQuery = DB::table('payments as revenue_payments')
+            ->join('bookings as revenue_bookings', 'revenue_bookings.id', '=', 'revenue_payments.booking_id')
+            ->selectRaw('COALESCE(SUM(revenue_payments.amount), 0)')
+            ->whereColumn('revenue_bookings.badminton_field_id', 'badminton_fields.id')
+            ->where('revenue_payments.status', Payment::STATUS_SUCCESS)
+            ->whereBetween('revenue_payments.paid_at', [
+                CarbonImmutable::parse($filters['date_from'])->startOfDay(),
+                CarbonImmutable::parse($filters['date_to'])->endOfDay(),
+            ]);
+
         return DB::table('badminton_fields')
             ->leftJoin('bookings', function ($join) use ($filters): void {
                 $join->on('bookings.badminton_field_id', '=', 'badminton_fields.id')
                     ->whereBetween('bookings.booking_date', [$filters['date_from'], $filters['date_to']]);
-            })
-            ->leftJoin('payments', function ($join): void {
-                $join->on('payments.booking_id', '=', 'bookings.id')
-                    ->where('payments.status', '=', Payment::STATUS_SUCCESS);
             })
             ->where('badminton_fields.owner_id', $ownerId)
             ->when($filters['field_id'] !== null, fn ($query) => $query->where('badminton_fields.id', $filters['field_id']))
@@ -226,8 +235,8 @@ class OwnerDashboardService
                 DB::raw('COUNT(DISTINCT bookings.id) as total_bookings'),
                 DB::raw("COUNT(DISTINCT CASE WHEN bookings.status = '".Booking::STATUS_PENDING."' THEN bookings.id END) as pending_bookings"),
                 DB::raw("COUNT(DISTINCT CASE WHEN bookings.status = '".Booking::STATUS_PAID."' THEN bookings.id END) as paid_bookings"),
-                DB::raw('COALESCE(SUM(payments.amount), 0) as total_revenue'),
             ])
+            ->selectSub($revenueQuery, 'total_revenue')
             ->orderByDesc('total_bookings')
             ->orderBy('badminton_fields.name')
             ->get()
@@ -241,7 +250,7 @@ class OwnerDashboardService
                 'total_bookings' => (int) $field->total_bookings,
                 'pending_bookings' => (int) $field->pending_bookings,
                 'paid_bookings' => (int) $field->paid_bookings,
-                'total_revenue' => (float) $field->total_revenue,
+                'total_revenue' => (float) ($field->total_revenue ?? 0),
             ])
             ->all();
     }

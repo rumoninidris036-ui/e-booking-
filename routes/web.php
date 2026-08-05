@@ -18,7 +18,7 @@ Route::get('/', function () {
     $recommendationService = app(FieldRecommendationService::class);
     $query = trim((string) request('q'));
     $timeWindow = match (request('time')) {
-        'morning' => ['start_time' => '06:00:00', 'end_time' => '11:00:00', 'open_time' => '06:00:00', 'close_time' => '11:00:00'],
+        'morning' => ['start_time' => '06:00:00', 'end_time' => '12:00:00', 'open_time' => '06:00:00', 'close_time' => '12:00:00'],
         'afternoon' => ['start_time' => '12:00:00', 'end_time' => '17:00:00', 'open_time' => '12:00:00', 'close_time' => '17:00:00'],
         'evening' => ['start_time' => '17:00:00', 'end_time' => '23:00:00', 'open_time' => '17:00:00', 'close_time' => '23:00:00'],
         default => [],
@@ -27,39 +27,54 @@ Route::get('/', function () {
     if ($query === '') {
         $recommendedCourts = \App\Models\BadmintonField::query()
             ->with(['facilities'])
+            ->withAvg('ratings', 'score')
             ->where('is_active', true)
-            ->when($timeWindow !== [], function ($builder) use ($timeWindow): void {
-                $builder->where('open_time', '<=', $timeWindow['start_time'])
-                    ->where('close_time', '>=', $timeWindow['end_time']);
-            })
             ->latest()
-            ->limit(3)
             ->get()
             ->map(static function ($field): array {
                 return [
                     'field' => $field,
                     'score' => 100.0,
-                    'reasons' => ['Lapangan tersedia untuk slot yang dipilih'],
+                    'reasons' => ['Lapangan beroperasi pada rentang waktu yang dipilih'],
                 ];
             })
             ->values();
     } else {
         $recommendedCourts = $recommendationService->recommend(
             FieldRecommendationCriteria::fromArray(array_merge([
-                'limit' => 3,
+                'limit' => 12,
                 'q' => $query,
             ], $timeWindow), 3)
         );
-
-        if ($timeWindow !== [] && isset($timeWindow['open_time'], $timeWindow['close_time'])) {
-            $recommendedCourts = $recommendedCourts->filter(function (array $recommendation) use ($timeWindow): bool {
-                $field = $recommendation['field'];
-
-                return (string) $field->open_time <= $timeWindow['start_time']
-                    && (string) $field->close_time >= $timeWindow['end_time'];
-            })->values();
-        }
     }
+
+    if ($timeWindow !== [] && isset($timeWindow['open_time'], $timeWindow['close_time'])) {
+        $toMinutes = static fn (string $time): int => ((int) substr($time, 0, 2) * 60) + (int) substr($time, 3, 2);
+        $windowStart = $toMinutes($timeWindow['start_time']);
+        $windowEnd = $toMinutes($timeWindow['end_time']);
+
+        $recommendedCourts = $recommendedCourts
+            ->filter(function (array $recommendation) use ($toMinutes, $windowStart, $windowEnd): bool {
+                $field = $recommendation['field'];
+                $openTime = $toMinutes((string) $field->open_time);
+                $closeTime = $toMinutes((string) $field->close_time);
+
+                return $openTime < $windowEnd && $closeTime > $windowStart;
+            })
+            ->sortByDesc(function (array $recommendation) use ($toMinutes, $windowStart, $windowEnd): int {
+                $field = $recommendation['field'];
+                $openTime = $toMinutes((string) $field->open_time);
+                $closeTime = $toMinutes((string) $field->close_time);
+                $overlap = min($closeTime, $windowEnd) - max($openTime, $windowStart);
+                $isExactMatch = $openTime === $windowStart && $closeTime === $windowEnd;
+                $isWithinWindow = $openTime >= $windowStart && $closeTime <= $windowEnd;
+
+                return ($isExactMatch ? 100000 : 0) + ($isWithinWindow ? 10000 : 0) + $overlap;
+            })
+            ->values();
+    }
+
+    $recommendedCourts = $recommendedCourts->take(3)->values();
 
     return view('welcome', [
         'recommendedCourts' => $recommendedCourts,

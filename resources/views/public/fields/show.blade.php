@@ -109,7 +109,8 @@
             .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
             .glass-nav { backdrop-filter: blur(12px); background: rgba(17, 19, 22, 0.8); border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
             .neon-glow { box-shadow: 0 0 15px rgba(195, 244, 0, 0.3); }
-            .leaflet-container { background: #1a1c1f; }
+            /* Menahan layer internal Leaflet agar tidak keluar di atas navbar fixed. */
+            .leaflet-container { position: relative; z-index: 0; background: #1a1c1f; }
         </style>
     </head>
     <body class="overflow-x-hidden bg-background font-body-md text-on-background">

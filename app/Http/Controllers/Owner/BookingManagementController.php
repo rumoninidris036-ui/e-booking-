@@ -169,9 +169,21 @@ class BookingManagementController extends Controller
             });
         }
 
+        $revenueBookingQuery = Booking::query()
+            ->whereHas('field', fn($query) => $query->where('owner_id', $ownerId));
+
+        $this->applyBookingFilters($revenueBookingQuery, [
+            ...$filters,
+            'date' => '',
+        ]);
+
         $totalRevenue = Payment::query()
             ->where('payments.status', Payment::STATUS_SUCCESS)
-            ->whereIn('payments.booking_id', (clone $visibleBookingQuery)->select('bookings.id'))
+            ->whereIn('payments.booking_id', $revenueBookingQuery->select('bookings.id'))
+            ->when(
+                $filters['date'] !== '',
+                fn($query) => $query->whereDate('payments.paid_at', $filters['date']),
+            )
             ->sum('payments.amount');
 
         return [

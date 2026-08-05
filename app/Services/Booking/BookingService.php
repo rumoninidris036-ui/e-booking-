@@ -147,27 +147,37 @@ class BookingService
 
     public function updateStatus(Booking $booking, string $status): Booking
     {
-        $this->assertValidTransition($booking, $status);
+        return DB::transaction(function () use ($booking, $status): Booking {
+            $lockedBooking = Booking::query()
+                ->lockForUpdate()
+                ->findOrFail($booking->id);
 
-        if ($status === Booking::STATUS_CANCELLED) {
-            return $this->markBookingAsCancelled($booking);
-        }
+            $this->assertValidTransition($lockedBooking, $status);
 
-        $attributes = [
-            'status' => $status,
-        ];
+            if ($status === Booking::STATUS_CANCELLED) {
+                return $this->markBookingAsCancelled($lockedBooking);
+            }
 
-        if ($status === Booking::STATUS_PAID) {
-            $attributes['paid_at'] = now();
-        }
+            $attributes = [
+                'status' => $status,
+            ];
 
-        if ($status === Booking::STATUS_FINISHED) {
-            $attributes['finished_at'] = now();
-        }
+            if ($status === Booking::STATUS_PAID) {
+                $attributes['paid_at'] = now();
+            }
 
-        $booking->forceFill($attributes)->save();
+            if ($status === Booking::STATUS_FINISHED) {
+                $attributes['finished_at'] = now();
+            }
 
-        return $booking->fresh(['field:id,name,slug', 'user:id,name,email']);
+            $lockedBooking->forceFill($attributes)->save();
+
+            if ($status === Booking::STATUS_PAID) {
+                $this->recordManualPayment($lockedBooking);
+            }
+
+            return $lockedBooking->fresh(['field:id,name,slug', 'user:id,name,email']);
+        });
     }
 
     public function expirePendingBooking(Booking $booking): Booking
@@ -289,5 +299,42 @@ class BookingService
             ]);
 
         return $booking->fresh(['field:id,name,slug', 'user:id,name,email']);
+    }
+
+    /**
+     * Keep a manually confirmed booking aligned with the payment ledger so it
+     * contributes to revenue calculations, which only include successful payments.
+     */
+    private function recordManualPayment(Booking $booking): void
+    {
+        $latestPayment = Payment::query()
+            ->where('booking_id', $booking->id)
+            ->latest('id')
+            ->lockForUpdate()
+            ->first();
+
+        if ($latestPayment?->status === Payment::STATUS_SUCCESS) {
+            return;
+        }
+
+        if ($latestPayment?->status === Payment::STATUS_PENDING) {
+            $latestPayment->forceFill([
+                'status' => Payment::STATUS_SUCCESS,
+                'paid_at' => $latestPayment->paid_at ?? now(),
+                'failed_at' => null,
+            ])->save();
+
+            return;
+        }
+
+        Payment::query()->create([
+            'booking_id' => $booking->id,
+            'provider' => 'manual',
+            'order_id' => sprintf('MANUAL-%s-%d', $booking->booking_code, $booking->id),
+            'amount' => $booking->price_per_hour,
+            'currency' => 'IDR',
+            'status' => Payment::STATUS_SUCCESS,
+            'paid_at' => now(),
+        ]);
     }
 }

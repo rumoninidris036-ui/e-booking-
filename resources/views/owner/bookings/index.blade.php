@@ -90,7 +90,7 @@
                 ['label' => 'Pending', 'value' => number_format((int) $summary['pending_bookings']), 'hint' => 'menunggu pembayaran', 'tone' => 'text-amber-700 bg-amber-50', 'icon' => 'PN'],
                 ['label' => 'Paid', 'value' => number_format((int) $summary['paid_bookings']), 'hint' => 'siap dimainkan', 'tone' => 'text-emerald-700 bg-emerald-50', 'icon' => 'PD'],
                 ['label' => 'Finished', 'value' => number_format((int) $summary['finished_bookings']), 'hint' => 'selesai', 'tone' => 'text-blue-700 bg-blue-50', 'icon' => 'FN'],
-                ['label' => 'Revenue', 'value' => $compactRupiah((float) $summary['total_revenue']), 'hint' => 'pembayaran sukses', 'tone' => 'text-lime-700 bg-lime-50', 'icon' => 'RV'],
+                ['label' => 'Revenue', 'value' => $compactRupiah((float) $summary['total_revenue']), 'hint' => 'pembayaran sukses pada tanggal filter', 'tone' => 'text-lime-700 bg-lime-50', 'icon' => 'RV'],
             ];
         @endphp
 

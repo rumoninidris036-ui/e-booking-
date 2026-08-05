@@ -104,6 +104,8 @@ class HomepageRecommendationTest extends TestCase
             'name' => 'Sentani WiFi Court',
             'slug' => 'sentani-wifi-court',
             'address' => 'Jl. Raya Sentani No. 1, Sentani, Jayapura',
+            'open_time' => '06:00:00',
+            'close_time' => '12:00:00',
             'price_per_hour' => 120000,
             'is_active' => true,
         ]);
@@ -130,7 +132,17 @@ class HomepageRecommendationTest extends TestCase
             'slug' => 'morning-court',
             'address' => 'Jl. Pagi 1',
             'open_time' => '06:00:00',
-            'close_time' => '11:00:00',
+            'close_time' => '12:00:00',
+            'price_per_hour' => 100000,
+            'is_active' => true,
+        ]);
+
+        BadmintonField::query()->create([
+            'name' => 'Morning Partial Court',
+            'slug' => 'morning-partial-court',
+            'address' => 'Jl. Pagi 2',
+            'open_time' => '08:00:00',
+            'close_time' => '23:00:00',
             'price_per_hour' => 100000,
             'is_active' => true,
         ]);
@@ -148,6 +160,8 @@ class HomepageRecommendationTest extends TestCase
         $this->get('/?q=court&time=morning')
             ->assertOk()
             ->assertSee('Morning Exact Court')
+            ->assertSee('Morning Partial Court')
+            ->assertSeeInOrder(['Morning Exact Court', 'Morning Partial Court'])
             ->assertDontSee('Morning Wrong Close Court');
     }
 

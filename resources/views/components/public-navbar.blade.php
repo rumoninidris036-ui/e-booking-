@@ -8,66 +8,54 @@
     $authLabel = auth()->check() ? 'Dashboard' : 'Login';
 @endphp
 
-<nav x-data="{ open: false }" class="fixed top-0 z-50 w-full border-b border-white/10 bg-surface/80 shadow-sm backdrop-blur-md">
-    <div class="mx-auto flex max-w-7xl items-center justify-between px-gutter py-4 md:px-margin-desktop">
-        <a href="{{ $homeUrl }}" class="font-headline-md text-headline-md font-black italic tracking-tighter text-secondary-container">
+<nav id="navbar" x-data="{ open: false }" class="fixed inset-x-0 top-0 z-[1100] border-b border-white/5 bg-surface/95 text-on-surface shadow-[0_1px_0_rgba(255,255,255,0.03)] backdrop-blur-md transition-transform duration-300">
+    <div class="mx-auto grid h-[84px] max-w-7xl grid-cols-[1fr_auto_1fr] items-center px-gutter md:px-margin-desktop">
+        <a href="{{ $homeUrl }}" class="justify-self-start font-headline-md text-[24px] font-black italic leading-none tracking-[-0.07em] text-secondary-container transition-opacity hover:opacity-85">
             SMASHCOURT
         </a>
 
-        <div class="hidden items-center gap-8 md:flex">
-            <a
-                class="{{ $isHome ? 'border-b-2 border-secondary-container pb-1 font-body-md text-body-md font-bold text-secondary-container' : 'font-body-md text-body-md text-on-surface transition-colors hover:text-secondary-container' }}"
-                href="{{ $homeUrl }}"
-            >
+        <div class="hidden items-center gap-10 md:flex">
+            <a href="{{ $homeUrl }}" @class([
+                'border-b-2 border-secondary-container pb-2 font-bold text-secondary-container' => $isHome,
+                'pb-2 text-on-surface transition-colors hover:text-secondary-container' => ! $isHome,
+            ])>
                 Home
             </a>
-            <a
-                class="{{ $isCourts ? 'border-b-2 border-secondary-container pb-1 font-body-md text-body-md font-bold text-secondary-container' : 'font-body-md text-body-md text-on-surface transition-colors hover:text-secondary-container' }}"
-                href="{{ $courtsUrl }}"
-            >
+            <a href="{{ $courtsUrl }}" @class([
+                'border-b-2 border-secondary-container pb-2 font-bold text-secondary-container' => $isCourts,
+                'pb-2 text-on-surface transition-colors hover:text-secondary-container' => ! $isCourts,
+            ])>
                 Lapangan
             </a>
-            <a
-                class="font-body-md text-body-md text-on-surface transition-colors hover:text-secondary-container"
-                href="{{ $recommendedUrl }}"
-            >
+            <a href="{{ $recommendedUrl }}" class="pb-2 text-on-surface transition-colors hover:text-secondary-container">
                 Rekomendasi
             </a>
         </div>
 
-        <div class="flex items-center gap-4">
-            <a href="{{ $authUrl }}" class="hidden font-body-md text-body-md text-on-surface transition-colors hover:text-secondary-container md:block">
+        <div class="hidden justify-self-end md:block">
+            <a href="{{ $authUrl }}" class="rounded-full bg-secondary-container px-7 py-3 font-label-bold text-label-bold uppercase tracking-[0.04em] text-on-secondary shadow-[0_4px_0_#3c4d00] transition hover:-translate-y-px hover:brightness-105 active:translate-y-[2px] active:shadow-[0_2px_0_#3c4d00]">
                 {{ $authLabel }}
             </a>
-
-            <a href="{{ $courtsUrl }}" class="rounded-full bg-secondary-container px-6 py-2.5 font-label-bold text-label-bold uppercase text-on-secondary shadow-[0_4px_0_0_#3c4d00] transition-transform hover:-translate-y-px active:translate-y-[2px]">
-                Lihat Lapangan
-            </a>
-
-            <button @click="open = ! open" class="inline-flex items-center justify-center rounded-md p-2 text-on-surface transition-colors hover:bg-white/5 hover:text-secondary-container md:hidden" aria-label="Toggle navigation">
-                <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                    <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                    <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
         </div>
+
+        <button @click="open = ! open" :aria-expanded="open.toString()" class="justify-self-end rounded-lg p-2 text-on-surface transition hover:bg-white/5 hover:text-secondary-container md:hidden" aria-label="Buka navigasi">
+            <svg x-show="!open" class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            <svg x-cloak x-show="open" style="display: none;" class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
     </div>
 
-    <div :class="{'block': open, 'hidden': ! open}" class="hidden border-t border-white/10 bg-surface/95 md:hidden">
-        <div class="mx-auto max-w-7xl px-gutter py-4 md:px-margin-desktop">
-            <div class="flex flex-col gap-3">
-                <a class="rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface transition-colors hover:bg-white/5 hover:text-secondary-container" href="{{ $homeUrl }}">
-                    Home
-                </a>
-                <a class="rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface transition-colors hover:bg-white/5 hover:text-secondary-container" href="{{ $courtsUrl }}">
-                    Lapangan
-                </a>
-                <a class="rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface transition-colors hover:bg-white/5 hover:text-secondary-container" href="{{ $recommendedUrl }}">
-                    Rekomendasi
-                </a>
-                <a class="rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface transition-colors hover:bg-white/5 hover:text-secondary-container" href="{{ $authUrl }}">
-                    {{ $authLabel }}
-                </a>
+    <div x-cloak x-show="open" x-transition style="display: none;" class="border-t border-white/10 bg-surface md:hidden">
+        <div class="mx-auto max-w-7xl px-gutter py-4">
+            <div class="flex flex-col gap-1">
+                <a href="{{ $homeUrl }}" class="rounded-lg px-4 py-3 transition hover:bg-white/5 hover:text-secondary-container">Home</a>
+                <a href="{{ $courtsUrl }}" class="rounded-lg px-4 py-3 transition hover:bg-white/5 hover:text-secondary-container">Lapangan</a>
+                <a href="{{ $recommendedUrl }}" class="rounded-lg px-4 py-3 transition hover:bg-white/5 hover:text-secondary-container">Rekomendasi</a>
+                <a href="{{ $authUrl }}" class="rounded-lg px-4 py-3 transition hover:bg-white/5 hover:text-secondary-container">{{ $authLabel }}</a>
+                <a href="{{ $authUrl }}" class="mt-2 rounded-full bg-secondary-container px-4 py-3 text-center font-label-bold uppercase text-on-secondary">{{ $authLabel }}</a>
             </div>
         </div>
     </div>

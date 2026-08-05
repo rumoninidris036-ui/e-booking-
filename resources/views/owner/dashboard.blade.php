@@ -120,7 +120,7 @@
                 [
                     'label' => 'Total Revenue',
                     'value' => $compactRupiah((float) $summary['total_revenue']),
-                    'hint' => number_format((int) $summary['successful_transactions']).' transaksi sukses',
+                    'hint' => number_format((int) $summary['successful_transactions']).' transaksi sukses (tgl pembayaran)',
                     'tone' => 'text-lime-700 bg-lime-50',
                     'icon' => 'RV',
                 ],
@@ -155,12 +155,12 @@
 
                         <div class="ml-auto flex items-center gap-4">
                             <a href="{{ route('public.fields.index') }}" class="hidden rounded-xl border border-line px-4 py-2 text-sm font-bold text-ink transition hover:border-brand hover:text-brand md:inline-flex">Lihat Publik</a>
-                            <div class="relative hidden h-10 w-10 items-center justify-center rounded-full border border-line bg-white md:flex">
+                            {{-- <div class="relative hidden h-10 w-10 items-center justify-center rounded-full border border-line bg-white md:flex">
                                 <span class="text-lg">!</span>
                                 @if ((int) $summary['pending_bookings'] > 0)
                                     <span class="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white"></span>
                                 @endif
-                            </div>
+                            </div> --}}
                             <div class="border-l border-line pl-4">
                                 @include('layouts.topbar-profile-menu')
                             </div>

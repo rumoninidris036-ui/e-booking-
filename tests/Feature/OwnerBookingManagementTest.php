@@ -106,6 +106,7 @@ class OwnerBookingManagementTest extends TestCase
             'amount' => 90000,
             'currency' => 'IDR',
             'status' => Payment::STATUS_SUCCESS,
+            'paid_at' => now()->addDay(),
         ]);
 
         $this->actingAs($owner)
@@ -166,6 +167,7 @@ class OwnerBookingManagementTest extends TestCase
             'amount' => 90000,
             'currency' => 'IDR',
             'status' => Payment::STATUS_SUCCESS,
+            'paid_at' => $dateA.' 10:00:00',
         ]);
 
         Payment::query()->create([
@@ -175,6 +177,7 @@ class OwnerBookingManagementTest extends TestCase
             'amount' => 180000,
             'currency' => 'IDR',
             'status' => Payment::STATUS_SUCCESS,
+            'paid_at' => $dateB.' 12:00:00',
         ]);
 
         $this->actingAs($owner)
@@ -218,6 +221,12 @@ class OwnerBookingManagementTest extends TestCase
 
         $booking->refresh();
         $this->assertSame(Booking::STATUS_PAID, $booking->status);
+        $this->assertDatabaseHas('payments', [
+            'booking_id' => $booking->id,
+            'provider' => 'manual',
+            'amount' => 95000,
+            'status' => Payment::STATUS_SUCCESS,
+        ]);
     }
 
     public function test_owner_cannot_force_expired_status_through_request(): void
