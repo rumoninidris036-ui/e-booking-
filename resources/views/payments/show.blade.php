@@ -187,15 +187,13 @@
                         @elseif ($paymentStatus === \App\Models\Payment::STATUS_PENDING && $snapRedirectUrl !== null)
                             <a
                                 href="{{ $snapRedirectUrl }}"
-                                target="_blank"
-                                rel="noopener noreferrer"
                                 class="mt-8 block w-full rounded-2xl bg-accent px-6 py-4 text-center text-sm font-bold uppercase tracking-[0.18em] text-black transition-transform hover:-translate-y-0.5"
                             >
                                 Lanjut Bayar
                             </a>
 
                             <p class="mt-4 text-xs leading-6 text-muted">
-                                Midtrans akan dibuka di tab baru. Halaman ini tetap terbuka untuk memantau statusnya.
+                                Kamu akan diarahkan ke Midtrans pada tab ini dan kembali ke halaman status pembayaran setelah selesai.
                             </p>
                         @elseif ($bookingStatus === \App\Models\Booking::STATUS_PENDING)
                             <form method="POST" action="{{ $paymentStoreUrl }}" class="mt-8">
@@ -330,14 +328,12 @@
                         paymentActionArea.innerHTML = `
                             <a
                                 href="${state.snapRedirectUrl}"
-                                target="_blank"
-                                rel="noopener noreferrer"
                                 class="mt-8 block w-full rounded-2xl bg-accent px-6 py-4 text-center text-sm font-bold uppercase tracking-[0.18em] text-black transition-transform hover:-translate-y-0.5"
                             >
                                 Lanjut Bayar
                             </a>
                             <p class="mt-4 text-xs leading-6 text-muted">
-                                Midtrans akan dibuka di tab baru. Halaman ini tetap terbuka untuk memantau statusnya.
+                                Kamu akan diarahkan ke Midtrans pada tab ini dan kembali ke halaman status pembayaran setelah selesai.
                             </p>
                         `;
                         return;
