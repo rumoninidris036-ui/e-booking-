@@ -25,20 +25,9 @@ Route::get('/', function () {
     };
 
     if ($query === '') {
-        $recommendedCourts = \App\Models\BadmintonField::query()
-            ->with(['facilities'])
-            ->withAvg('ratings', 'score')
-            ->where('is_active', true)
-            ->latest()
-            ->get()
-            ->map(static function ($field): array {
-                return [
-                    'field' => $field,
-                    'score' => 100.0,
-                    'reasons' => ['Lapangan beroperasi pada rentang waktu yang dipilih'],
-                ];
-            })
-            ->values();
+        $recommendedCourts = $recommendationService->recommend(
+            FieldRecommendationCriteria::fromArray(['limit' => 12], 3)
+        );
     } else {
         $recommendedCourts = $recommendationService->recommend(
             FieldRecommendationCriteria::fromArray(array_merge([
