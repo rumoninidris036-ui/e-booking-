@@ -52,6 +52,7 @@ COPY . .
 RUN composer install \
     --no-dev \
     --optimize-autoloader \
+    --no-scripts \
     --no-interaction
 
 COPY --from=frontend /app/public/build ./public/build
