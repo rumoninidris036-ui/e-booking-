@@ -26,6 +26,7 @@ class BadmintonField extends Model
         'slug',
         'description',
         'address',
+        'whatsapp_number',
         'latitude',
         'longitude',
         'price_per_hour',

@@ -169,6 +169,10 @@
                                     <label for="address" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Alamat</label>
                                     <input id="address" name="address" type="text" value="{{ old('address') }}" class="w-full rounded-2xl border-line bg-slate-50 px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20" placeholder="Alamat venue">
                                 </div>
+                                <div>
+                                    <label for="whatsapp_number" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">WhatsApp Owner</label>
+                                    <input id="whatsapp_number" name="whatsapp_number" type="tel" value="{{ old('whatsapp_number') }}" class="w-full rounded-2xl border-line bg-slate-50 px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20" placeholder="6281234567890">
+                                </div>
 
                                 <div>
                                     <label for="description" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Deskripsi</label>
@@ -493,10 +497,14 @@
                                                                             <label for="field-{{ $field->id }}-name" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Nama Lapangan</label>
                                                                             <input id="field-{{ $field->id }}-name" name="name" type="text" value="{{ old("fields.{$field->id}.name", $field->name) }}" required class="w-full rounded-2xl border-line bg-white px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">
                                                                         </div>
-                                                                        <div>
-                                                                            <label for="field-{{ $field->id }}-address" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Alamat</label>
-                                                                            <input id="field-{{ $field->id }}-address" name="address" type="text" value="{{ old("fields.{$field->id}.address", $field->address) }}" class="w-full rounded-2xl border-line bg-white px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">
-                                                                        </div>
+                                                                    <div>
+                                                                        <label for="field-{{ $field->id }}-address" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Alamat</label>
+                                                                        <input id="field-{{ $field->id }}-address" name="address" type="text" value="{{ old("fields.{$field->id}.address", $field->address) }}" class="w-full rounded-2xl border-line bg-white px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">
+                                                                    </div>
+                                                                    <div>
+                                                                        <label for="field-{{ $field->id }}-whatsapp" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">WhatsApp Owner</label>
+                                                                        <input id="field-{{ $field->id }}-whatsapp" name="whatsapp_number" type="tel" value="{{ old("fields.{$field->id}.whatsapp_number", $field->whatsapp_number) }}" class="w-full rounded-2xl border-line bg-white px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20" placeholder="6281234567890">
+                                                                    </div>
                                                                         <div>
                                                                             <label for="field-{{ $field->id }}-description" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Deskripsi</label>
                                                                             <textarea id="field-{{ $field->id }}-description" name="description" rows="4" class="w-full rounded-2xl border-line bg-white px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">{{ old("fields.{$field->id}.description", $field->description) }}</textarea>

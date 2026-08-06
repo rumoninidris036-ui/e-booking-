@@ -41,6 +41,8 @@
             $paymentStatus = $payment->status;
             $bookingStatus = $booking->status;
             $customerName = $booking->customer_name ?: $booking->user?->name ?: 'Pemesan';
+            $adminWhatsapp = preg_replace('/\D+/', '', (string) config('services.support.whatsapp_number'));
+            $ownerWhatsapp = preg_replace('/\D+/', '', (string) $field->whatsapp_number);
             $statusPalette = match ($payment->status) {
                 \App\Models\Payment::STATUS_SUCCESS => [
                     'label' => 'Pembayaran Dikonfirmasi',
@@ -237,6 +239,14 @@
                     >
                         Kembali ke Booking
                     </a>
+
+                    @if ($paymentStatus === \App\Models\Payment::STATUS_SUCCESS && $ownerWhatsapp !== '')
+                        <a href="https://wa.me/{{ $ownerWhatsapp }}?text={{ rawurlencode('Halo, saya '.$customerName.'. Saya ingin menanyakan booking '.$booking->booking_code.' di '.$field->name.'.') }}" target="_blank" rel="noopener" class="mt-4 block w-full rounded-2xl border border-accent/40 px-6 py-4 text-center text-sm font-bold uppercase tracking-[0.14em] text-accent transition hover:bg-accent hover:text-black">Hubungi Owner</a>
+                    @endif
+
+                    @if ($adminWhatsapp !== '')
+                        <a href="https://wa.me/{{ $adminWhatsapp }}?text={{ rawurlencode('Halo Admin SmashCourt, saya membutuhkan bantuan untuk booking '.$booking->booking_code.'.') }}" target="_blank" rel="noopener" class="mt-3 block w-full text-center text-sm font-semibold text-muted transition hover:text-accent">Butuh bantuan? Hubungi Admin</a>
+                    @endif
                 </aside>
             </div>
         </main>

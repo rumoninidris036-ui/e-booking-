@@ -169,12 +169,18 @@
                 </header>
 
                 <main class="space-y-6 px-4 py-6 md:px-6">
+                    @php
+                        $adminWhatsapp = preg_replace('/\D+/', '', (string) config('services.support.whatsapp_number'));
+                    @endphp
                     <section class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
                         <div>
                             <p class="text-xs font-bold uppercase tracking-[0.24em] text-brand">Owner Workspace</p>
                             <h1 class="mt-2 font-display text-3xl font-bold tracking-tight text-ink md:text-4xl">Dashboard Owner</h1>
                             <p class="mt-2 text-sm text-slateSoft">Pantau booking, pendapatan, performa lapangan, dan lokasi venue kamu secara real-time.</p>
                         </div>
+                        @if ($adminWhatsapp !== '')
+                            <a href="https://wa.me/{{ $adminWhatsapp }}?text={{ rawurlencode('Halo Admin SmashCourt, saya owner '.$owner->name.' dan membutuhkan bantuan.') }}" target="_blank" rel="noopener" class="inline-flex items-center justify-center rounded-xl border border-brand/30 bg-brandSoft px-4 py-3 text-sm font-bold text-brand transition hover:bg-brand hover:text-white">Hubungi Admin</a>
+                        @endif
 
                         <form action="{{ route('owner.dashboard') }}" method="GET" class="grid gap-3 rounded-2xl border border-line bg-white p-3 shadow-sm sm:grid-cols-2 xl:grid-cols-[150px_150px_150px_auto]">
                             <select name="period" class="rounded-xl border-line text-sm focus:border-brand focus:ring-brand/20">

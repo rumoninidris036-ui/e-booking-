@@ -53,4 +53,8 @@ return [
         'algorithm' => env('RECOMMENDATION_ALGORITHM', 'tfidf'),
     ],
 
+    'support' => [
+        'whatsapp_number' => env('ADMIN_WHATSAPP_NUMBER'),
+    ],
+
 ];
