@@ -388,8 +388,14 @@
                     <p class="max-w-xs font-body-md text-body-md text-on-surface-variant">
                         © {{ now()->year }} SMASHCOURT. Engineered for performance, built for fast booking.
                     </p>
-                    @if (config('services.support.whatsapp_number'))
-                        <p class="font-body-md text-body-md text-on-surface-variant">Kontak Admin: {{ config('services.support.whatsapp_number') }}</p>
+                    @php
+                        $adminWhatsapp = preg_replace('/\D+/', '', (string) config('services.support.whatsapp_number'));
+                    @endphp
+                    @if ($adminWhatsapp !== '')
+                        <a href="https://wa.me/{{ $adminWhatsapp }}?text={{ rawurlencode('Halo Admin SmashCourt, saya membutuhkan bantuan.') }}" target="_blank" rel="noopener" class="inline-flex w-fit items-center gap-2 font-body-md text-body-md font-semibold text-secondary-container transition hover:text-white">
+                            <span class="material-symbols-outlined text-lg">chat</span>
+                            Hubungi Admin
+                        </a>
                     @endif
                 </div>
 

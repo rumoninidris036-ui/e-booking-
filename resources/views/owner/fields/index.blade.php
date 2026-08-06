@@ -171,7 +171,7 @@
                                 </div>
                                 <div>
                                     <label for="whatsapp_number" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">WhatsApp Owner</label>
-                                    <input id="whatsapp_number" name="whatsapp_number" type="tel" value="{{ old('whatsapp_number') }}" class="w-full rounded-2xl border-line bg-slate-50 px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20" placeholder="6281234567890">
+                                    <input id="whatsapp_number" name="whatsapp_number" type="tel" value="{{ old('whatsapp_number') }}" class="w-full rounded-2xl border-line bg-slate-50 px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">
                                 </div>
 
                                 <div>
@@ -503,7 +503,7 @@
                                                                     </div>
                                                                     <div>
                                                                         <label for="field-{{ $field->id }}-whatsapp" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">WhatsApp Owner</label>
-                                                                        <input id="field-{{ $field->id }}-whatsapp" name="whatsapp_number" type="tel" value="{{ old("fields.{$field->id}.whatsapp_number", $field->whatsapp_number) }}" class="w-full rounded-2xl border-line bg-white px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20" placeholder="6281234567890">
+                                                                        <input id="field-{{ $field->id }}-whatsapp" name="whatsapp_number" type="tel" value="{{ old("fields.{$field->id}.whatsapp_number", $field->whatsapp_number) }}" class="w-full rounded-2xl border-line bg-white px-4 py-3 text-sm focus:border-brand focus:bg-white focus:ring-brand/20">
                                                                     </div>
                                                                         <div>
                                                                             <label for="field-{{ $field->id }}-description" class="mb-2 block text-xs font-bold uppercase tracking-[0.16em] text-slateSoft">Deskripsi</label>
