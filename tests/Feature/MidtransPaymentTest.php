@@ -395,6 +395,14 @@ class MidtransPaymentTest extends TestCase
 
         $payment->refresh();
 
+        $this->actingAs($user)
+            ->get(route('payments.show', $payment))
+            ->assertOk()
+            ->assertSee(
+                sprintf('href="/payments/%d/invoice?access_token=guest-token-456"', $payment->id),
+                false,
+            );
+
         $response = $this->get(route('payments.invoice.download', [
             'payment' => $payment,
             'access_token' => $booking->guest_access_token,

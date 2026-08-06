@@ -242,9 +242,12 @@ class PaymentController extends Controller
 
     private function invoiceDownloadUrl(Payment $payment): string
     {
+        // The payment page may be served through a public domain while APP_URL
+        // still points to an internal host. Keep this link relative so the
+        // browser always requests the invoice from the current application.
         return route('payments.invoice.download', array_filter([
             'payment' => $payment,
             'access_token' => $payment->booking->guest_access_token,
-        ]));
+        ]), false);
     }
 }
