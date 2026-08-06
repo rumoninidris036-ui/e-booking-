@@ -142,8 +142,11 @@
                                     required
                                     autocomplete="current-password"
                                     placeholder="••••••••"
-                                    class="w-full rounded-lg border border-outline-variant bg-surface-container-low py-4 pl-12 pr-4 text-on-surface outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-secondary-fixed"
+                                    class="w-full rounded-lg border border-outline-variant bg-surface-container-low py-4 pl-12 pr-12 text-on-surface outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-secondary-fixed"
                                 >
+                                <button type="button" data-password-toggle="password" class="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-outline transition hover:text-secondary-fixed focus:outline-none focus:ring-2 focus:ring-secondary-fixed" aria-label="Tampilkan kata sandi" title="Tampilkan kata sandi">
+                                    <span class="material-symbols-outlined">visibility</span>
+                                </button>
                             </div>
                             <x-input-error :messages="$errors->get('password')" class="mt-2 text-sm text-red-300" />
                         </div>
@@ -208,6 +211,17 @@
         </footer>
 
         <script>
+            document.querySelectorAll('[data-password-toggle]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const input = document.getElementById(button.dataset.passwordToggle);
+                    const isVisible = input.type === 'text';
+                    input.type = isVisible ? 'password' : 'text';
+                    button.querySelector('.material-symbols-outlined').textContent = isVisible ? 'visibility' : 'visibility_off';
+                    button.setAttribute('aria-label', isVisible ? 'Tampilkan kata sandi' : 'Sembunyikan kata sandi');
+                    button.setAttribute('title', isVisible ? 'Tampilkan kata sandi' : 'Sembunyikan kata sandi');
+                });
+            });
+
             const toast = document.getElementById('dev-toast');
             let toastTimer;
 

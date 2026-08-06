@@ -85,7 +85,10 @@
                             <label for="password" class="mb-2 ml-1 block text-sm font-bold uppercase tracking-[0.08em] text-on-surface-variant">Kata sandi baru</label>
                             <div class="relative">
                                 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">lock</span>
-                                <input id="password" name="password" type="password" required autocomplete="new-password" placeholder="Minimal 8 karakter" class="w-full rounded-lg border border-outline-variant bg-surface-container-low py-4 pl-12 pr-4 text-on-surface outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30">
+                                <input id="password" name="password" type="password" required autocomplete="new-password" placeholder="Minimal 8 karakter" class="w-full rounded-lg border border-outline-variant bg-surface-container-low py-4 pl-12 pr-12 text-on-surface outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30">
+                                <button type="button" data-password-toggle="password" class="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-outline transition hover:text-accent focus:outline-none focus:ring-2 focus:ring-accent" aria-label="Tampilkan kata sandi" title="Tampilkan kata sandi">
+                                    <span class="material-symbols-outlined">visibility</span>
+                                </button>
                             </div>
                             <x-input-error :messages="$errors->get('password')" class="mt-2 text-sm text-red-300" />
                         </div>
@@ -94,7 +97,10 @@
                             <label for="password_confirmation" class="mb-2 ml-1 block text-sm font-bold uppercase tracking-[0.08em] text-on-surface-variant">Konfirmasi kata sandi</label>
                             <div class="relative">
                                 <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">lock</span>
-                                <input id="password_confirmation" name="password_confirmation" type="password" required autocomplete="new-password" placeholder="Ulangi kata sandi baru" class="w-full rounded-lg border border-outline-variant bg-surface-container-low py-4 pl-12 pr-4 text-on-surface outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30">
+                                <input id="password_confirmation" name="password_confirmation" type="password" required autocomplete="new-password" placeholder="Ulangi kata sandi baru" class="w-full rounded-lg border border-outline-variant bg-surface-container-low py-4 pl-12 pr-12 text-on-surface outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/30">
+                                <button type="button" data-password-toggle="password_confirmation" class="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-outline transition hover:text-accent focus:outline-none focus:ring-2 focus:ring-accent" aria-label="Tampilkan kata sandi" title="Tampilkan kata sandi">
+                                    <span class="material-symbols-outlined">visibility</span>
+                                </button>
                             </div>
                         </div>
 
@@ -111,5 +117,17 @@
                 </div>
             </section>
         </main>
+        <script>
+            document.querySelectorAll('[data-password-toggle]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const input = document.getElementById(button.dataset.passwordToggle);
+                    const isVisible = input.type === 'text';
+                    input.type = isVisible ? 'password' : 'text';
+                    button.querySelector('.material-symbols-outlined').textContent = isVisible ? 'visibility' : 'visibility_off';
+                    button.setAttribute('aria-label', isVisible ? 'Tampilkan kata sandi' : 'Sembunyikan kata sandi');
+                    button.setAttribute('title', isVisible ? 'Tampilkan kata sandi' : 'Sembunyikan kata sandi');
+                });
+            });
+        </script>
     </body>
 </html>
