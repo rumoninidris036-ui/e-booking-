@@ -233,7 +233,7 @@ $facilityIcons = [
             <section id="location" class="mx-auto max-w-7xl px-gutter pb-24 md:px-margin-desktop">
                 <div class="grid grid-cols-1 items-stretch gap-8 md:grid-cols-2">
                     <div class="relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/5 bg-surface-container p-8 md:p-12">
-                        <div class="z-10">
+                        <div class="z-10 flex flex-col items-start">
                             <h3 class="mb-4 font-headline-lg text-headline-lg text-secondary">Lokasi</h3>
                             <p class="mb-4 font-body-lg text-body-lg text-on-surface-variant">
                                 {{ $field->address ?: 'Alamat belum diisi.' }}
@@ -242,7 +242,7 @@ $facilityIcons = [
                                 Dikelola oleh {{ $field->owner?->name ?? 'pemilik lapangan' }}.
                             </p>
                             @if ($ownerWhatsapp !== '')
-                                <a href="https://wa.me/{{ $ownerWhatsapp }}?text={{ rawurlencode('Halo, saya ingin menanyakan lapangan '.$field->name.'.') }}" target="_blank" rel="noopener" class="mb-6 inline-flex items-center gap-2 rounded-lg border border-secondary-container/30 bg-secondary-container/10 px-4 py-3 text-sm font-semibold text-secondary-container transition hover:bg-secondary-container hover:text-black">
+                                <a href="https://wa.me/{{ $ownerWhatsapp }}?text={{ rawurlencode('Halo, saya ingin menanyakan lapangan '.$field->name.'.') }}" target="_blank" rel="noopener" class="mb-4 inline-flex items-center gap-2 rounded-lg border border-secondary-container/30 bg-secondary-container/10 px-4 py-3 text-sm font-semibold text-secondary-container transition hover:bg-secondary-container hover:text-black">
                                     <span class="material-symbols-outlined text-lg">call</span>
                                     Hubungi Pemilik
                                 </a>
