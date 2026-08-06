@@ -20,7 +20,7 @@
     }
 @endphp
 
-<aside class="border-b border-white/10 bg-nav text-white lg:sticky lg:top-0 lg:h-screen lg:w-[232px] lg:border-b-0 lg:border-r">
+<aside class="relative z-[1100] border-b border-white/10 bg-nav text-white lg:sticky lg:top-0 lg:h-screen lg:w-[232px] lg:border-b-0 lg:border-r">
     <div class="flex items-center gap-3 px-4 py-4 lg:h-16 lg:border-b lg:border-white/10 lg:px-5">
         <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand font-display text-sm font-bold shadow-lg shadow-brand/20">SC</div>
         <div class="min-w-0 flex-1">

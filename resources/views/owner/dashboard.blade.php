@@ -43,6 +43,8 @@
 
         <style>
             .leaflet-container {
+                isolation: isolate;
+                z-index: 0;
                 background: #eef4fb;
                 font-family: Manrope, sans-serif;
             }
@@ -138,7 +140,7 @@
             @include("layouts.role-sidebar")
 
             <div class="min-w-0">
-                <header class="sticky top-0 z-30 border-b border-line bg-white/90 backdrop-blur-xl">
+                <header class="sticky top-0 z-[1000] isolate border-b border-line bg-white/90 backdrop-blur-xl">
                     <div class="flex min-h-16 items-center justify-between gap-4 px-4 py-3 md:px-6">
                         <form action="{{ route('owner.dashboard') }}" method="GET" class="hidden w-full max-w-md md:block">
                             <input type="hidden" name="period" value="{{ $filters['period'] }}">
