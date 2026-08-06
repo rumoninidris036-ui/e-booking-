@@ -357,7 +357,7 @@
                                             </td>
                                             <td class="px-4 py-4 whitespace-nowrap">
                                                 <p class="text-sm font-bold">{{ number_format((int) $field->bookings_count) }}</p>
-                                                <p class="mt-1 text-xs font-semibold text-slateSoft">{{ number_format((int) $field->pending_bookings_count) }} pending · {{ number_format((int) $field->paid_bookings_count) }} paid</p>
+                                                <p class="mt-1 text-xs font-semibold text-slateSoft">{{ number_format((int) $field->pending_bookings_count) }} pending · {{ number_format((int) $field->paid_bookings_count) }} lunas</p>
                                             </td>
                                             <td class="px-4 py-4 whitespace-nowrap">
                                                 <p class="text-sm font-bold">{{ $compactRupiah((float) $field->successful_revenue) }}</p>
@@ -420,7 +420,7 @@
                                                                 <p class="mt-2 font-display text-xl font-bold">{{ number_format((int) $field->pending_bookings_count) }}</p>
                                                             </div>
                                                             <div class="rounded-2xl border border-line bg-white p-3">
-                                                                <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-slateSoft">Paid</p>
+                                                                <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-slateSoft">Lunas</p>
                                                                 <p class="mt-2 font-display text-xl font-bold">{{ number_format((int) $field->paid_bookings_count) }}</p>
                                                             </div>
                                                         </div>

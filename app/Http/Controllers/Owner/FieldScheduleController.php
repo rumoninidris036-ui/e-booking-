@@ -53,7 +53,7 @@ class FieldScheduleController extends Controller
             'available_slots' => collect($slots)->where('status', 'available')->count(),
             'booked_slots' => collect($slots)->where('status', 'booked')->count(),
             'pending_bookings' => $bookings->where('status', Booking::STATUS_PENDING)->count(),
-            'paid_bookings' => $bookings->where('status', Booking::STATUS_PAID)->count(),
+            'paid_bookings' => $bookings->whereIn('status', Booking::SETTLED_STATUSES)->count(),
         ];
 
         return view('owner.schedules.index', [

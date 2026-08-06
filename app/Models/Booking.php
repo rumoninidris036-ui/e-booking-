@@ -36,6 +36,15 @@ class Booking extends Model
     ];
 
     /**
+     * Booking yang pembayarannya sudah berhasil, termasuk yang permainannya
+     * telah selesai dan status operasionalnya berubah menjadi finished.
+     */
+    public const SETTLED_STATUSES = [
+        self::STATUS_PAID,
+        self::STATUS_FINISHED,
+    ];
+
+    /**
      * @var list<string>
      */
     protected $fillable = [

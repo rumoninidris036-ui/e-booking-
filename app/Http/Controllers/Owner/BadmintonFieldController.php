@@ -35,12 +35,12 @@ class BadmintonFieldController extends Controller
         $fields = $owner
             ->ownedFields()
             ->with(['facilities', 'owner:id,name,email', 'galleryImages'])
+            ->select('badminton_fields.*')
             ->withCount([
                 'bookings',
                 'bookings as pending_bookings_count' => fn($query) => $query->where('status', Booking::STATUS_PENDING),
-                'bookings as paid_bookings_count' => fn($query) => $query->where('status', Booking::STATUS_PAID),
+                'bookings as paid_bookings_count' => fn($query) => $query->whereIn('status', Booking::SETTLED_STATUSES),
             ])
-            ->select('badminton_fields.*')
             ->selectSub(
                 Payment::query()
                     ->selectRaw('COALESCE(SUM(payments.amount), 0)')

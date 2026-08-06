@@ -31,7 +31,7 @@ class OwnerDashboardService
         $summary = [
             'total_bookings' => (clone $bookingBaseQuery)->count(),
             'pending_bookings' => (clone $bookingBaseQuery)->where('bookings.status', Booking::STATUS_PENDING)->count(),
-            'paid_bookings' => (clone $bookingBaseQuery)->where('bookings.status', Booking::STATUS_PAID)->count(),
+            'paid_bookings' => (clone $bookingBaseQuery)->whereIn('bookings.status', Booking::SETTLED_STATUSES)->count(),
             'finished_bookings' => (clone $bookingBaseQuery)->where('bookings.status', Booking::STATUS_FINISHED)->count(),
             'cancelled_bookings' => (clone $bookingBaseQuery)->where('bookings.status', Booking::STATUS_CANCELLED)->count(),
             'active_fields' => BadmintonField::query()->where('owner_id', $ownerId)->where('is_active', true)->count(),
@@ -234,7 +234,7 @@ class OwnerDashboardService
                 'badminton_fields.longitude',
                 DB::raw('COUNT(DISTINCT bookings.id) as total_bookings'),
                 DB::raw("COUNT(DISTINCT CASE WHEN bookings.status = '".Booking::STATUS_PENDING."' THEN bookings.id END) as pending_bookings"),
-                DB::raw("COUNT(DISTINCT CASE WHEN bookings.status = '".Booking::STATUS_PAID."' THEN bookings.id END) as paid_bookings"),
+                DB::raw("COUNT(DISTINCT CASE WHEN bookings.status IN ('".Booking::STATUS_PAID."', '".Booking::STATUS_FINISHED."') THEN bookings.id END) as paid_bookings"),
             ])
             ->selectSub($revenueQuery, 'total_revenue')
             ->orderByDesc('total_bookings')
