@@ -116,6 +116,7 @@
     <body class="overflow-x-hidden bg-background font-body-md text-on-background">
         @php
 $primaryCta = route('public.fields.booking', ['slug' => $field->slug]);
+$ownerWhatsapp = preg_replace('/\D+/', '', (string) $field->whatsapp_number);
 $coverImage = $field->cover_image_url ?: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1400&q=80';
 $galleryImages = $field->galleryImages;
 $facilityIcons = [
@@ -240,11 +241,11 @@ $facilityIcons = [
                             <p class="mb-8 text-on-surface-variant">
                                 Dikelola oleh {{ $field->owner?->name ?? 'pemilik lapangan' }}.
                             </p>
-                            @if ($field->whatsapp_number)
-                                <p class="mb-6 inline-flex items-center gap-2 rounded-lg border border-secondary-container/30 bg-secondary-container/10 px-4 py-3 text-sm font-semibold text-secondary-container">
+                            @if ($ownerWhatsapp !== '')
+                                <a href="https://wa.me/{{ $ownerWhatsapp }}?text={{ rawurlencode('Halo, saya ingin menanyakan lapangan '.$field->name.'.') }}" target="_blank" rel="noopener" class="mb-6 inline-flex items-center gap-2 rounded-lg border border-secondary-container/30 bg-secondary-container/10 px-4 py-3 text-sm font-semibold text-secondary-container transition hover:bg-secondary-container hover:text-black">
                                     <span class="material-symbols-outlined text-lg">call</span>
-                                    Kontak pemilik: {{ $field->whatsapp_number }}
-                                </p>
+                                    Hubungi Pemilik
+                                </a>
                             @endif
                             <a id="cta" href="{{ $primaryCta }}" class="inline-flex items-center gap-2 rounded-xl bg-secondary-container px-10 py-4 font-label-bold text-label-bold uppercase text-on-secondary transition-transform hover:scale-105">
                                 Lanjut Booking
