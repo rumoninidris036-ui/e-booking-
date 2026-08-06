@@ -117,6 +117,7 @@
         @php
 $primaryCta = route('public.fields.booking', ['slug' => $field->slug]);
 $ownerWhatsapp = preg_replace('/\D+/', '', (string) $field->whatsapp_number);
+$ownerWhatsapp = str_starts_with($ownerWhatsapp, '0') ? '62'.substr($ownerWhatsapp, 1) : $ownerWhatsapp;
 $coverImage = $field->cover_image_url ?: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1400&q=80';
 $galleryImages = $field->galleryImages;
 $facilityIcons = [
