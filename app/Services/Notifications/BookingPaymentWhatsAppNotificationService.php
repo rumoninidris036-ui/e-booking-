@@ -23,6 +23,29 @@ class BookingPaymentWhatsAppNotificationService
             return $payment;
         }
 
+        /*
+         * Midtrans dapat mengirim ulang webhook sementara halaman pembayaran juga
+         * melakukan sinkronisasi status. Klaim ini harus atomik supaya hanya satu
+         * proses yang boleh meneruskan pengiriman WhatsApp untuk satu pembayaran.
+         */
+        $claimedAt = now();
+        $claimed = Payment::query()
+            ->whereKey($payment->id)
+            ->where('status', Payment::STATUS_SUCCESS)
+            ->whereNull('whatsapp_notified_at')
+            ->update(['whatsapp_notified_at' => $claimedAt]);
+
+        if ($claimed !== 1) {
+            Log::info('booking.whatsapp_notification.skipped_already_claimed', [
+                'payment_id' => $payment->id,
+                'booking_id' => $payment->booking_id,
+            ]);
+
+            return $payment->fresh(['booking.field', 'booking.user']);
+        }
+
+        $payment = $payment->fresh(['booking.field', 'booking.user']);
+
         $booking = $payment->booking;
         $recipient = trim((string) $booking->customer_contact);
 
@@ -32,6 +55,8 @@ class BookingPaymentWhatsAppNotificationService
                 'booking_id' => $booking->id,
             ]);
 
+            $this->releaseNotificationClaim($payment);
+
             return $payment;
         }
 
@@ -40,6 +65,8 @@ class BookingPaymentWhatsAppNotificationService
                 'payment_id' => $payment->id,
                 'booking_id' => $booking->id,
             ]);
+
+            $this->releaseNotificationClaim($payment);
 
             return $payment;
         }
@@ -61,7 +88,6 @@ class BookingPaymentWhatsAppNotificationService
             );
 
             $payment->forceFill([
-                'whatsapp_notified_at' => now(),
                 'whatsapp_notification_response' => $response,
             ])->save();
 
@@ -77,9 +103,18 @@ class BookingPaymentWhatsAppNotificationService
                 'booking_code' => $booking->booking_code,
                 'message' => $exception->getMessage(),
             ]);
+
+            $this->releaseNotificationClaim($payment);
         }
 
         return $payment->fresh(['booking.field', 'booking.user']);
+    }
+
+    private function releaseNotificationClaim(Payment $payment): void
+    {
+        $payment->forceFill([
+            'whatsapp_notified_at' => null,
+        ])->save();
     }
 
     private function invoiceDownloadUrl(Payment $payment): string
