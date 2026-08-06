@@ -7,10 +7,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use App\Models\User;
+use App\Services\Admin\AdminAuditService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Illuminate\Http\RedirectResponse;
 
 class UserManagementController extends Controller
 {
@@ -74,5 +76,25 @@ class UserManagementController extends Controller
                 ->where('name', 'owner')
                 ->where('guard_name', 'web');
         });
+    }
+
+    public function updateStatus(Request $request, User $user, AdminAuditService $auditService): RedirectResponse
+    {
+        abort_unless($user->hasRole('owner'), 404);
+        abort_if($user->id === $request->user()->id, 422, 'Admin tidak dapat menonaktifkan akun sendiri.');
+
+        $validated = $request->validate(['is_active' => ['required', 'boolean']]);
+        $isActive = (bool) $validated['is_active'];
+
+        $user->forceFill([
+            'is_active' => $isActive,
+            'suspended_at' => $isActive ? null : now(),
+        ])->save();
+
+        $auditService->record($request->user(), $isActive ? 'owner.activated' : 'owner.suspended', $user, $request, [
+            'owner_email' => $user->email,
+        ]);
+
+        return back()->with('status', sprintf('Akun owner %s berhasil %s.', $user->name, $isActive ? 'diaktifkan' : 'dinonaktifkan'));
     }
 }

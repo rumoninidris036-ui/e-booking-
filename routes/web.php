@@ -94,7 +94,7 @@ Route::post('/webhooks/midtrans', [MidtransWebhookController::class, 'handle'])
     ->middleware('throttle:midtrans-webhook')
     ->name('webhooks.midtrans.handle');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/bookings', [PublicBookingController::class, 'index'])->name('bookings.index');
     Route::get('/bookings/{booking}', [PublicBookingController::class, 'show'])->name('bookings.show');
     Route::patch('/bookings/{booking}/cancel', [PublicBookingController::class, 'cancel'])->name('bookings.cancel');

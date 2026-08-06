@@ -120,6 +120,7 @@
                                         <th class="px-5 py-4 text-right">Lapangan</th>
                                         <th class="px-5 py-4 text-right">Booking</th>
                                         <th class="px-5 py-4 text-right">Revenue</th>
+                                        <th class="px-5 py-4 text-right">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-line">
@@ -136,10 +137,20 @@
                                             <td class="px-5 py-4 text-right font-bold">{{ number_format((int) $owner->owned_fields_count) }}</td>
                                             <td class="px-5 py-4 text-right font-bold">{{ number_format((int) ($ownerMetrics?->total_bookings ?? 0)) }}</td>
                                             <td class="px-5 py-4 text-right font-bold">{{ $rupiah((float) ($ownerMetrics?->total_revenue ?? 0)) }}</td>
+                                            <td class="px-5 py-4 text-right">
+                                                <form method="POST" action="{{ route('admin.users.update-status', $owner) }}">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <input type="hidden" name="is_active" value="{{ $owner->is_active ? '0' : '1' }}">
+                                                    <button type="submit" onclick="return confirm('{{ $owner->is_active ? 'Nonaktifkan' : 'Aktifkan' }} akun owner ini?')" class="rounded-lg px-3 py-2 text-xs font-bold {{ $owner->is_active ? 'bg-rose-50 text-rose-700 hover:bg-rose-100' : 'bg-brandSoft text-brand hover:bg-brand/10' }}">
+                                                        {{ $owner->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
+                                                    </button>
+                                                </form>
+                                            </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="5" class="px-5 py-12 text-center text-sm text-slateSoft">Belum ada owner yang cocok.</td>
+                                            <td colspan="6" class="px-5 py-12 text-center text-sm text-slateSoft">Belum ada owner yang cocok.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>

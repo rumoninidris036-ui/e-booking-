@@ -8,7 +8,7 @@ use App\Http\Controllers\Owner\DashboardController;
 use App\Http\Controllers\Owner\FieldScheduleController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'role:owner'])
+Route::middleware(['auth', 'active', 'role:owner'])
     ->prefix('owner')
     ->as('owner.')
     ->group(function (): void {
