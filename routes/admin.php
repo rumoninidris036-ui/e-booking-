@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
+// Seluruh route di bawah ini khusus administrator platform yang akunnya aktif.
 Route::middleware(['auth', 'active', 'role:admin'])
     ->prefix('admin')
     ->as('admin.')

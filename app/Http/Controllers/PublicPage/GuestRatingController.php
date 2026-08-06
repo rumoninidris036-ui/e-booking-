@@ -19,6 +19,7 @@ class GuestRatingController extends Controller
         abort_unless($request->hasValidSignature(), 403);
 
         $booking->loadMissing(['field:id,name,slug', 'rating.booking:id,booking_code,customer_name,user_id', 'rating.booking.user:id,name']);
+        abort_unless($booking->status === Booking::STATUS_FINISHED, 403, 'Rating tersedia setelah permainan selesai.');
 
         if ($booking->rating()->exists()) {
             return view('public.rating.already-rated', [
@@ -53,6 +54,8 @@ class GuestRatingController extends Controller
                 ->with(['field:id,name,slug'])
                 ->lockForUpdate()
                 ->findOrFail($booking->id);
+
+            abort_unless($lockedBooking->status === Booking::STATUS_FINISHED, 403, 'Rating tersedia setelah permainan selesai.');
 
             $existingRating = $lockedBooking->rating()->with(['booking:id,booking_code,customer_name,user_id', 'booking.user:id,name'])->first();
 

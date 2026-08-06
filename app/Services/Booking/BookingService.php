@@ -8,6 +8,7 @@ use App\Models\BadmintonField;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Models\User;
+use App\Services\Notifications\BookingRatingWhatsAppNotificationService;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -15,12 +16,17 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * Menangani aturan bisnis booking: validasi slot, pencegahan jadwal bentrok,
+ * masa tunggu pembayaran, pembatalan, dan perubahan status booking.
+ */
 class BookingService
 {
     public const EXPIRED_PENDING_BOOKING_REASON = 'Auto-expired after 10 minutes without payment.';
 
     public function __construct(
         private readonly FieldScheduleService $fieldScheduleService,
+        private readonly BookingRatingWhatsAppNotificationService $ratingWhatsAppNotificationService,
     ) {}
 
     public function create(
@@ -31,6 +37,7 @@ class BookingService
         ?string $endTime = null,
         array $customer = [],
     ): Booking {
+        // Validasi waktu yang diminta sebelum menyentuh database.
         $scheduleDate = CarbonImmutable::createFromFormat('Y-m-d', $bookingDate);
         $slotStart = CarbonImmutable::createFromFormat('H:i', $startTime);
         $slotEnd = $endTime === null
@@ -67,6 +74,7 @@ class BookingService
         }
 
         try {
+            // Lock lapangan dan booking terkait supaya dua customer tidak bisa mengambil slot yang sama.
             return DB::transaction(function () use ($field, $user, $customer, $scheduleDate, $slotStart, $slotEnd): Booking {
                 $lockedField = BadmintonField::query()
                     ->whereKey($field->id)
@@ -105,6 +113,7 @@ class BookingService
                     'price_per_hour' => $lockedField->price_per_hour,
                 ];
 
+                // Pending hanya menahan slot selama 10 menit sebelum dianggap expired.
                 if (Schema::hasColumn((new Booking())->getTable(), 'expires_at')) {
                     $bookingAttributes['expires_at'] = now()->addMinutes(Booking::PENDING_PAYMENT_TIMEOUT_MINUTES);
                 }
@@ -147,7 +156,7 @@ class BookingService
 
     public function updateStatus(Booking $booking, string $status): Booking
     {
-        return DB::transaction(function () use ($booking, $status): Booking {
+        $updatedBooking = DB::transaction(function () use ($booking, $status): Booking {
             $lockedBooking = Booking::query()
                 ->lockForUpdate()
                 ->findOrFail($booking->id);
@@ -178,6 +187,13 @@ class BookingService
 
             return $lockedBooking->fresh(['field:id,name,slug', 'user:id,name,email']);
         });
+
+        // Rating baru dapat diundang setelah owner benar-benar menyelesaikan booking.
+        if ($updatedBooking->status === Booking::STATUS_FINISHED) {
+            return $this->ratingWhatsAppNotificationService->sendFinishedBookingRatingInvitation($updatedBooking);
+        }
+
+        return $updatedBooking;
     }
 
     public function expirePendingBooking(Booking $booking): Booking

@@ -7,8 +7,11 @@ namespace App\Services\Notifications;
 use App\Contracts\Notifications\WhatsAppNotificationGateway;
 use App\Models\Payment;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\URL;
 
+/**
+ * Mengirim konfirmasi pembayaran dan link invoice ke WhatsApp customer.
+ * Pengiriman diklaim secara atomik agar webhook yang berulang tidak menghasilkan pesan ganda.
+ */
 class BookingPaymentWhatsAppNotificationService
 {
     public function __construct(
@@ -74,12 +77,9 @@ class BookingPaymentWhatsAppNotificationService
         try {
             // Gabungkan teks info booking dengan link download PDF internal aplikasi
             $downloadUrl = $this->invoiceDownloadUrl($payment);
-            $ratingUrl = URL::signedRoute('public.rating.create', ['booking' => $booking->id]);
             $messageText = $this->successCaption($payment)
                 . "\n\nUnduh Bukti Booking / Invoice Anda di sini:\n"
-                . $downloadUrl
-                . "\n\nSetelah selesai bermain, beri rating lapangan di sini:\n"
-                . $ratingUrl;
+                . $downloadUrl;
 
             // Panggil pengiriman text message biasa agar super ringan dan instan
             $response = $this->whatsAppGateway->sendTextMessage(

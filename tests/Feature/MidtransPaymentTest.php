@@ -336,10 +336,7 @@ class MidtransPaymentTest extends TestCase
                     'access_token' => 'guest-token-123',
                 ]))
                 && str_contains((string) $request['message'], 'Kode booking: BK-2026-0001')
-                && str_contains((string) $request['message'], 'Setelah selesai bermain, beri rating lapangan di sini:')
-                && str_contains((string) $request['message'], URL::signedRoute('public.rating.create', [
-                    'booking' => $payment->booking_id,
-                ]));
+                && ! str_contains((string) $request['message'], 'beri rating lapangan di sini:');
         });
     }
 

@@ -14,6 +14,7 @@ use App\Services\Recommendations\FieldRecommendationCriteria;
 use App\Services\Recommendations\FieldRecommendationService;
 use Illuminate\Support\Facades\Route;
 
+// Halaman publik: rekomendasi lapangan di beranda.
 Route::get('/', function () {
     $recommendationService = app(FieldRecommendationService::class);
     $query = trim((string) request('q'));
@@ -70,6 +71,7 @@ Route::get('/', function () {
     ]);
 });
 
+// Eksplorasi lapangan, ketersediaan slot, dan pembuatan booking oleh pengunjung.
 Route::get('/fields', [PublicBadmintonFieldController::class, 'index'])->name('public.fields.index');
 Route::get('/fields/markers', [PublicBadmintonFieldController::class, 'markers'])->name('public.fields.markers');
 Route::get('/fields/recommendations', [PublicBadmintonFieldController::class, 'recommendations'])->name('public.fields.recommendations');
@@ -84,16 +86,19 @@ Route::get('/guest-rating/{booking}', [PublicGuestRatingController::class, 'crea
 Route::post('/guest-rating/{booking}', [PublicGuestRatingController::class, 'store'])
     ->middleware('signed')
     ->name('public.rating.store');
+// Pembayaran: membuat Snap Midtrans, melihat status, kembali dari Midtrans, dan unduh invoice.
 Route::post('/bookings/{booking}/payments', [PublicPaymentController::class, 'store'])
     ->middleware('throttle:payment-create')
     ->name('payments.store');
 Route::get('/payments/{payment}', [PublicPaymentController::class, 'show'])->name('payments.show');
 Route::get('/payments/{payment}/return', [PublicPaymentController::class, 'handleReturn'])->name('payments.return');
 Route::get('/payments/{payment}/invoice', [PublicPaymentController::class, 'downloadInvoice'])->name('payments.invoice.download');
+// Dipanggil server Midtrans, bukan dari tombol pengguna di browser.
 Route::post('/webhooks/midtrans', [MidtransWebhookController::class, 'handle'])
     ->middleware('throttle:midtrans-webhook')
     ->name('webhooks.midtrans.handle');
 
+// Fitur booking/profil yang hanya dapat digunakan oleh akun aktif.
 Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/bookings', [PublicBookingController::class, 'index'])->name('bookings.index');
     Route::get('/bookings/{booking}', [PublicBookingController::class, 'show'])->name('bookings.show');

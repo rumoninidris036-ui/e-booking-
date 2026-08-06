@@ -9,6 +9,9 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * Membuat PDF invoice sekali untuk payment sukses dan menyimpan path-nya pada tabel payments.
+ */
 class InvoiceService
 {
     public function generateForPayment(Payment $payment): Payment
@@ -21,6 +24,7 @@ class InvoiceService
             ]);
         }
 
+        // Invoice yang sudah ada dipakai ulang agar tidak membuat PDF duplikat.
         if ($payment->invoice_pdf_path !== null && Storage::disk('local')->exists($payment->invoice_pdf_path)) {
             return $payment;
         }

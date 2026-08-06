@@ -64,6 +64,8 @@ class Booking extends Model
         'cancelled_at',
         'paid_at',
         'finished_at',
+        'rating_whatsapp_notified_at',
+        'rating_whatsapp_notification_response',
         'price_per_hour',
     ];
 
@@ -78,6 +80,8 @@ class Booking extends Model
             'cancelled_at' => 'datetime',
             'paid_at' => 'datetime',
             'finished_at' => 'datetime',
+            'rating_whatsapp_notified_at' => 'datetime',
+            'rating_whatsapp_notification_response' => 'array',
             'price_per_hour' => 'decimal:2',
         ];
     }

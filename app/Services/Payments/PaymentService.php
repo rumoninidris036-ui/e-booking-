@@ -15,6 +15,10 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * Menghubungkan booking dengan Midtrans: membuat transaksi Snap, memverifikasi
+ * callback/webhook, menyinkronkan status, lalu memicu invoice dan notifikasi.
+ */
 class PaymentService
 {
     public function __construct(
@@ -26,6 +30,7 @@ class PaymentService
 
     public function createOrGetSnapPayment(Booking $booking): Payment
     {
+        // Booking expired atau sudah berstatus final tidak boleh membuat pembayaran baru.
         $latestBooking = $booking->fresh();
 
         if ($latestBooking !== null && (
@@ -39,6 +44,7 @@ class PaymentService
             ]);
         }
 
+        // Lock booking agar satu booking tidak membuat beberapa transaksi Snap aktif.
         return DB::transaction(function () use ($booking): Payment {
             $lockedBooking = Booking::query()
                 ->with(['field', 'user'])
@@ -115,7 +121,7 @@ class PaymentService
 
     public function handleMidtransNotification(array $payload): Payment
     {
-        // 1. Verifikasi keaslian webhook
+        // 1. Verifikasi signature agar webhook palsu tidak bisa mengubah pembayaran.
         $this->assertNotificationSignature($payload);
         $orderId = (string) ($payload['order_id'] ?? '');
 
