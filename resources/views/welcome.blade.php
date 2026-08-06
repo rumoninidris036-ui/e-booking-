@@ -388,6 +388,9 @@
                     <p class="max-w-xs font-body-md text-body-md text-on-surface-variant">
                         © {{ now()->year }} SMASHCOURT. Engineered for performance, built for fast booking.
                     </p>
+                    @if (config('services.support.whatsapp_number'))
+                        <p class="font-body-md text-body-md text-on-surface-variant">Kontak Admin: {{ config('services.support.whatsapp_number') }}</p>
+                    @endif
                 </div>
 
                 {{-- <div class="flex flex-wrap justify-center gap-x-8 gap-y-4">

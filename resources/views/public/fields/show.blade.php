@@ -240,6 +240,12 @@ $facilityIcons = [
                             <p class="mb-8 text-on-surface-variant">
                                 Dikelola oleh {{ $field->owner?->name ?? 'pemilik lapangan' }}.
                             </p>
+                            @if ($field->whatsapp_number)
+                                <p class="mb-6 inline-flex items-center gap-2 rounded-lg border border-secondary-container/30 bg-secondary-container/10 px-4 py-3 text-sm font-semibold text-secondary-container">
+                                    <span class="material-symbols-outlined text-lg">call</span>
+                                    Kontak pemilik: {{ $field->whatsapp_number }}
+                                </p>
+                            @endif
                             <a id="cta" href="{{ $primaryCta }}" class="inline-flex items-center gap-2 rounded-xl bg-secondary-container px-10 py-4 font-label-bold text-label-bold uppercase text-on-secondary transition-transform hover:scale-105">
                                 Lanjut Booking
                                 <span class="material-symbols-outlined">arrow_forward</span>
